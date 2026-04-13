@@ -115,6 +115,7 @@ export default function VehicleNotifications() {
           const days = daysDiff(lDate);
           if (days <= 180) {
             result.push({
+              vehicleId: v.id,
               vehicleLabel: label,
               message: days < 0
                 ? `Leasing vypršel před ${Math.abs(days)} dny!`

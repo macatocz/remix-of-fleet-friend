@@ -41,7 +41,7 @@ const emptyForm: DriverForm = {
   email: "",
   department: "",
   notes: "",
-  vehicle_id: "",
+  vehicle_id: "none",
   status: "aktivní",
 };
 

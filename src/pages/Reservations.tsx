@@ -79,12 +79,39 @@ export default function Reservations() {
 
   useEffect(() => { fetchData(); }, []);
 
+  const checkCollision = async (vehicleId: string, dateFrom: string, dateTo: string, timeFrom: string, timeTo: string): Promise<boolean> => {
+    const { data } = await supabase
+      .from("reservations")
+      .select("id, driver_name, date_from, date_to, time_from, time_to")
+      .eq("vehicle_id", vehicleId)
+      .in("status", ["čeká", "schváleno"])
+      .lte("date_from", dateTo)
+      .gte("date_to", dateFrom);
+
+    if (!data || data.length === 0) return false;
+
+    // Check time overlap for overlapping date ranges
+    return data.some(r => {
+      const existFrom = r.time_from?.slice(0, 5) || "08:00";
+      const existTo = r.time_to?.slice(0, 5) || "17:00";
+      return timeFrom < existTo && timeTo > existFrom;
+    });
+  };
+
   const handleSave = async () => {
     if (!form.vehicle_id || !form.driver_name || !form.date_from || !form.date_to) {
       toast({ title: "Vyplňte povinná pole", description: "Vozidlo, řidič a data jsou povinná.", variant: "destructive" });
       return;
     }
     setSaving(true);
+
+    const hasCollision = await checkCollision(form.vehicle_id, form.date_from, form.date_to, form.time_from || "08:00", form.time_to || "17:00");
+    if (hasCollision) {
+      toast({ title: "Kolize rezervací", description: "Vozidlo je v tomto období a čase již rezervováno.", variant: "destructive" });
+      setSaving(false);
+      return;
+    }
+
     const { error } = await supabase.from("reservations").insert([{
       vehicle_id: form.vehicle_id,
       driver_name: form.driver_name,

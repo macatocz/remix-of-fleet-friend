@@ -58,14 +58,21 @@ export type Database = {
       vehicles: {
         Row: {
           cena_pronajmu: string | null
+          cislo_smlouvy_leasing: string | null
           created_at: string
           dalnicni_znamka: string | null
+          datum_ukonceni_leasingu: string | null
+          datum_zahajeni_leasingu: string | null
+          doba_leasingu: string | null
           id: string
+          leasingova_spolecnost: string | null
           lekarnicka: string | null
           lokalita: string | null
           maly_tp: string | null
+          mesicni_splatka: string | null
           misto_uskladneni_pneu: string | null
           nahradni_klic: string | null
+          najezd_za_rok: string | null
           parkovaci_stani: string | null
           poznamky: string | null
           rz: string | null
@@ -74,6 +81,7 @@ export type Database = {
           status: string
           stk: string | null
           tankovaci_karty: string | null
+          typ_vlastnictvi: string | null
           updated_at: string
           v_uzivani_do: string | null
           v_uzivani_od: string | null
@@ -85,14 +93,21 @@ export type Database = {
         }
         Insert: {
           cena_pronajmu?: string | null
+          cislo_smlouvy_leasing?: string | null
           created_at?: string
           dalnicni_znamka?: string | null
+          datum_ukonceni_leasingu?: string | null
+          datum_zahajeni_leasingu?: string | null
+          doba_leasingu?: string | null
           id?: string
+          leasingova_spolecnost?: string | null
           lekarnicka?: string | null
           lokalita?: string | null
           maly_tp?: string | null
+          mesicni_splatka?: string | null
           misto_uskladneni_pneu?: string | null
           nahradni_klic?: string | null
+          najezd_za_rok?: string | null
           parkovaci_stani?: string | null
           poznamky?: string | null
           rz?: string | null
@@ -101,6 +116,7 @@ export type Database = {
           status?: string
           stk?: string | null
           tankovaci_karty?: string | null
+          typ_vlastnictvi?: string | null
           updated_at?: string
           v_uzivani_do?: string | null
           v_uzivani_od?: string | null
@@ -112,14 +128,21 @@ export type Database = {
         }
         Update: {
           cena_pronajmu?: string | null
+          cislo_smlouvy_leasing?: string | null
           created_at?: string
           dalnicni_znamka?: string | null
+          datum_ukonceni_leasingu?: string | null
+          datum_zahajeni_leasingu?: string | null
+          doba_leasingu?: string | null
           id?: string
+          leasingova_spolecnost?: string | null
           lekarnicka?: string | null
           lokalita?: string | null
           maly_tp?: string | null
+          mesicni_splatka?: string | null
           misto_uskladneni_pneu?: string | null
           nahradni_klic?: string | null
+          najezd_za_rok?: string | null
           parkovaci_stani?: string | null
           poznamky?: string | null
           rz?: string | null
@@ -128,6 +151,7 @@ export type Database = {
           status?: string
           stk?: string | null
           tankovaci_karty?: string | null
+          typ_vlastnictvi?: string | null
           updated_at?: string
           v_uzivani_do?: string | null
           v_uzivani_od?: string | null

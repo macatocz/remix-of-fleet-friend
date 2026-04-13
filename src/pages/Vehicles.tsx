@@ -30,6 +30,14 @@ const ALL_COLUMNS = [
   { key: "rz", label: "RZ" },
   { key: "vin", label: "VIN" },
   { key: "vlastnik", label: "Vlastník" },
+  { key: "typ_vlastnictvi", label: "Typ vlastnictví" },
+  { key: "leasingova_spolecnost", label: "Leasingová spol." },
+  { key: "doba_leasingu", label: "Doba leasingu" },
+  { key: "najezd_za_rok", label: "Nájezd/rok" },
+  { key: "mesicni_splatka", label: "Měsíční splátka" },
+  { key: "datum_zahajeni_leasingu", label: "Leasing od" },
+  { key: "datum_ukonceni_leasingu", label: "Leasing do" },
+  { key: "cislo_smlouvy_leasing", label: "Č. smlouvy leasing" },
   { key: "velky_tp", label: "Velký TP" },
   { key: "maly_tp", label: "Malý TP" },
   { key: "tankovaci_karty", label: "Tankovací karty" },
@@ -52,7 +60,7 @@ const ALL_COLUMNS = [
 type ColumnKey = typeof ALL_COLUMNS[number]["key"];
 
 const DEFAULT_VISIBLE: ColumnKey[] = [
-  "znacka", "spravce", "rz", "vlastnik", "stk", "lokalita", "status"
+  "znacka", "spravce", "rz", "vlastnik", "typ_vlastnictvi", "stk", "lokalita", "status"
 ];
 
 const STORAGE_KEY = "vehicles-visible-columns";
@@ -76,6 +84,9 @@ const statusBadge = (status: string) => {
 
 interface VehicleFormData {
   znacka: string; spravce: string; rz: string; vin: string; vlastnik: string;
+  typ_vlastnictvi: string; leasingova_spolecnost: string; doba_leasingu: string;
+  najezd_za_rok: string; mesicni_splatka: string; datum_zahajeni_leasingu: string;
+  datum_ukonceni_leasingu: string; cislo_smlouvy_leasing: string;
   velky_tp: string; maly_tp: string; tankovaci_karty: string; stk: string;
   dalnicni_znamka: string; zelena_karta: string; v_uzivani_od: string;
   v_uzivani_do: string; misto_uskladneni_pneu: string; lekarnicka: string;
@@ -84,8 +95,11 @@ interface VehicleFormData {
 }
 
 const emptyForm: VehicleFormData = {
-  znacka: "", spravce: "", rz: "", vin: "", vlastnik: "", velky_tp: "",
-  maly_tp: "", tankovaci_karty: "", stk: "", dalnicni_znamka: "",
+  znacka: "", spravce: "", rz: "", vin: "", vlastnik: "",
+  typ_vlastnictvi: "majetek", leasingova_spolecnost: "", doba_leasingu: "",
+  najezd_za_rok: "", mesicni_splatka: "", datum_zahajeni_leasingu: "",
+  datum_ukonceni_leasingu: "", cislo_smlouvy_leasing: "",
+  velky_tp: "", maly_tp: "", tankovaci_karty: "", stk: "", dalnicni_znamka: "",
   zelena_karta: "", v_uzivani_od: "", v_uzivani_do: "",
   misto_uskladneni_pneu: "", lekarnicka: "", cena_pronajmu: "",
   srazka_soukrome: "", parkovaci_stani: "", nahradni_klic: "",
@@ -154,9 +168,13 @@ export default function Vehicles() {
     setForm(prev => ({ ...prev, [key]: value }));
   };
 
-  const renderCellValue = (vehicle: any, key: ColumnKey) => {
+  const renderCellValue = (vehicle: any, key: string) => {
     const val = vehicle[key];
     if (key === "status") return statusBadge(val || "aktivní");
+    if (key === "typ_vlastnictvi") {
+      const labels: Record<string, string> = { majetek: "Majetek", operativni_leasing: "Operativní leasing", financni_leasing: "Finanční leasing" };
+      return labels[val] || val || "—";
+    }
     return val || "—";
   };
 
@@ -194,6 +212,35 @@ export default function Vehicles() {
                   </Select>
                 </div>
               </div>
+              {/* Typ vlastnictví a leasing */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Typ vlastnictví</Label>
+                  <Select value={form.typ_vlastnictvi} onValueChange={v => updateForm("typ_vlastnictvi", v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="majetek">Majetek</SelectItem>
+                      <SelectItem value="operativni_leasing">Operativní leasing</SelectItem>
+                      <SelectItem value="financni_leasing">Finanční leasing</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Leasingová společnost</Label><Input placeholder="Arval, ALD, LeasePlan..." value={form.leasingova_spolecnost} onChange={e => updateForm("leasingova_spolecnost", e.target.value)} /></div>
+              </div>
+              {(form.typ_vlastnictvi === "operativni_leasing" || form.typ_vlastnictvi === "financni_leasing") && (
+                <>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div><Label>Doba leasingu</Label><Input placeholder="48 měsíců" value={form.doba_leasingu} onChange={e => updateForm("doba_leasingu", e.target.value)} /></div>
+                    <div><Label>Nájezd za rok</Label><Input placeholder="30 000 km" value={form.najezd_za_rok} onChange={e => updateForm("najezd_za_rok", e.target.value)} /></div>
+                    <div><Label>Měsíční splátka</Label><Input placeholder="9 681,-" value={form.mesicni_splatka} onChange={e => updateForm("mesicni_splatka", e.target.value)} /></div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div><Label>Leasing od</Label><Input placeholder="1.1.2024" value={form.datum_zahajeni_leasingu} onChange={e => updateForm("datum_zahajeni_leasingu", e.target.value)} /></div>
+                    <div><Label>Leasing do</Label><Input placeholder="31.12.2027" value={form.datum_ukonceni_leasingu} onChange={e => updateForm("datum_ukonceni_leasingu", e.target.value)} /></div>
+                    <div><Label>Č. smlouvy</Label><Input placeholder="LS-2024-001" value={form.cislo_smlouvy_leasing} onChange={e => updateForm("cislo_smlouvy_leasing", e.target.value)} /></div>
+                  </div>
+                </>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div><Label>Velký TP</Label><Input placeholder="CM Praha / Arval" value={form.velky_tp} onChange={e => updateForm("velky_tp", e.target.value)} /></div>
                 <div>

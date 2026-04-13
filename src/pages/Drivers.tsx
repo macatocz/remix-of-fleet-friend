@@ -111,7 +111,7 @@ export default function Drivers() {
       email: form.email.trim() || null,
       department: form.department.trim() || null,
       notes: form.notes.trim() || null,
-      vehicle_id: form.vehicle_id || null,
+      vehicle_id: form.vehicle_id === "none" ? null : form.vehicle_id || null,
       status: form.status,
     };
 

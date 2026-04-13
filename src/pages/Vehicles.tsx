@@ -472,7 +472,7 @@ export default function Vehicles() {
                     </TableRow>
                   ) : (
                      filtered.map((v) => (
-                       <TableRow key={v.id} className="cursor-pointer" onClick={() => setDetailVehicle(v)}>
+                       <TableRow key={v.id} className="cursor-pointer" onClick={() => navigate(`/vozidla/${v.id}`)}>
                          {ALL_COLUMNS.filter(c => visibleColumns.includes(c.key)).map(col => (
                            <TableCell key={col.key} className="whitespace-nowrap">
                              {renderCellValue(v, col.key)}

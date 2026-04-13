@@ -533,6 +533,33 @@ export default function Vehicles() {
           </Tabs>
         </DialogContent>
       </Dialog>
+      {/* Save view dialog */}
+      <Dialog open={saveViewDialogOpen} onOpenChange={setSaveViewDialogOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Uložit pohled</DialogTitle>
+            <DialogDescription>Uložte aktuální nastavení sloupců a filtrů jako pojmenovaný pohled.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label>Název pohledu</Label>
+              <Input
+                placeholder="Např. Leasing Praha"
+                value={newViewName}
+                onChange={e => setNewViewName(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && saveCurrentView()}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSaveViewDialogOpen(false)}>Zrušit</Button>
+            <Button onClick={saveCurrentView} disabled={!newViewName.trim()}>
+              <Save className="mr-2 h-4 w-4" />Uložit
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

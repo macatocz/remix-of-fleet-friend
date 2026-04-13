@@ -227,7 +227,16 @@ export default function VehicleDetail() {
     setSaving(false);
   };
 
-  if (loading) {
+  const handleDelete = async () => {
+    const { error } = await supabase.from("vehicles").delete().eq("id", id!);
+    if (error) {
+      toast({ title: "Chyba při mazání", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Vozidlo smazáno" });
+      navigate("/vozidla");
+    }
+  };
+
     return (
       <div className="flex justify-center py-24">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

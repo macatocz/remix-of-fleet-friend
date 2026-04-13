@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Car, ChevronDown, ChevronUp } from "lucide-react";
@@ -16,6 +17,7 @@ interface Vehicle {
 }
 
 interface Alert {
+  vehicleId: string;
   vehicleLabel: string;
   message: string;
   daysLeft: number;
@@ -52,6 +54,7 @@ function formatDate(d: Date): string {
 
 export default function VehicleNotifications() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const navigate = useNavigate();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({
     critical: false, warning: false, info: false,
   });
@@ -75,6 +78,7 @@ export default function VehicleNotifications() {
         const days = daysDiff(stkDate);
         if (days <= 180) {
           result.push({
+            vehicleId: v.id,
             vehicleLabel: label,
             message: days < 0
               ? `STK expirovala před ${Math.abs(days)} dny!`
@@ -92,6 +96,7 @@ export default function VehicleNotifications() {
         const days = daysDiff(zkDate);
         if (days <= 180) {
           result.push({
+            vehicleId: v.id,
             vehicleLabel: label,
             message: days < 0
               ? `Zelená karta expirovala před ${Math.abs(days)} dny!`
@@ -110,6 +115,7 @@ export default function VehicleNotifications() {
           const days = daysDiff(lDate);
           if (days <= 180) {
             result.push({
+              vehicleId: v.id,
               vehicleLabel: label,
               message: days < 0
                 ? `Leasing vypršel před ${Math.abs(days)} dny!`
@@ -154,7 +160,7 @@ export default function VehicleNotifications() {
         </div>
         <div className="space-y-2">
           {visible.map((a, i) => (
-            <div key={i} className="flex items-start gap-2 bg-background/60 rounded-md p-2.5">
+            <div key={i} className="flex items-start gap-2 bg-background/60 rounded-md p-2.5 cursor-pointer hover:bg-background/90 transition-colors" onClick={() => navigate(`/vozidla?detail=${a.vehicleId}`)}>
               <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${dotColor}`} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">

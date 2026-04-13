@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -107,6 +108,7 @@ const emptyForm: VehicleFormData = {
 };
 
 export default function Vehicles() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [lokalitaFilter, setLokalitaFilter] = useState("all");
@@ -118,6 +120,18 @@ export default function Vehicles() {
   const [saving, setSaving] = useState(false);
   const [detailVehicle, setDetailVehicle] = useState<any>(null);
   const { toast } = useToast();
+
+  // Auto-open vehicle detail from URL param
+  useEffect(() => {
+    const detailId = searchParams.get("detail");
+    if (detailId && vehicles.length > 0 && !detailVehicle) {
+      const found = vehicles.find(v => v.id === detailId);
+      if (found) {
+        setDetailVehicle(found);
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [searchParams, vehicles]);
 
   const fetchVehicles = async () => {
     setLoading(true);

@@ -10,7 +10,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, FileText, CalendarDays, Info, Loader2, Pencil, Save, X } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft, FileText, CalendarDays, Info, Loader2, Pencil, Save, X, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import VehicleDocuments from "@/components/VehicleDocuments";
@@ -224,6 +227,16 @@ export default function VehicleDetail() {
     setSaving(false);
   };
 
+  const handleDelete = async () => {
+    const { error } = await supabase.from("vehicles").delete().eq("id", id!);
+    if (error) {
+      toast({ title: "Chyba při mazání", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Vozidlo smazáno" });
+      navigate("/vozidla");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center py-24">
@@ -260,9 +273,32 @@ export default function VehicleDetail() {
         <div className="ml-auto flex items-center gap-2">
           {statusBadge(vehicle.status)}
           {!editing ? (
-            <Button variant="outline" size="sm" onClick={startEditing}>
-              <Pencil className="mr-2 h-4 w-4" />Upravit
-            </Button>
+            <>
+              <Button variant="outline" size="sm" onClick={startEditing}>
+                <Pencil className="mr-2 h-4 w-4" />Upravit
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                    <Trash2 className="mr-2 h-4 w-4" />Smazat
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Smazat vozidlo?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Opravdu chcete smazat vozidlo <strong>{vehicle.znacka}</strong> ({vehicle.rz})? Tato akce je nevratná a smaže i všechny přiložené dokumenty a rezervace.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Zrušit</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Smazat
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
           ) : (
             <>
               <Button variant="outline" size="sm" onClick={cancelEditing}>

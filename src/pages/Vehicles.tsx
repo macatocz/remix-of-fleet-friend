@@ -136,6 +136,10 @@ export default function Vehicles() {
   const [form, setForm] = useState<VehicleFormData>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [detailVehicle, setDetailVehicle] = useState<any>(null);
+  const [savedViews, setSavedViews] = useState<SavedView[]>(getSavedViews);
+  const [activeViewId, setActiveViewId] = useState<string | null>(null);
+  const [saveViewDialogOpen, setSaveViewDialogOpen] = useState(false);
+  const [newViewName, setNewViewName] = useState("");
   const { toast } = useToast();
 
   // Auto-open vehicle detail from URL param

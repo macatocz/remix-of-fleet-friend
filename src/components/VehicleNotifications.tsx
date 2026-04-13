@@ -17,6 +17,7 @@ interface Vehicle {
 }
 
 interface Alert {
+  vehicleId: string;
   vehicleLabel: string;
   message: string;
   daysLeft: number;

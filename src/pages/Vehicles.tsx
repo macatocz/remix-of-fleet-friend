@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -13,83 +13,236 @@ import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
-import { Plus, Search } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus, Search, Columns3, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-interface Vehicle {
-  id: string;
-  spz: string;
-  brand: string;
-  model: string;
-  year: number;
-  vin: string;
-  fuelType: string;
-  status: "aktivní" | "v_servisu" | "vyřazeno";
-}
+// All available columns definition
+const ALL_COLUMNS = [
+  { key: "znacka", label: "Značka" },
+  { key: "spravce", label: "Správce" },
+  { key: "rz", label: "RZ" },
+  { key: "vin", label: "VIN" },
+  { key: "vlastnik", label: "Vlastník" },
+  { key: "velky_tp", label: "Velký TP" },
+  { key: "maly_tp", label: "Malý TP" },
+  { key: "tankovaci_karty", label: "Tankovací karty" },
+  { key: "stk", label: "STK" },
+  { key: "dalnicni_znamka", label: "Dálniční známka" },
+  { key: "zelena_karta", label: "Zelená karta" },
+  { key: "v_uzivani_od", label: "V užívání od" },
+  { key: "v_uzivani_do", label: "V užívání do" },
+  { key: "misto_uskladneni_pneu", label: "Uskladnění pneu" },
+  { key: "lekarnicka", label: "Lékárnička" },
+  { key: "cena_pronajmu", label: "Cena pronájmu" },
+  { key: "srazka_soukrome", label: "Srážka soukr." },
+  { key: "parkovaci_stani", label: "Parkování" },
+  { key: "nahradni_klic", label: "Náhradní klíč" },
+  { key: "poznamky", label: "Poznámky" },
+  { key: "lokalita", label: "Lokalita" },
+  { key: "status", label: "Stav" },
+] as const;
 
-const mockVehicles: Vehicle[] = [
-  { id: "1", spz: "1AB 2345", brand: "Škoda", model: "Octavia", year: 2021, vin: "TMBAG7NE1M0123456", fuelType: "Nafta", status: "aktivní" },
-  { id: "2", spz: "2CD 6789", brand: "Volkswagen", model: "Passat", year: 2020, vin: "WVWZZZ3CZWE123456", fuelType: "Benzín", status: "aktivní" },
-  { id: "3", spz: "3EF 1234", brand: "Ford", model: "Transit", year: 2019, vin: "WF0XXXGCFXKY12345", fuelType: "Nafta", status: "v_servisu" },
-  { id: "4", spz: "4GH 5678", brand: "Škoda", model: "Superb", year: 2022, vin: "TMBAG9NE1N0654321", fuelType: "Nafta", status: "aktivní" },
-  { id: "5", spz: "5IJ 9012", brand: "Toyota", model: "Corolla", year: 2023, vin: "SB1K83BE10E123456", fuelType: "Hybrid", status: "aktivní" },
+type ColumnKey = typeof ALL_COLUMNS[number]["key"];
+
+const DEFAULT_VISIBLE: ColumnKey[] = [
+  "znacka", "spravce", "rz", "vlastnik", "stk", "lokalita", "status"
 ];
 
-const statusBadge = (status: Vehicle["status"]) => {
+const STORAGE_KEY = "vehicles-visible-columns";
+
+function getStoredColumns(): ColumnKey[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  return DEFAULT_VISIBLE;
+}
+
+const statusBadge = (status: string) => {
   switch (status) {
     case "aktivní": return <Badge className="bg-success text-success-foreground">Aktivní</Badge>;
     case "v_servisu": return <Badge className="bg-warning text-warning-foreground">V servisu</Badge>;
     case "vyřazeno": return <Badge variant="secondary">Vyřazeno</Badge>;
+    default: return <Badge>{status}</Badge>;
   }
+};
+
+interface VehicleFormData {
+  znacka: string; spravce: string; rz: string; vin: string; vlastnik: string;
+  velky_tp: string; maly_tp: string; tankovaci_karty: string; stk: string;
+  dalnicni_znamka: string; zelena_karta: string; v_uzivani_od: string;
+  v_uzivani_do: string; misto_uskladneni_pneu: string; lekarnicka: string;
+  cena_pronajmu: string; srazka_soukrome: string; parkovaci_stani: string;
+  nahradni_klic: string; poznamky: string; lokalita: string; status: string;
+}
+
+const emptyForm: VehicleFormData = {
+  znacka: "", spravce: "", rz: "", vin: "", vlastnik: "", velky_tp: "",
+  maly_tp: "", tankovaci_karty: "", stk: "", dalnicni_znamka: "",
+  zelena_karta: "", v_uzivani_od: "", v_uzivani_do: "",
+  misto_uskladneni_pneu: "", lekarnicka: "", cena_pronajmu: "",
+  srazka_soukrome: "", parkovaci_stani: "", nahradni_klic: "",
+  poznamky: "", lokalita: "", status: "aktivní",
 };
 
 export default function Vehicles() {
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [lokalitaFilter, setLokalitaFilter] = useState("all");
+  const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(getStoredColumns);
+  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [form, setForm] = useState<VehicleFormData>(emptyForm);
+  const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
 
-  const filtered = mockVehicles.filter((v) => {
-    const matchSearch = `${v.brand} ${v.model} ${v.spz}`.toLowerCase().includes(search.toLowerCase());
+  const fetchVehicles = async () => {
+    setLoading(true);
+    const { data, error } = await supabase.from("vehicles").select("*").order("created_at");
+    if (error) {
+      toast({ title: "Chyba", description: error.message, variant: "destructive" });
+    } else {
+      setVehicles(data || []);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchVehicles(); }, []);
+
+  const toggleColumn = (key: ColumnKey) => {
+    setVisibleColumns(prev => {
+      const next = prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const filtered = vehicles.filter((v) => {
+    const searchStr = `${v.znacka || ""} ${v.spravce || ""} ${v.rz || ""} ${v.vin || ""}`.toLowerCase();
+    const matchSearch = searchStr.includes(search.toLowerCase());
     const matchStatus = statusFilter === "all" || v.status === statusFilter;
-    return matchSearch && matchStatus;
+    const matchLokalita = lokalitaFilter === "all" || v.lokalita === lokalitaFilter;
+    return matchSearch && matchStatus && matchLokalita;
   });
+
+  const lokality = [...new Set(vehicles.map(v => v.lokalita).filter(Boolean))];
+
+  const handleSave = async () => {
+    setSaving(true);
+    const { error } = await supabase.from("vehicles").insert([form]);
+    if (error) {
+      toast({ title: "Chyba při ukládání", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Vozidlo přidáno" });
+      setForm(emptyForm);
+      setDialogOpen(false);
+      fetchVehicles();
+    }
+    setSaving(false);
+  };
+
+  const updateForm = (key: keyof VehicleFormData, value: string) => {
+    setForm(prev => ({ ...prev, [key]: value }));
+  };
+
+  const renderCellValue = (vehicle: any, key: ColumnKey) => {
+    const val = vehicle[key];
+    if (key === "status") return statusBadge(val || "aktivní");
+    return val || "—";
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Vozidla</h1>
-        <Dialog>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button><Plus className="mr-2 h-4 w-4" />Přidat vozidlo</Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Nové vozidlo</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-2 gap-4">
-                <div><Label>SPZ</Label><Input placeholder="1AB 2345" /></div>
-                <div><Label>VIN</Label><Input placeholder="VIN kód" /></div>
+                <div><Label>Značka / Model</Label><Input placeholder="VW Golf" value={form.znacka} onChange={e => updateForm("znacka", e.target.value)} /></div>
+                <div><Label>RZ (SPZ)</Label><Input placeholder="1AB 2345" value={form.rz} onChange={e => updateForm("rz", e.target.value)} /></div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div><Label>Značka</Label><Input placeholder="Škoda" /></div>
-                <div><Label>Model</Label><Input placeholder="Octavia" /></div>
+                <div><Label>VIN</Label><Input placeholder="VIN kód" value={form.vin} onChange={e => updateForm("vin", e.target.value)} /></div>
+                <div><Label>Správce</Label><Input placeholder="Jméno správce" value={form.spravce} onChange={e => updateForm("spravce", e.target.value)} /></div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div><Label>Rok výroby</Label><Input type="number" placeholder="2023" /></div>
+                <div><Label>Vlastník</Label><Input placeholder="Arval / Majetek" value={form.vlastnik} onChange={e => updateForm("vlastnik", e.target.value)} /></div>
                 <div>
-                  <Label>Typ paliva</Label>
-                  <Select>
+                  <Label>Lokalita</Label>
+                  <Select value={form.lokalita} onValueChange={v => updateForm("lokalita", v)}>
                     <SelectTrigger><SelectValue placeholder="Vyberte" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="benzin">Benzín</SelectItem>
-                      <SelectItem value="nafta">Nafta</SelectItem>
-                      <SelectItem value="hybrid">Hybrid</SelectItem>
-                      <SelectItem value="elektro">Elektro</SelectItem>
-                      <SelectItem value="lpg">LPG</SelectItem>
+                      <SelectItem value="Praha">Praha</SelectItem>
+                      <SelectItem value="Liberec">Liberec</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-              <Button className="w-full">Uložit vozidlo</Button>
+              <div className="grid grid-cols-2 gap-4">
+                <div><Label>Velký TP</Label><Input placeholder="CM Praha / Arval" value={form.velky_tp} onChange={e => updateForm("velky_tp", e.target.value)} /></div>
+                <div>
+                  <Label>Malý TP</Label>
+                  <Select value={form.maly_tp} onValueChange={v => updateForm("maly_tp", v)}>
+                    <SelectTrigger><SelectValue placeholder="Vyberte" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ANO">ANO</SelectItem>
+                      <SelectItem value="NE">NE</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div><Label>Tankovací karty + PIN</Label><Input placeholder="SHELL: xxxx MOL: xxxx" value={form.tankovaci_karty} onChange={e => updateForm("tankovaci_karty", e.target.value)} /></div>
+              <div className="grid grid-cols-3 gap-4">
+                <div><Label>STK</Label><Input placeholder="do 19.02.2027" value={form.stk} onChange={e => updateForm("stk", e.target.value)} /></div>
+                <div><Label>Dálniční známka</Label><Input placeholder="do 31.1.2026" value={form.dalnicni_znamka} onChange={e => updateForm("dalnicni_znamka", e.target.value)} /></div>
+                <div><Label>Zelená karta</Label><Input placeholder="datum" value={form.zelena_karta} onChange={e => updateForm("zelena_karta", e.target.value)} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><Label>V užívání od</Label><Input placeholder="datum" value={form.v_uzivani_od} onChange={e => updateForm("v_uzivani_od", e.target.value)} /></div>
+                <div><Label>V užívání do</Label><Input placeholder="datum" value={form.v_uzivani_do} onChange={e => updateForm("v_uzivani_do", e.target.value)} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><Label>Uskladnění pneu</Label><Input placeholder="AT pneu Chodov" value={form.misto_uskladneni_pneu} onChange={e => updateForm("misto_uskladneni_pneu", e.target.value)} /></div>
+                <div>
+                  <Label>Lékárnička</Label>
+                  <Select value={form.lekarnicka} onValueChange={v => updateForm("lekarnicka", v)}>
+                    <SelectTrigger><SelectValue placeholder="Vyberte" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ANO">ANO</SelectItem>
+                      <SelectItem value="NE">NE</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><Label>Cena pronájmu</Label><Input placeholder="9 681,-" value={form.cena_pronajmu} onChange={e => updateForm("cena_pronajmu", e.target.value)} /></div>
+                <div><Label>Srážka za soukr. užívání</Label><Input placeholder="500,-" value={form.srazka_soukrome} onChange={e => updateForm("srazka_soukrome", e.target.value)} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><Label>Parkovací stání</Label><Input placeholder="City Tower 322" value={form.parkovaci_stani} onChange={e => updateForm("parkovaci_stani", e.target.value)} /></div>
+                <div><Label>Náhradní klíč</Label><Input placeholder="umístění" value={form.nahradni_klic} onChange={e => updateForm("nahradni_klic", e.target.value)} /></div>
+              </div>
+              <div>
+                <Label>Poznámky</Label>
+                <Textarea placeholder="Poznámky k vozidlu..." value={form.poznamky} onChange={e => updateForm("poznamky", e.target.value)} />
+              </div>
+              <Button className="w-full" onClick={handleSave} disabled={saving}>
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Uložit vozidlo
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -100,10 +253,17 @@ export default function Vehicles() {
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input className="pl-9" placeholder="Hledat (značka, model, SPZ)..." value={search} onChange={(e) => setSearch(e.target.value)} />
+              <Input className="pl-9" placeholder="Hledat (značka, správce, RZ, VIN)..." value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
+            <Select value={lokalitaFilter} onValueChange={setLokalitaFilter}>
+              <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Všechny lokality</SelectItem>
+                {lokality.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+              </SelectContent>
+            </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Všechny stavy</SelectItem>
                 <SelectItem value="aktivní">Aktivní</SelectItem>
@@ -111,33 +271,67 @@ export default function Vehicles() {
                 <SelectItem value="vyřazeno">Vyřazeno</SelectItem>
               </SelectContent>
             </Select>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" title="Nastavení sloupců">
+                  <Columns3 className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 max-h-80 overflow-y-auto">
+                <DropdownMenuLabel>Zobrazené sloupce</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {ALL_COLUMNS.map(col => (
+                  <DropdownMenuCheckboxItem
+                    key={col.key}
+                    checked={visibleColumns.includes(col.key)}
+                    onCheckedChange={() => toggleColumn(col.key)}
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    {col.label}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>SPZ</TableHead>
-                <TableHead>Značka</TableHead>
-                <TableHead>Model</TableHead>
-                <TableHead>Rok</TableHead>
-                <TableHead>Palivo</TableHead>
-                <TableHead>Stav</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((v) => (
-                <TableRow key={v.id} className="cursor-pointer">
-                  <TableCell className="font-medium">{v.spz}</TableCell>
-                  <TableCell>{v.brand}</TableCell>
-                  <TableCell>{v.model}</TableCell>
-                  <TableCell>{v.year}</TableCell>
-                  <TableCell>{v.fuelType}</TableCell>
-                  <TableCell>{statusBadge(v.status)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          {loading ? (
+            <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {ALL_COLUMNS.filter(c => visibleColumns.includes(c.key)).map(col => (
+                      <TableHead key={col.key} className="whitespace-nowrap">{col.label}</TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={visibleColumns.length} className="text-center py-8 text-muted-foreground">
+                        Žádná vozidla nenalezena
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filtered.map((v) => (
+                      <TableRow key={v.id} className="cursor-pointer">
+                        {ALL_COLUMNS.filter(c => visibleColumns.includes(c.key)).map(col => (
+                          <TableCell key={col.key} className="whitespace-nowrap">
+                            {renderCellValue(v, col.key)}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+          <div className="mt-4 text-sm text-muted-foreground">
+            Celkem: {filtered.length} vozidel
+          </div>
         </CardContent>
       </Card>
     </div>

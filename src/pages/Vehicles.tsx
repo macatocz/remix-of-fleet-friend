@@ -8,18 +8,18 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from "@/components/ui/table";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
 import {
-  DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator
+  DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuItem
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, Columns3, Loader2, FileText } from "lucide-react";
+import { Plus, Search, Columns3, Loader2, FileText, Save, Bookmark, Trash2, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import VehicleDocuments from "@/components/VehicleDocuments";
@@ -65,6 +65,15 @@ const DEFAULT_VISIBLE: ColumnKey[] = [
 ];
 
 const STORAGE_KEY = "vehicles-visible-columns";
+const SAVED_VIEWS_KEY = "vehicles-saved-views";
+
+interface SavedView {
+  id: string;
+  name: string;
+  columns: ColumnKey[];
+  statusFilter: string;
+  lokalitaFilter: string;
+}
 
 function getStoredColumns(): ColumnKey[] {
   try {
@@ -72,6 +81,14 @@ function getStoredColumns(): ColumnKey[] {
     if (stored) return JSON.parse(stored);
   } catch {}
   return DEFAULT_VISIBLE;
+}
+
+function getSavedViews(): SavedView[] {
+  try {
+    const stored = localStorage.getItem(SAVED_VIEWS_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  return [];
 }
 
 const statusBadge = (status: string) => {
@@ -119,6 +136,10 @@ export default function Vehicles() {
   const [form, setForm] = useState<VehicleFormData>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [detailVehicle, setDetailVehicle] = useState<any>(null);
+  const [savedViews, setSavedViews] = useState<SavedView[]>(getSavedViews);
+  const [activeViewId, setActiveViewId] = useState<string | null>(null);
+  const [saveViewDialogOpen, setSaveViewDialogOpen] = useState(false);
+  const [newViewName, setNewViewName] = useState("");
   const { toast } = useToast();
 
   // Auto-open vehicle detail from URL param
@@ -152,6 +173,51 @@ export default function Vehicles() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
       return next;
     });
+    setActiveViewId(null);
+  };
+
+  const saveCurrentView = () => {
+    if (!newViewName.trim()) return;
+    const view: SavedView = {
+      id: crypto.randomUUID(),
+      name: newViewName.trim(),
+      columns: visibleColumns,
+      statusFilter,
+      lokalitaFilter,
+    };
+    const updated = [...savedViews, view];
+    setSavedViews(updated);
+    localStorage.setItem(SAVED_VIEWS_KEY, JSON.stringify(updated));
+    setActiveViewId(view.id);
+    setNewViewName("");
+    setSaveViewDialogOpen(false);
+    toast({ title: "Pohled uložen", description: `„${view.name}" byl uložen.` });
+  };
+
+  const loadView = (view: SavedView) => {
+    setVisibleColumns(view.columns);
+    setStatusFilter(view.statusFilter);
+    setLokalitaFilter(view.lokalitaFilter);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(view.columns));
+    setActiveViewId(view.id);
+  };
+
+  const deleteView = (id: string) => {
+    const updated = savedViews.filter(v => v.id !== id);
+    setSavedViews(updated);
+    localStorage.setItem(SAVED_VIEWS_KEY, JSON.stringify(updated));
+    if (activeViewId === id) setActiveViewId(null);
+    toast({ title: "Pohled smazán" });
+  };
+
+  const updateCurrentView = () => {
+    if (!activeViewId) return;
+    const updated = savedViews.map(v =>
+      v.id === activeViewId ? { ...v, columns: visibleColumns, statusFilter, lokalitaFilter } : v
+    );
+    setSavedViews(updated);
+    localStorage.setItem(SAVED_VIEWS_KEY, JSON.stringify(updated));
+    toast({ title: "Pohled aktualizován" });
   };
 
   const filtered = vehicles.filter((v) => {
@@ -319,14 +385,14 @@ export default function Vehicles() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input className="pl-9" placeholder="Hledat (značka, správce, RZ, VIN)..." value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
-            <Select value={lokalitaFilter} onValueChange={setLokalitaFilter}>
+            <Select value={lokalitaFilter} onValueChange={v => { setLokalitaFilter(v); setActiveViewId(null); }}>
               <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Všechny lokality</SelectItem>
                 {lokality.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={v => { setStatusFilter(v); setActiveViewId(null); }}>
               <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Všechny stavy</SelectItem>
@@ -354,6 +420,46 @@ export default function Vehicles() {
                     {col.label}
                   </DropdownMenuCheckboxItem>
                 ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {/* Save view button */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" title="Uložené pohledy">
+                  <Bookmark className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuLabel>Uložené pohledy</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {savedViews.length === 0 && (
+                  <div className="px-2 py-3 text-sm text-muted-foreground text-center">Zatím žádné uložené pohledy</div>
+                )}
+                {savedViews.map(view => (
+                  <DropdownMenuItem key={view.id} className="flex items-center justify-between gap-2" onSelect={() => loadView(view)}>
+                    <span className="flex items-center gap-2 truncate">
+                      {activeViewId === view.id && <Star className="h-3 w-3 text-primary fill-primary" />}
+                      {view.name}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 shrink-0"
+                      onClick={(e) => { e.stopPropagation(); deleteView(view.id); }}
+                    >
+                      <Trash2 className="h-3 w-3 text-destructive" />
+                    </Button>
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={() => setSaveViewDialogOpen(true)}>
+                  <Save className="h-4 w-4 mr-2" />Uložit aktuální pohled
+                </DropdownMenuItem>
+                {activeViewId && (
+                  <DropdownMenuItem onSelect={updateCurrentView}>
+                    <Save className="h-4 w-4 mr-2" />Aktualizovat „{savedViews.find(v => v.id === activeViewId)?.name}"
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -425,6 +531,33 @@ export default function Vehicles() {
               {detailVehicle && <VehicleDocuments vehicleId={detailVehicle.id} />}
             </TabsContent>
           </Tabs>
+        </DialogContent>
+      </Dialog>
+      {/* Save view dialog */}
+      <Dialog open={saveViewDialogOpen} onOpenChange={setSaveViewDialogOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Uložit pohled</DialogTitle>
+            <DialogDescription>Uložte aktuální nastavení sloupců a filtrů jako pojmenovaný pohled.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label>Název pohledu</Label>
+              <Input
+                placeholder="Např. Leasing Praha"
+                value={newViewName}
+                onChange={e => setNewViewName(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && saveCurrentView()}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSaveViewDialogOpen(false)}>Zrušit</Button>
+            <Button onClick={saveCurrentView} disabled={!newViewName.trim()}>
+              <Save className="mr-2 h-4 w-4" />Uložit
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

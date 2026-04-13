@@ -279,13 +279,65 @@ export default function Reservations() {
             <CalendarDays className="h-5 w-5" />
             Přehled rezervací
           </CardTitle>
+          <div className="flex flex-wrap gap-3 pt-3">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Hledat řidiče nebo účel…"
+                value={searchText}
+                onChange={e => setSearchText(e.target.value)}
+                className="pl-9 pr-8"
+              />
+              {searchText && (
+                <button onClick={() => setSearchText("")} className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground">
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            <Select value={filterVehicle} onValueChange={setFilterVehicle}>
+              <SelectTrigger className="w-[200px]"><SelectValue placeholder="Všechna vozidla" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Všechna vozidla</SelectItem>
+                {vehicles.map(v => (
+                  <SelectItem key={v.id} value={v.id}>{v.znacka || "—"} ({v.rz || "—"})</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[160px]"><SelectValue placeholder="Všechny stavy" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Všechny stavy</SelectItem>
+                <SelectItem value="čeká">Čeká na schválení</SelectItem>
+                <SelectItem value="schváleno">Schváleno</SelectItem>
+                <SelectItem value="zamítnuto">Zamítnuto</SelectItem>
+                <SelectItem value="dokončeno">Dokončeno</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
-          ) : reservations.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">Zatím žádné rezervace. Vytvořte první kliknutím na „Nová rezervace".</div>
-          ) : (
+          ) : (() => {
+            const filtered = reservations.filter(r => {
+              if (filterVehicle !== "all" && r.vehicle_id !== filterVehicle) return false;
+              if (filterStatus !== "all" && r.status !== filterStatus) return false;
+              if (searchText) {
+                const s = searchText.toLowerCase();
+                const match = (r.driver_name || "").toLowerCase().includes(s)
+                  || (r.purpose || "").toLowerCase().includes(s)
+                  || (r.vehicles?.znacka || "").toLowerCase().includes(s)
+                  || (r.vehicles?.rz || "").toLowerCase().includes(s);
+                if (!match) return false;
+              }
+              return true;
+            });
+            if (filtered.length === 0) return (
+              <div className="text-center py-12 text-muted-foreground">
+                {reservations.length === 0 ? "Zatím žádné rezervace. Vytvořte první kliknutím na „Nová rezervace"." : "Žádné rezervace neodpovídají filtru."}
+              </div>
+            );
+            return (
             <Table>
               <TableHeader>
                 <TableRow>

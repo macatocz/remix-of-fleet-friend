@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,11 +19,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, Columns3, Loader2, FileText, Save, Bookmark, Trash2, Star, CalendarDays } from "lucide-react";
+import { Plus, Search, Columns3, Loader2, Save, Bookmark, Trash2, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import VehicleDocuments from "@/components/VehicleDocuments";
-import VehicleCalendar from "@/components/VehicleCalendar";
 
 // All available columns definition
 const ALL_COLUMNS = [

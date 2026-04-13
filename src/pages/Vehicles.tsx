@@ -124,7 +124,7 @@ const emptyForm: VehicleFormData = {
 };
 
 export default function Vehicles() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [lokalitaFilter, setLokalitaFilter] = useState("all");
@@ -134,24 +134,11 @@ export default function Vehicles() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<VehicleFormData>(emptyForm);
   const [saving, setSaving] = useState(false);
-  const [detailVehicle, setDetailVehicle] = useState<any>(null);
   const [savedViews, setSavedViews] = useState<SavedView[]>(getSavedViews);
   const [activeViewId, setActiveViewId] = useState<string | null>(null);
   const [saveViewDialogOpen, setSaveViewDialogOpen] = useState(false);
   const [newViewName, setNewViewName] = useState("");
   const { toast } = useToast();
-
-  // Auto-open vehicle detail from URL param
-  useEffect(() => {
-    const detailId = searchParams.get("detail");
-    if (detailId && vehicles.length > 0 && !detailVehicle) {
-      const found = vehicles.find(v => v.id === detailId);
-      if (found) {
-        setDetailVehicle(found);
-        setSearchParams({}, { replace: true });
-      }
-    }
-  }, [searchParams, vehicles]);
 
   const fetchVehicles = async () => {
     setLoading(true);

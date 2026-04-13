@@ -18,7 +18,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
-import { Plus, CalendarDays, Loader2, Pencil, Trash2 } from "lucide-react";
+import { Plus, CalendarDays, Loader2, Pencil, Trash2, Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 

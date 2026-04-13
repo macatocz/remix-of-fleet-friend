@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      reservations: {
+        Row: {
+          created_at: string
+          date_from: string
+          date_to: string
+          driver_name: string
+          id: string
+          purpose: string | null
+          status: string
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string
+          date_from: string
+          date_to: string
+          driver_name: string
+          id?: string
+          purpose?: string | null
+          status?: string
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string
+          date_from?: string
+          date_to?: string
+          driver_name?: string
+          id?: string
+          purpose?: string | null
+          status?: string
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservations_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vehicle_documents: {
         Row: {
           category: string | null

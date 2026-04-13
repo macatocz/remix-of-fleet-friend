@@ -65,6 +65,9 @@ export default function Reservations() {
   const [form, setForm] = useState<ReservationForm>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const [filterVehicle, setFilterVehicle] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
   const { toast } = useToast();
 
   const fetchData = async () => {

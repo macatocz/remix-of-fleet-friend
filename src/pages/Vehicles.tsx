@@ -84,6 +84,9 @@ const statusBadge = (status: string) => {
 
 interface VehicleFormData {
   znacka: string; spravce: string; rz: string; vin: string; vlastnik: string;
+  typ_vlastnictvi: string; leasingova_spolecnost: string; doba_leasingu: string;
+  najezd_za_rok: string; mesicni_splatka: string; datum_zahajeni_leasingu: string;
+  datum_ukonceni_leasingu: string; cislo_smlouvy_leasing: string;
   velky_tp: string; maly_tp: string; tankovaci_karty: string; stk: string;
   dalnicni_znamka: string; zelena_karta: string; v_uzivani_od: string;
   v_uzivani_do: string; misto_uskladneni_pneu: string; lekarnicka: string;
@@ -92,8 +95,11 @@ interface VehicleFormData {
 }
 
 const emptyForm: VehicleFormData = {
-  znacka: "", spravce: "", rz: "", vin: "", vlastnik: "", velky_tp: "",
-  maly_tp: "", tankovaci_karty: "", stk: "", dalnicni_znamka: "",
+  znacka: "", spravce: "", rz: "", vin: "", vlastnik: "",
+  typ_vlastnictvi: "majetek", leasingova_spolecnost: "", doba_leasingu: "",
+  najezd_za_rok: "", mesicni_splatka: "", datum_zahajeni_leasingu: "",
+  datum_ukonceni_leasingu: "", cislo_smlouvy_leasing: "",
+  velky_tp: "", maly_tp: "", tankovaci_karty: "", stk: "", dalnicni_znamka: "",
   zelena_karta: "", v_uzivani_od: "", v_uzivani_do: "",
   misto_uskladneni_pneu: "", lekarnicka: "", cena_pronajmu: "",
   srazka_soukrome: "", parkovaci_stani: "", nahradni_klic: "",

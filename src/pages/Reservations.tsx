@@ -28,11 +28,18 @@ const statusBadge = (status: string) => {
   }
 };
 
+const TIME_OPTIONS = Array.from({ length: 24 }, (_, i) => {
+  const h = String(i).padStart(2, "0");
+  return [`${h}:00`, `${h}:30`];
+}).flat();
+
 interface ReservationForm {
   vehicle_id: string;
   driver_name: string;
   date_from: string;
   date_to: string;
+  time_from: string;
+  time_to: string;
   purpose: string;
 }
 
@@ -41,6 +48,8 @@ const emptyForm: ReservationForm = {
   driver_name: "",
   date_from: "",
   date_to: "",
+  time_from: "08:00",
+  time_to: "17:00",
   purpose: "",
 };
 
@@ -81,6 +90,8 @@ export default function Reservations() {
       driver_name: form.driver_name,
       date_from: form.date_from,
       date_to: form.date_to,
+      time_from: form.time_from || "08:00",
+      time_to: form.time_to || "17:00",
       purpose: form.purpose || null,
     }]);
     if (error) {
@@ -144,6 +155,30 @@ export default function Reservations() {
                   <Input type="date" value={form.date_to} onChange={e => setForm(p => ({ ...p, date_to: e.target.value }))} />
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Čas od</Label>
+                  <Select value={form.time_from} onValueChange={v => setForm(p => ({ ...p, time_from: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {TIME_OPTIONS.map(t => (
+                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Čas do</Label>
+                  <Select value={form.time_to} onValueChange={v => setForm(p => ({ ...p, time_to: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {TIME_OPTIONS.map(t => (
+                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <div>
                 <Label>Účel</Label>
                 <Textarea placeholder="Účel cesty..." value={form.purpose} onChange={e => setForm(p => ({ ...p, purpose: e.target.value }))} />
@@ -192,8 +227,8 @@ export default function Reservations() {
                       {r.vehicles?.znacka || "—"} ({r.vehicles?.rz || "—"})
                     </TableCell>
                     <TableCell>{r.driver_name}</TableCell>
-                    <TableCell>{new Date(r.date_from).toLocaleDateString("cs-CZ")}</TableCell>
-                    <TableCell>{new Date(r.date_to).toLocaleDateString("cs-CZ")}</TableCell>
+                    <TableCell>{new Date(r.date_from).toLocaleDateString("cs-CZ")} {r.time_from?.slice(0, 5) || ""}</TableCell>
+                    <TableCell>{new Date(r.date_to).toLocaleDateString("cs-CZ")} {r.time_to?.slice(0, 5) || ""}</TableCell>
                     <TableCell>{r.purpose || "—"}</TableCell>
                     <TableCell>{statusBadge(r.status)}</TableCell>
                     <TableCell>

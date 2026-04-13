@@ -96,6 +96,7 @@ export default function VehicleNotifications() {
         const days = daysDiff(zkDate);
         if (days <= 180) {
           result.push({
+            vehicleId: v.id,
             vehicleLabel: label,
             message: days < 0
               ? `Zelená karta expirovala před ${Math.abs(days)} dny!`

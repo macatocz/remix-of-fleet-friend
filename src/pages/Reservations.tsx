@@ -402,7 +402,8 @@ export default function Reservations() {
                 ))}
               </TableBody>
             </Table>
-          )}
+            );
+          })()}
         </CardContent>
       </Card>
     </div>

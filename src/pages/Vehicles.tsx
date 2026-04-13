@@ -385,14 +385,14 @@ export default function Vehicles() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input className="pl-9" placeholder="Hledat (značka, správce, RZ, VIN)..." value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
-            <Select value={lokalitaFilter} onValueChange={setLokalitaFilter}>
+            <Select value={lokalitaFilter} onValueChange={v => { setLokalitaFilter(v); setActiveViewId(null); }}>
               <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Všechny lokality</SelectItem>
                 {lokality.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={v => { setStatusFilter(v); setActiveViewId(null); }}>
               <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Všechny stavy</SelectItem>
@@ -420,6 +420,46 @@ export default function Vehicles() {
                     {col.label}
                   </DropdownMenuCheckboxItem>
                 ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {/* Save view button */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" title="Uložené pohledy">
+                  <Bookmark className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuLabel>Uložené pohledy</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {savedViews.length === 0 && (
+                  <div className="px-2 py-3 text-sm text-muted-foreground text-center">Zatím žádné uložené pohledy</div>
+                )}
+                {savedViews.map(view => (
+                  <DropdownMenuItem key={view.id} className="flex items-center justify-between gap-2" onSelect={() => loadView(view)}>
+                    <span className="flex items-center gap-2 truncate">
+                      {activeViewId === view.id && <Star className="h-3 w-3 text-primary fill-primary" />}
+                      {view.name}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 shrink-0"
+                      onClick={(e) => { e.stopPropagation(); deleteView(view.id); }}
+                    >
+                      <Trash2 className="h-3 w-3 text-destructive" />
+                    </Button>
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={() => setSaveViewDialogOpen(true)}>
+                  <Save className="h-4 w-4 mr-2" />Uložit aktuální pohled
+                </DropdownMenuItem>
+                {activeViewId && (
+                  <DropdownMenuItem onSelect={updateCurrentView}>
+                    <Save className="h-4 w-4 mr-2" />Aktualizovat „{savedViews.find(v => v.id === activeViewId)?.name}"
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

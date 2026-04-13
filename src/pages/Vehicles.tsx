@@ -337,6 +337,35 @@ export default function Vehicles() {
           </div>
         </CardContent>
       </Card>
+      {/* Vehicle detail dialog */}
+      <Dialog open={!!detailVehicle} onOpenChange={(open) => !open && setDetailVehicle(null)}>
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{detailVehicle?.znacka || "Detail vozidla"} — {detailVehicle?.rz || ""}</DialogTitle>
+          </DialogHeader>
+          <Tabs defaultValue="info">
+            <TabsList className="w-full">
+              <TabsTrigger value="info" className="flex-1">Údaje</TabsTrigger>
+              <TabsTrigger value="documents" className="flex-1">
+                <FileText className="mr-2 h-4 w-4" />Dokumenty
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="info" className="mt-4">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                {ALL_COLUMNS.map(col => (
+                  <div key={col.key}>
+                    <span className="text-muted-foreground">{col.label}:</span>{" "}
+                    <span className="font-medium">{detailVehicle?.[col.key] || "—"}</span>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+            <TabsContent value="documents" className="mt-4">
+              {detailVehicle && <VehicleDocuments vehicleId={detailVehicle.id} />}
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

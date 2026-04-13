@@ -208,6 +208,35 @@ export default function Vehicles() {
                   </Select>
                 </div>
               </div>
+              {/* Typ vlastnictví a leasing */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Typ vlastnictví</Label>
+                  <Select value={form.typ_vlastnictvi} onValueChange={v => updateForm("typ_vlastnictvi", v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="majetek">Majetek</SelectItem>
+                      <SelectItem value="operativni_leasing">Operativní leasing</SelectItem>
+                      <SelectItem value="financni_leasing">Finanční leasing</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Leasingová společnost</Label><Input placeholder="Arval, ALD, LeasePlan..." value={form.leasingova_spolecnost} onChange={e => updateForm("leasingova_spolecnost", e.target.value)} /></div>
+              </div>
+              {(form.typ_vlastnictvi === "operativni_leasing" || form.typ_vlastnictvi === "financni_leasing") && (
+                <>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div><Label>Doba leasingu</Label><Input placeholder="48 měsíců" value={form.doba_leasingu} onChange={e => updateForm("doba_leasingu", e.target.value)} /></div>
+                    <div><Label>Nájezd za rok</Label><Input placeholder="30 000 km" value={form.najezd_za_rok} onChange={e => updateForm("najezd_za_rok", e.target.value)} /></div>
+                    <div><Label>Měsíční splátka</Label><Input placeholder="9 681,-" value={form.mesicni_splatka} onChange={e => updateForm("mesicni_splatka", e.target.value)} /></div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div><Label>Leasing od</Label><Input placeholder="1.1.2024" value={form.datum_zahajeni_leasingu} onChange={e => updateForm("datum_zahajeni_leasingu", e.target.value)} /></div>
+                    <div><Label>Leasing do</Label><Input placeholder="31.12.2027" value={form.datum_ukonceni_leasingu} onChange={e => updateForm("datum_ukonceni_leasingu", e.target.value)} /></div>
+                    <div><Label>Č. smlouvy</Label><Input placeholder="LS-2024-001" value={form.cislo_smlouvy_leasing} onChange={e => updateForm("cislo_smlouvy_leasing", e.target.value)} /></div>
+                  </div>
+                </>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div><Label>Velký TP</Label><Input placeholder="CM Praha / Arval" value={form.velky_tp} onChange={e => updateForm("velky_tp", e.target.value)} /></div>
                 <div>

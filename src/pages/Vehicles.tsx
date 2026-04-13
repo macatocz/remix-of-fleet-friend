@@ -168,9 +168,13 @@ export default function Vehicles() {
     setForm(prev => ({ ...prev, [key]: value }));
   };
 
-  const renderCellValue = (vehicle: any, key: ColumnKey) => {
+  const renderCellValue = (vehicle: any, key: string) => {
     const val = vehicle[key];
     if (key === "status") return statusBadge(val || "aktivní");
+    if (key === "typ_vlastnictvi") {
+      const labels: Record<string, string> = { majetek: "Majetek", operativni_leasing: "Operativní leasing", financni_leasing: "Finanční leasing" };
+      return labels[val] || val || "—";
+    }
     return val || "—";
   };
 

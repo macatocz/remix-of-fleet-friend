@@ -41,7 +41,7 @@ const emptyForm: DriverForm = {
   email: "",
   department: "",
   notes: "",
-  vehicle_id: "",
+  vehicle_id: "none",
   status: "aktivní",
 };
 
@@ -92,7 +92,7 @@ export default function Drivers() {
       email: d.email || "",
       department: d.department || "",
       notes: d.notes || "",
-      vehicle_id: d.vehicle_id || "",
+      vehicle_id: d.vehicle_id || "none",
       status: d.status,
     });
     setDialogOpen(true);
@@ -111,7 +111,7 @@ export default function Drivers() {
       email: form.email.trim() || null,
       department: form.department.trim() || null,
       notes: form.notes.trim() || null,
-      vehicle_id: form.vehicle_id || null,
+      vehicle_id: form.vehicle_id === "none" ? null : form.vehicle_id || null,
       status: form.status,
     };
 
@@ -232,7 +232,7 @@ export default function Drivers() {
               <Select value={form.vehicle_id} onValueChange={v => setForm(p => ({ ...p, vehicle_id: v }))}>
                 <SelectTrigger><SelectValue placeholder="Bez přiřazeného vozidla" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Žádné</SelectItem>
+                  <SelectItem value="none">Žádné</SelectItem>
                   {vehicles.map(v => (
                     <SelectItem key={v.id} value={v.id}>{v.znacka || "—"} ({v.rz || "—"})</SelectItem>
                   ))}

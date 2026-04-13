@@ -60,7 +60,7 @@ const ALL_COLUMNS = [
 type ColumnKey = typeof ALL_COLUMNS[number]["key"];
 
 const DEFAULT_VISIBLE: ColumnKey[] = [
-  "znacka", "spravce", "rz", "vlastnik", "stk", "lokalita", "status"
+  "znacka", "spravce", "rz", "vlastnik", "typ_vlastnictvi", "stk", "lokalita", "status"
 ];
 
 const STORAGE_KEY = "vehicles-visible-columns";

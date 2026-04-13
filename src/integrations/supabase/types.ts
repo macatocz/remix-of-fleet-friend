@@ -23,6 +23,8 @@ export type Database = {
           id: string
           purpose: string | null
           status: string
+          time_from: string | null
+          time_to: string | null
           updated_at: string
           vehicle_id: string
         }
@@ -34,6 +36,8 @@ export type Database = {
           id?: string
           purpose?: string | null
           status?: string
+          time_from?: string | null
+          time_to?: string | null
           updated_at?: string
           vehicle_id: string
         }
@@ -45,6 +49,8 @@ export type Database = {
           id?: string
           purpose?: string | null
           status?: string
+          time_from?: string | null
+          time_to?: string | null
           updated_at?: string
           vehicle_id?: string
         }

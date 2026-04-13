@@ -54,6 +54,7 @@ function formatDate(d: Date): string {
 
 export default function VehicleNotifications() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const navigate = useNavigate();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({
     critical: false, warning: false, info: false,
   });

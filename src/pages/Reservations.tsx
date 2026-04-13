@@ -334,7 +334,7 @@ export default function Reservations() {
             });
             if (filtered.length === 0) return (
               <div className="text-center py-12 text-muted-foreground">
-                {reservations.length === 0 ? "Zatím žádné rezervace. Vytvořte první kliknutím na „Nová rezervace"." : "Žádné rezervace neodpovídají filtru."}
+                {reservations.length === 0 ? "Zatím žádné rezervace." : "Žádné rezervace neodpovídají filtru."}
               </div>
             );
             return (

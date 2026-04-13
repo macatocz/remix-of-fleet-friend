@@ -12,9 +12,13 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription
 } from "@/components/ui/dialog";
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
+} from "@/components/ui/alert-dialog";
+import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
-import { Plus, CalendarDays, Loader2 } from "lucide-react";
+import { Plus, CalendarDays, Loader2, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -59,6 +63,7 @@ export default function Reservations() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<ReservationForm>(emptyForm);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
@@ -79,23 +84,47 @@ export default function Reservations() {
 
   useEffect(() => { fetchData(); }, []);
 
-  const checkCollision = async (vehicleId: string, dateFrom: string, dateTo: string, timeFrom: string, timeTo: string): Promise<boolean> => {
-    const { data } = await supabase
+  const checkCollision = async (vehicleId: string, dateFrom: string, dateTo: string, timeFrom: string, timeTo: string, excludeId?: string): Promise<boolean> => {
+    let query = supabase
       .from("reservations")
-      .select("id, driver_name, date_from, date_to, time_from, time_to")
+      .select("id, time_from, time_to")
       .eq("vehicle_id", vehicleId)
       .in("status", ["čeká", "schváleno"])
       .lte("date_from", dateTo)
       .gte("date_to", dateFrom);
 
+    if (excludeId) {
+      query = query.neq("id", excludeId);
+    }
+
+    const { data } = await query;
     if (!data || data.length === 0) return false;
 
-    // Check time overlap for overlapping date ranges
     return data.some(r => {
       const existFrom = r.time_from?.slice(0, 5) || "08:00";
       const existTo = r.time_to?.slice(0, 5) || "17:00";
       return timeFrom < existTo && timeTo > existFrom;
     });
+  };
+
+  const openCreate = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setDialogOpen(true);
+  };
+
+  const openEdit = (r: any) => {
+    setEditingId(r.id);
+    setForm({
+      vehicle_id: r.vehicle_id,
+      driver_name: r.driver_name,
+      date_from: r.date_from,
+      date_to: r.date_to,
+      time_from: r.time_from?.slice(0, 5) || "08:00",
+      time_to: r.time_to?.slice(0, 5) || "17:00",
+      purpose: r.purpose || "",
+    });
+    setDialogOpen(true);
   };
 
   const handleSave = async () => {
@@ -105,14 +134,18 @@ export default function Reservations() {
     }
     setSaving(true);
 
-    const hasCollision = await checkCollision(form.vehicle_id, form.date_from, form.date_to, form.time_from || "08:00", form.time_to || "17:00");
+    const hasCollision = await checkCollision(
+      form.vehicle_id, form.date_from, form.date_to,
+      form.time_from || "08:00", form.time_to || "17:00",
+      editingId || undefined
+    );
     if (hasCollision) {
       toast({ title: "Kolize rezervací", description: "Vozidlo je v tomto období a čase již rezervováno.", variant: "destructive" });
       setSaving(false);
       return;
     }
 
-    const { error } = await supabase.from("reservations").insert([{
+    const payload = {
       vehicle_id: form.vehicle_id,
       driver_name: form.driver_name,
       date_from: form.date_from,
@@ -120,16 +153,32 @@ export default function Reservations() {
       time_from: form.time_from || "08:00",
       time_to: form.time_to || "17:00",
       purpose: form.purpose || null,
-    }]);
+    };
+
+    const { error } = editingId
+      ? await supabase.from("reservations").update(payload).eq("id", editingId)
+      : await supabase.from("reservations").insert([payload]);
+
     if (error) {
       toast({ title: "Chyba při ukládání", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Rezervace vytvořena" });
+      toast({ title: editingId ? "Rezervace upravena" : "Rezervace vytvořena" });
       setForm(emptyForm);
+      setEditingId(null);
       setDialogOpen(false);
       fetchData();
     }
     setSaving(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from("reservations").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Chyba při mazání", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Rezervace smazána" });
+      fetchData();
+    }
   };
 
   const updateStatus = async (id: string, status: string) => {
@@ -145,82 +194,81 @@ export default function Reservations() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Rezervace</h1>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="mr-2 h-4 w-4" />Nová rezervace</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Nová rezervace</DialogTitle>
-              <DialogDescription>Vyplňte údaje pro rezervaci vozidla.</DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
+        <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />Nová rezervace</Button>
+      </div>
+
+      <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) { setEditingId(null); setForm(emptyForm); } }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editingId ? "Upravit rezervaci" : "Nová rezervace"}</DialogTitle>
+            <DialogDescription>Vyplňte údaje pro rezervaci vozidla.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div>
+              <Label>Vozidlo *</Label>
+              <Select value={form.vehicle_id} onValueChange={v => setForm(p => ({ ...p, vehicle_id: v }))}>
+                <SelectTrigger><SelectValue placeholder="Vyberte vozidlo" /></SelectTrigger>
+                <SelectContent>
+                  {vehicles.map(v => (
+                    <SelectItem key={v.id} value={v.id}>
+                      {v.znacka || "—"} ({v.rz || "—"})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Řidič *</Label>
+              <Input placeholder="Jméno řidiče" value={form.driver_name} onChange={e => setForm(p => ({ ...p, driver_name: e.target.value }))} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Vozidlo *</Label>
-                <Select value={form.vehicle_id} onValueChange={v => setForm(p => ({ ...p, vehicle_id: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Vyberte vozidlo" /></SelectTrigger>
+                <Label>Od *</Label>
+                <Input type="date" value={form.date_from} onChange={e => setForm(p => ({ ...p, date_from: e.target.value }))} />
+              </div>
+              <div>
+                <Label>Do *</Label>
+                <Input type="date" value={form.date_to} onChange={e => setForm(p => ({ ...p, date_to: e.target.value }))} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Čas od</Label>
+                <Select value={form.time_from} onValueChange={v => setForm(p => ({ ...p, time_from: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {vehicles.map(v => (
-                      <SelectItem key={v.id} value={v.id}>
-                        {v.znacka || "—"} ({v.rz || "—"})
-                      </SelectItem>
+                    {TIME_OPTIONS.map(t => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Řidič *</Label>
-                <Input placeholder="Jméno řidiče" value={form.driver_name} onChange={e => setForm(p => ({ ...p, driver_name: e.target.value }))} />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Od *</Label>
-                  <Input type="date" value={form.date_from} onChange={e => setForm(p => ({ ...p, date_from: e.target.value }))} />
-                </div>
-                <div>
-                  <Label>Do *</Label>
-                  <Input type="date" value={form.date_to} onChange={e => setForm(p => ({ ...p, date_to: e.target.value }))} />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Čas od</Label>
-                  <Select value={form.time_from} onValueChange={v => setForm(p => ({ ...p, time_from: v }))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {TIME_OPTIONS.map(t => (
-                        <SelectItem key={t} value={t}>{t}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Čas do</Label>
-                  <Select value={form.time_to} onValueChange={v => setForm(p => ({ ...p, time_to: v }))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {TIME_OPTIONS.map(t => (
-                        <SelectItem key={t} value={t}>{t}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div>
-                <Label>Účel</Label>
-                <Textarea placeholder="Účel cesty..." value={form.purpose} onChange={e => setForm(p => ({ ...p, purpose: e.target.value }))} />
+                <Label>Čas do</Label>
+                <Select value={form.time_to} onValueChange={v => setForm(p => ({ ...p, time_to: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {TIME_OPTIONS.map(t => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>Zrušit</Button>
-              <Button onClick={handleSave} disabled={saving}>
-                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Vytvořit rezervaci
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+            <div>
+              <Label>Účel</Label>
+              <Textarea placeholder="Účel cesty..." value={form.purpose} onChange={e => setForm(p => ({ ...p, purpose: e.target.value }))} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Zrušit</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {editingId ? "Uložit změny" : "Vytvořit rezervaci"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardHeader>
@@ -259,15 +307,41 @@ export default function Reservations() {
                     <TableCell>{r.purpose || "—"}</TableCell>
                     <TableCell>{statusBadge(r.status)}</TableCell>
                     <TableCell>
-                      {r.status === "čeká" && (
-                        <div className="flex gap-1">
-                          <Button size="sm" variant="outline" className="text-xs" onClick={() => updateStatus(r.id, "schváleno")}>Schválit</Button>
-                          <Button size="sm" variant="outline" className="text-xs text-destructive" onClick={() => updateStatus(r.id, "zamítnuto")}>Zamítnout</Button>
-                        </div>
-                      )}
-                      {r.status === "schváleno" && (
-                        <Button size="sm" variant="outline" className="text-xs" onClick={() => updateStatus(r.id, "dokončeno")}>Dokončit</Button>
-                      )}
+                      <div className="flex gap-1 flex-wrap">
+                        {r.status === "čeká" && (
+                          <>
+                            <Button size="sm" variant="outline" className="text-xs" onClick={() => updateStatus(r.id, "schváleno")}>Schválit</Button>
+                            <Button size="sm" variant="outline" className="text-xs text-destructive" onClick={() => updateStatus(r.id, "zamítnuto")}>Zamítnout</Button>
+                          </>
+                        )}
+                        {r.status === "schváleno" && (
+                          <Button size="sm" variant="outline" className="text-xs" onClick={() => updateStatus(r.id, "dokončeno")}>Dokončit</Button>
+                        )}
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(r)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive">
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Smazat rezervaci?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tato akce je nevratná. Rezervace pro {r.driver_name} bude trvale odstraněna.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Zrušit</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(r.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                Smazat
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

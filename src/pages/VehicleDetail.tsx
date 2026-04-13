@@ -212,7 +212,7 @@ export default function VehicleDetail() {
       return;
     }
     setSaving(true);
-    const { error } = await supabase.from("vehicles").update(editData).eq("id", id!);
+    const { error } = await supabase.from("vehicles").update(editData as any).eq("id", id!);
     if (error) {
       toast({ title: "Chyba při ukládání", description: error.message, variant: "destructive" });
     } else {

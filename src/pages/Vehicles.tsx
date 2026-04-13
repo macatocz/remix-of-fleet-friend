@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,11 +19,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, Columns3, Loader2, FileText, Save, Bookmark, Trash2, Star, CalendarDays } from "lucide-react";
+import { Plus, Search, Columns3, Loader2, Save, Bookmark, Trash2, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import VehicleDocuments from "@/components/VehicleDocuments";
-import VehicleCalendar from "@/components/VehicleCalendar";
 
 // All available columns definition
 const ALL_COLUMNS = [
@@ -126,7 +124,7 @@ const emptyForm: VehicleFormData = {
 };
 
 export default function Vehicles() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [lokalitaFilter, setLokalitaFilter] = useState("all");
@@ -136,24 +134,11 @@ export default function Vehicles() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<VehicleFormData>(emptyForm);
   const [saving, setSaving] = useState(false);
-  const [detailVehicle, setDetailVehicle] = useState<any>(null);
   const [savedViews, setSavedViews] = useState<SavedView[]>(getSavedViews);
   const [activeViewId, setActiveViewId] = useState<string | null>(null);
   const [saveViewDialogOpen, setSaveViewDialogOpen] = useState(false);
   const [newViewName, setNewViewName] = useState("");
   const { toast } = useToast();
-
-  // Auto-open vehicle detail from URL param
-  useEffect(() => {
-    const detailId = searchParams.get("detail");
-    if (detailId && vehicles.length > 0 && !detailVehicle) {
-      const found = vehicles.find(v => v.id === detailId);
-      if (found) {
-        setDetailVehicle(found);
-        setSearchParams({}, { replace: true });
-      }
-    }
-  }, [searchParams, vehicles]);
 
   const fetchVehicles = async () => {
     setLoading(true);
@@ -487,7 +472,7 @@ export default function Vehicles() {
                     </TableRow>
                   ) : (
                      filtered.map((v) => (
-                       <TableRow key={v.id} className="cursor-pointer" onClick={() => setDetailVehicle(v)}>
+                       <TableRow key={v.id} className="cursor-pointer" onClick={() => navigate(`/vozidla/${v.id}`)}>
                          {ALL_COLUMNS.filter(c => visibleColumns.includes(c.key)).map(col => (
                            <TableCell key={col.key} className="whitespace-nowrap">
                              {renderCellValue(v, col.key)}
@@ -505,41 +490,6 @@ export default function Vehicles() {
           </div>
         </CardContent>
       </Card>
-      {/* Vehicle detail dialog */}
-      <Dialog open={!!detailVehicle} onOpenChange={(open) => !open && setDetailVehicle(null)}>
-        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{detailVehicle?.znacka || "Detail vozidla"} — {detailVehicle?.rz || ""}</DialogTitle>
-          </DialogHeader>
-          <Tabs defaultValue="info">
-            <TabsList className="w-full">
-              <TabsTrigger value="info" className="flex-1">Údaje</TabsTrigger>
-              <TabsTrigger value="calendar" className="flex-1">
-                <CalendarDays className="mr-2 h-4 w-4" />Kalendář
-              </TabsTrigger>
-              <TabsTrigger value="documents" className="flex-1">
-                <FileText className="mr-2 h-4 w-4" />Dokumenty
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="info" className="mt-4">
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                {ALL_COLUMNS.map(col => (
-                  <div key={col.key}>
-                    <span className="text-muted-foreground">{col.label}:</span>{" "}
-                    <span className="font-medium">{detailVehicle?.[col.key] || "—"}</span>
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-            <TabsContent value="calendar" className="mt-4">
-              {detailVehicle && <VehicleCalendar vehicleId={detailVehicle.id} />}
-            </TabsContent>
-            <TabsContent value="documents" className="mt-4">
-              {detailVehicle && <VehicleDocuments vehicleId={detailVehicle.id} />}
-            </TabsContent>
-          </Tabs>
-        </DialogContent>
-      </Dialog>
       {/* Save view dialog */}
       <Dialog open={saveViewDialogOpen} onOpenChange={setSaveViewDialogOpen}>
         <DialogContent className="sm:max-w-sm">

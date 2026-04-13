@@ -273,9 +273,32 @@ export default function VehicleDetail() {
         <div className="ml-auto flex items-center gap-2">
           {statusBadge(vehicle.status)}
           {!editing ? (
-            <Button variant="outline" size="sm" onClick={startEditing}>
-              <Pencil className="mr-2 h-4 w-4" />Upravit
-            </Button>
+            <>
+              <Button variant="outline" size="sm" onClick={startEditing}>
+                <Pencil className="mr-2 h-4 w-4" />Upravit
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                    <Trash2 className="mr-2 h-4 w-4" />Smazat
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Smazat vozidlo?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Opravdu chcete smazat vozidlo <strong>{vehicle.znacka}</strong> ({vehicle.rz})? Tato akce je nevratná a smaže i všechny přiložené dokumenty a rezervace.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Zrušit</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Smazat
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
           ) : (
             <>
               <Button variant="outline" size="sm" onClick={cancelEditing}>

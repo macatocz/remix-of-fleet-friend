@@ -17,9 +17,11 @@ import {
   DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Search, Columns3, Loader2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Search, Columns3, Loader2, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import VehicleDocuments from "@/components/VehicleDocuments";
 
 // All available columns definition
 const ALL_COLUMNS = [
@@ -100,6 +102,7 @@ export default function Vehicles() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<VehicleFormData>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [detailVehicle, setDetailVehicle] = useState<any>(null);
   const { toast } = useToast();
 
   const fetchVehicles = async () => {
@@ -315,15 +318,15 @@ export default function Vehicles() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filtered.map((v) => (
-                      <TableRow key={v.id} className="cursor-pointer">
-                        {ALL_COLUMNS.filter(c => visibleColumns.includes(c.key)).map(col => (
-                          <TableCell key={col.key} className="whitespace-nowrap">
-                            {renderCellValue(v, col.key)}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))
+                     filtered.map((v) => (
+                       <TableRow key={v.id} className="cursor-pointer" onClick={() => setDetailVehicle(v)}>
+                         {ALL_COLUMNS.filter(c => visibleColumns.includes(c.key)).map(col => (
+                           <TableCell key={col.key} className="whitespace-nowrap">
+                             {renderCellValue(v, col.key)}
+                           </TableCell>
+                         ))}
+                       </TableRow>
+                     ))
                   )}
                 </TableBody>
               </Table>
@@ -334,6 +337,35 @@ export default function Vehicles() {
           </div>
         </CardContent>
       </Card>
+      {/* Vehicle detail dialog */}
+      <Dialog open={!!detailVehicle} onOpenChange={(open) => !open && setDetailVehicle(null)}>
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{detailVehicle?.znacka || "Detail vozidla"} — {detailVehicle?.rz || ""}</DialogTitle>
+          </DialogHeader>
+          <Tabs defaultValue="info">
+            <TabsList className="w-full">
+              <TabsTrigger value="info" className="flex-1">Údaje</TabsTrigger>
+              <TabsTrigger value="documents" className="flex-1">
+                <FileText className="mr-2 h-4 w-4" />Dokumenty
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="info" className="mt-4">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                {ALL_COLUMNS.map(col => (
+                  <div key={col.key}>
+                    <span className="text-muted-foreground">{col.label}:</span>{" "}
+                    <span className="font-medium">{detailVehicle?.[col.key] || "—"}</span>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+            <TabsContent value="documents" className="mt-4">
+              {detailVehicle && <VehicleDocuments vehicleId={detailVehicle.id} />}
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

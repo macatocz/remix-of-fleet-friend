@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      vehicle_documents: {
+        Row: {
+          category: string | null
+          created_at: string
+          file_path: string
+          file_size: number | null
+          id: string
+          mime_type: string | null
+          name: string
+          vehicle_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          name: string
+          vehicle_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          name?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_documents_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vehicles: {
         Row: {
           cena_pronajmu: string | null

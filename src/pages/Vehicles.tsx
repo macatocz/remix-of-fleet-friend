@@ -19,10 +19,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, Columns3, Loader2, FileText, Save, Bookmark, Trash2, Star } from "lucide-react";
+import { Plus, Search, Columns3, Loader2, FileText, Save, Bookmark, Trash2, Star, CalendarDays } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import VehicleDocuments from "@/components/VehicleDocuments";
+import VehicleCalendar from "@/components/VehicleCalendar";
 
 // All available columns definition
 const ALL_COLUMNS = [
@@ -513,6 +514,9 @@ export default function Vehicles() {
           <Tabs defaultValue="info">
             <TabsList className="w-full">
               <TabsTrigger value="info" className="flex-1">Údaje</TabsTrigger>
+              <TabsTrigger value="calendar" className="flex-1">
+                <CalendarDays className="mr-2 h-4 w-4" />Kalendář
+              </TabsTrigger>
               <TabsTrigger value="documents" className="flex-1">
                 <FileText className="mr-2 h-4 w-4" />Dokumenty
               </TabsTrigger>
@@ -526,6 +530,9 @@ export default function Vehicles() {
                   </div>
                 ))}
               </div>
+            </TabsContent>
+            <TabsContent value="calendar" className="mt-4">
+              {detailVehicle && <VehicleCalendar vehicleId={detailVehicle.id} />}
             </TabsContent>
             <TabsContent value="documents" className="mt-4">
               {detailVehicle && <VehicleDocuments vehicleId={detailVehicle.id} />}

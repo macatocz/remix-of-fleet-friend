@@ -232,7 +232,7 @@ export default function Drivers() {
               <Select value={form.vehicle_id} onValueChange={v => setForm(p => ({ ...p, vehicle_id: v }))}>
                 <SelectTrigger><SelectValue placeholder="Bez přiřazeného vozidla" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Žádné</SelectItem>
+                  <SelectItem value="none">Žádné</SelectItem>
                   {vehicles.map(v => (
                     <SelectItem key={v.id} value={v.id}>{v.znacka || "—"} ({v.rz || "—"})</SelectItem>
                   ))}

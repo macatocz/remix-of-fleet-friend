@@ -318,15 +318,15 @@ export default function Vehicles() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filtered.map((v) => (
-                      <TableRow key={v.id} className="cursor-pointer">
-                        {ALL_COLUMNS.filter(c => visibleColumns.includes(c.key)).map(col => (
-                          <TableCell key={col.key} className="whitespace-nowrap">
-                            {renderCellValue(v, col.key)}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))
+                     filtered.map((v) => (
+                       <TableRow key={v.id} className="cursor-pointer" onClick={() => setDetailVehicle(v)}>
+                         {ALL_COLUMNS.filter(c => visibleColumns.includes(c.key)).map(col => (
+                           <TableCell key={col.key} className="whitespace-nowrap">
+                             {renderCellValue(v, col.key)}
+                           </TableCell>
+                         ))}
+                       </TableRow>
+                     ))
                   )}
                 </TableBody>
               </Table>

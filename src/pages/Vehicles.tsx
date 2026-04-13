@@ -102,6 +102,7 @@ export default function Vehicles() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<VehicleFormData>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [detailVehicle, setDetailVehicle] = useState<any>(null);
   const { toast } = useToast();
 
   const fetchVehicles = async () => {

@@ -227,8 +227,8 @@ export default function Reservations() {
                       {r.vehicles?.znacka || "—"} ({r.vehicles?.rz || "—"})
                     </TableCell>
                     <TableCell>{r.driver_name}</TableCell>
-                    <TableCell>{new Date(r.date_from).toLocaleDateString("cs-CZ")}</TableCell>
-                    <TableCell>{new Date(r.date_to).toLocaleDateString("cs-CZ")}</TableCell>
+                    <TableCell>{new Date(r.date_from).toLocaleDateString("cs-CZ")} {r.time_from?.slice(0, 5) || ""}</TableCell>
+                    <TableCell>{new Date(r.date_to).toLocaleDateString("cs-CZ")} {r.time_to?.slice(0, 5) || ""}</TableCell>
                     <TableCell>{r.purpose || "—"}</TableCell>
                     <TableCell>{statusBadge(r.status)}</TableCell>
                     <TableCell>

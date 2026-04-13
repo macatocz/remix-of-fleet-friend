@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/components/AppLayout";
 import Dashboard from "@/pages/Dashboard";
 import Vehicles from "@/pages/Vehicles";
+import VehicleDetail from "@/pages/VehicleDetail";
 import Drivers from "@/pages/Drivers";
 import Reservations from "@/pages/Reservations";
 import Service from "@/pages/Service";
@@ -25,6 +26,7 @@ const App = () => (
           <Route element={<AppLayout />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/vozidla" element={<Vehicles />} />
+            <Route path="/vozidla/:id" element={<VehicleDetail />} />
             <Route path="/ridici" element={<Drivers />} />
             <Route path="/rezervace" element={<Reservations />} />
             <Route path="/servis" element={<Service />} />

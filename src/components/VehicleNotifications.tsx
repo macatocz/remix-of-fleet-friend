@@ -160,7 +160,7 @@ export default function VehicleNotifications() {
         </div>
         <div className="space-y-2">
           {visible.map((a, i) => (
-            <div key={i} className="flex items-start gap-2 bg-background/60 rounded-md p-2.5 cursor-pointer hover:bg-background/90 transition-colors" onClick={() => navigate(`/vozidla?detail=${a.vehicleId}`)}>
+            <div key={i} className="flex items-start gap-2 bg-background/60 rounded-md p-2.5 cursor-pointer hover:bg-background/90 transition-colors" onClick={() => navigate(`/vozidla/${a.vehicleId}`)}>
               <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${dotColor}`} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">

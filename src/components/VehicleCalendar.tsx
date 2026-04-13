@@ -120,12 +120,38 @@ export default function VehicleCalendar({ vehicleId }: { vehicleId: string }) {
     setDialogOpen(true);
   };
 
+  const checkCollision = async (dateFrom: string, dateTo: string, timeFrom: string, timeTo: string): Promise<boolean> => {
+    const { data } = await supabase
+      .from("reservations")
+      .select("id, time_from, time_to")
+      .eq("vehicle_id", vehicleId)
+      .in("status", ["čeká", "schváleno"])
+      .lte("date_from", dateTo)
+      .gte("date_to", dateFrom);
+
+    if (!data || data.length === 0) return false;
+
+    return data.some(r => {
+      const existFrom = r.time_from?.slice(0, 5) || "08:00";
+      const existTo = r.time_to?.slice(0, 5) || "17:00";
+      return timeFrom < existTo && timeTo > existFrom;
+    });
+  };
+
   const handleCreate = async () => {
     if (!formDriver.trim() || !formDateFrom || !formDateTo) {
       toast({ title: "Vyplňte povinná pole", variant: "destructive" });
       return;
     }
     setSaving(true);
+
+    const hasCollision = await checkCollision(formDateFrom, formDateTo, formTimeFrom, formTimeTo);
+    if (hasCollision) {
+      toast({ title: "Kolize rezervací", description: "Vozidlo je v tomto období a čase již rezervováno.", variant: "destructive" });
+      setSaving(false);
+      return;
+    }
+
     const { error } = await supabase.from("reservations").insert([{
       vehicle_id: vehicleId,
       driver_name: formDriver.trim(),

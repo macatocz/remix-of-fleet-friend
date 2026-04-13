@@ -14,7 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      vehicles: {
+        Row: {
+          cena_pronajmu: string | null
+          created_at: string
+          dalnicni_znamka: string | null
+          id: string
+          lekarnicka: string | null
+          lokalita: string | null
+          maly_tp: string | null
+          misto_uskladneni_pneu: string | null
+          nahradni_klic: string | null
+          parkovaci_stani: string | null
+          poznamky: string | null
+          rz: string | null
+          spravce: string | null
+          srazka_soukrome: string | null
+          status: string
+          stk: string | null
+          tankovaci_karty: string | null
+          updated_at: string
+          v_uzivani_do: string | null
+          v_uzivani_od: string | null
+          velky_tp: string | null
+          vin: string | null
+          vlastnik: string | null
+          zelena_karta: string | null
+          znacka: string | null
+        }
+        Insert: {
+          cena_pronajmu?: string | null
+          created_at?: string
+          dalnicni_znamka?: string | null
+          id?: string
+          lekarnicka?: string | null
+          lokalita?: string | null
+          maly_tp?: string | null
+          misto_uskladneni_pneu?: string | null
+          nahradni_klic?: string | null
+          parkovaci_stani?: string | null
+          poznamky?: string | null
+          rz?: string | null
+          spravce?: string | null
+          srazka_soukrome?: string | null
+          status?: string
+          stk?: string | null
+          tankovaci_karty?: string | null
+          updated_at?: string
+          v_uzivani_do?: string | null
+          v_uzivani_od?: string | null
+          velky_tp?: string | null
+          vin?: string | null
+          vlastnik?: string | null
+          zelena_karta?: string | null
+          znacka?: string | null
+        }
+        Update: {
+          cena_pronajmu?: string | null
+          created_at?: string
+          dalnicni_znamka?: string | null
+          id?: string
+          lekarnicka?: string | null
+          lokalita?: string | null
+          maly_tp?: string | null
+          misto_uskladneni_pneu?: string | null
+          nahradni_klic?: string | null
+          parkovaci_stani?: string | null
+          poznamky?: string | null
+          rz?: string | null
+          spravce?: string | null
+          srazka_soukrome?: string | null
+          status?: string
+          stk?: string | null
+          tankovaci_karty?: string | null
+          updated_at?: string
+          v_uzivani_do?: string | null
+          v_uzivani_od?: string | null
+          velky_tp?: string | null
+          vin?: string | null
+          vlastnik?: string | null
+          zelena_karta?: string | null
+          znacka?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

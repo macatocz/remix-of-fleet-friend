@@ -514,6 +514,9 @@ export default function Vehicles() {
           <Tabs defaultValue="info">
             <TabsList className="w-full">
               <TabsTrigger value="info" className="flex-1">Údaje</TabsTrigger>
+              <TabsTrigger value="calendar" className="flex-1">
+                <CalendarDays className="mr-2 h-4 w-4" />Kalendář
+              </TabsTrigger>
               <TabsTrigger value="documents" className="flex-1">
                 <FileText className="mr-2 h-4 w-4" />Dokumenty
               </TabsTrigger>
@@ -527,6 +530,9 @@ export default function Vehicles() {
                   </div>
                 ))}
               </div>
+            </TabsContent>
+            <TabsContent value="calendar" className="mt-4">
+              {detailVehicle && <VehicleCalendar vehicleId={detailVehicle.id} />}
             </TabsContent>
             <TabsContent value="documents" className="mt-4">
               {detailVehicle && <VehicleDocuments vehicleId={detailVehicle.id} />}

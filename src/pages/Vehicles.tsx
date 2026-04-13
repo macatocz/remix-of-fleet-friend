@@ -173,6 +173,51 @@ export default function Vehicles() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
       return next;
     });
+    setActiveViewId(null);
+  };
+
+  const saveCurrentView = () => {
+    if (!newViewName.trim()) return;
+    const view: SavedView = {
+      id: crypto.randomUUID(),
+      name: newViewName.trim(),
+      columns: visibleColumns,
+      statusFilter,
+      lokalitaFilter,
+    };
+    const updated = [...savedViews, view];
+    setSavedViews(updated);
+    localStorage.setItem(SAVED_VIEWS_KEY, JSON.stringify(updated));
+    setActiveViewId(view.id);
+    setNewViewName("");
+    setSaveViewDialogOpen(false);
+    toast({ title: "Pohled uložen", description: `„${view.name}" byl uložen.` });
+  };
+
+  const loadView = (view: SavedView) => {
+    setVisibleColumns(view.columns);
+    setStatusFilter(view.statusFilter);
+    setLokalitaFilter(view.lokalitaFilter);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(view.columns));
+    setActiveViewId(view.id);
+  };
+
+  const deleteView = (id: string) => {
+    const updated = savedViews.filter(v => v.id !== id);
+    setSavedViews(updated);
+    localStorage.setItem(SAVED_VIEWS_KEY, JSON.stringify(updated));
+    if (activeViewId === id) setActiveViewId(null);
+    toast({ title: "Pohled smazán" });
+  };
+
+  const updateCurrentView = () => {
+    if (!activeViewId) return;
+    const updated = savedViews.map(v =>
+      v.id === activeViewId ? { ...v, columns: visibleColumns, statusFilter, lokalitaFilter } : v
+    );
+    setSavedViews(updated);
+    localStorage.setItem(SAVED_VIEWS_KEY, JSON.stringify(updated));
+    toast({ title: "Pohled aktualizován" });
   };
 
   const filtered = vehicles.filter((v) => {

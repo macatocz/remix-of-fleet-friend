@@ -155,6 +155,30 @@ export default function Reservations() {
                   <Input type="date" value={form.date_to} onChange={e => setForm(p => ({ ...p, date_to: e.target.value }))} />
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Čas od</Label>
+                  <Select value={form.time_from} onValueChange={v => setForm(p => ({ ...p, time_from: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {TIME_OPTIONS.map(t => (
+                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Čas do</Label>
+                  <Select value={form.time_to} onValueChange={v => setForm(p => ({ ...p, time_to: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {TIME_OPTIONS.map(t => (
+                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <div>
                 <Label>Účel</Label>
                 <Textarea placeholder="Účel cesty..." value={form.purpose} onChange={e => setForm(p => ({ ...p, purpose: e.target.value }))} />

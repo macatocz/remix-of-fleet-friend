@@ -92,7 +92,7 @@ export default function Drivers() {
       email: d.email || "",
       department: d.department || "",
       notes: d.notes || "",
-      vehicle_id: d.vehicle_id || "",
+      vehicle_id: d.vehicle_id || "none",
       status: d.status,
     });
     setDialogOpen(true);

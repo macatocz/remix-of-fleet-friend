@@ -351,7 +351,7 @@ export default function Reservations() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {reservations.map((r) => (
+                {filtered.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="font-medium">
                       {r.vehicles?.znacka || "—"} ({r.vehicles?.rz || "—"})

@@ -78,6 +78,7 @@ export default function VehicleNotifications() {
         const days = daysDiff(stkDate);
         if (days <= 180) {
           result.push({
+            vehicleId: v.id,
             vehicleLabel: label,
             message: days < 0
               ? `STK expirovala před ${Math.abs(days)} dny!`

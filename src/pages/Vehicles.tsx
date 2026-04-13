@@ -65,6 +65,15 @@ const DEFAULT_VISIBLE: ColumnKey[] = [
 ];
 
 const STORAGE_KEY = "vehicles-visible-columns";
+const SAVED_VIEWS_KEY = "vehicles-saved-views";
+
+interface SavedView {
+  id: string;
+  name: string;
+  columns: ColumnKey[];
+  statusFilter: string;
+  lokalitaFilter: string;
+}
 
 function getStoredColumns(): ColumnKey[] {
   try {
@@ -72,6 +81,14 @@ function getStoredColumns(): ColumnKey[] {
     if (stored) return JSON.parse(stored);
   } catch {}
   return DEFAULT_VISIBLE;
+}
+
+function getSavedViews(): SavedView[] {
+  try {
+    const stored = localStorage.getItem(SAVED_VIEWS_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  return [];
 }
 
 const statusBadge = (status: string) => {

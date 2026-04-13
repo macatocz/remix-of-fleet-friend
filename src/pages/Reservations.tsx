@@ -90,6 +90,8 @@ export default function Reservations() {
       driver_name: form.driver_name,
       date_from: form.date_from,
       date_to: form.date_to,
+      time_from: form.time_from || "08:00",
+      time_to: form.time_to || "17:00",
       purpose: form.purpose || null,
     }]);
     if (error) {

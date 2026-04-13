@@ -28,11 +28,18 @@ const statusBadge = (status: string) => {
   }
 };
 
+const TIME_OPTIONS = Array.from({ length: 24 }, (_, i) => {
+  const h = String(i).padStart(2, "0");
+  return [`${h}:00`, `${h}:30`];
+}).flat();
+
 interface ReservationForm {
   vehicle_id: string;
   driver_name: string;
   date_from: string;
   date_to: string;
+  time_from: string;
+  time_to: string;
   purpose: string;
 }
 
@@ -41,6 +48,8 @@ const emptyForm: ReservationForm = {
   driver_name: "",
   date_from: "",
   date_to: "",
+  time_from: "08:00",
+  time_to: "17:00",
   purpose: "",
 };
 

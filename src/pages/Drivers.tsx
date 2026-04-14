@@ -507,7 +507,7 @@ export default function Drivers() {
                       <span className="flex items-center gap-1.5">
                         {d.first_name} {d.last_name}
                         {d.user_id && (
-                          <UserCheck className="h-3.5 w-3.5 text-primary" title="Má uživatelský účet" />
+                          <span title="Má uživatelský účet"><UserCheck className="h-3.5 w-3.5 text-primary" /></span>
                         )}
                       </span>
                     </TableCell>

@@ -193,7 +193,9 @@ export default function VehicleCalendar({ vehicleId }: { vehicleId: string }) {
             <ChevronRight className="h-4 w-4" />
           </Button>
           <span className="text-sm font-medium ml-2">
-            {view === "week"
+            {view === "month"
+              ? format(currentDate, "LLLL yyyy", { locale: cs })
+              : view === "week"
               ? `${format(weekStart, "d. MMM", { locale: cs })} – ${format(endOfWeek(currentDate, { weekStartsOn: 1 }), "d. MMM yyyy", { locale: cs })}`
               : format(currentDate, "EEEE d. MMMM yyyy", { locale: cs })
             }

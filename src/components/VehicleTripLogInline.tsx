@@ -159,11 +159,11 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
     setCalRows(result);
   };
 
-  // Fetch multi-month stats (last 4 months)
+  // Fetch multi-month stats (last 12 months)
   const fetchMultiMonth = async () => {
     const now = new Date();
     const months: { label: string; start: string; end: string }[] = [];
-    for (let i = 3; i >= 0; i--) {
+    for (let i = 11; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const year = d.getFullYear();
       const month = d.getMonth() + 1;
@@ -284,6 +284,29 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
         }
       }
 
+      return updated;
+    });
+  };
+
+  const clearCalRow = async (rowIdx: number) => {
+    const row = calRows[rowIdx];
+    if (row.id) {
+      const { error } = await supabase.from("trip_logs").delete().eq("id", row.id);
+      if (error) { toast({ title: "Chyba", description: error.message, variant: "destructive" }); return; }
+      toast({ title: "Záznam smazán" });
+      await fetchLogs();
+      return;
+    }
+    setCalRows(prev => {
+      const updated = [...prev];
+      updated[rowIdx] = {
+        ...updated[rowIdx],
+        driver_id: null, time: null, break_minutes: null,
+        description: null, purpose: null, route_from: null, route_to: null,
+        km_start: null, km_end: null, km_total: null,
+        fuel_quantity: null, fuel_price: null, other_quantity: null, other_price: null,
+        _dirty: false,
+      };
       return updated;
     });
   };
@@ -598,6 +621,7 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
                 {CAL_COLUMNS.map(col => (
                   <th key={col.key} className={`px-1 py-1.5 text-left text-xs font-medium text-muted-foreground ${col.minW}`}>{col.label}</th>
                 ))}
+                <th className="w-8"></th>
               </tr>
             </thead>
             <tbody>
@@ -605,6 +629,7 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
                 const weekend = isWeekend(row.date);
                 const dayNum = parseInt(row.date.split("-")[2]);
                 const dayName = getDayName(row.date);
+                const hasData = !!(row.id || row.km_end || row.route_from || row.description || row.purpose || row.fuel_quantity);
                 return (
                   <tr
                     key={row.date}
@@ -620,6 +645,17 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
                         {renderCell(row, col, rowIdx, colIdx, true)}
                       </td>
                     ))}
+                    <td className="px-0.5 py-0.5">
+                      {hasData && (
+                        <button
+                          className="h-7 w-7 flex items-center justify-center text-destructive/60 hover:text-destructive rounded-sm hover:bg-destructive/10"
+                          onClick={() => clearCalRow(rowIdx)}
+                          title="Vymazat řádek"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 );
               })}
@@ -643,15 +679,15 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
       {multiMonthData.length > 0 && (
         <Card className="shadow-none">
           <CardContent className="p-4 space-y-3">
-            <p className="text-sm font-medium">Statistiky za poslední 4 měsíce</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <p className="text-sm font-medium">Roční statistiky (posledních 12 měsíců)</p>
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 text-xs max-h-[300px] overflow-y-auto">
               {multiMonthData.map(m => (
                 <div key={m.month} className="border rounded-md p-2 space-y-1">
                   <p className="font-medium text-sm">{m.month}</p>
                   <div className="flex justify-between"><span className="text-muted-foreground">Km:</span><span className="font-medium">{m.km.toLocaleString("cs-CZ")}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">PHM:</span><span>{m.fuel} l</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Spotřeba:</span><span>{m.consumption > 0 ? `${m.consumption} l/100` : "—"}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Náklady:</span><span className="font-medium">{m.totalCost.toLocaleString("cs-CZ")} Kč</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">l/100:</span><span>{m.consumption > 0 ? m.consumption : "—"}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Kč:</span><span className="font-medium">{m.totalCost.toLocaleString("cs-CZ")}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Jízd:</span><span>{m.trips}</span></div>
                 </div>
               ))}

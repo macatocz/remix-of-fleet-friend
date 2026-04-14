@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import VehicleDocuments from "@/components/VehicleDocuments";
 import VehicleCalendar from "@/components/VehicleCalendar";
 import VehicleMileage from "@/components/VehicleMileage";
+import VehicleAlerts from "@/components/VehicleAlerts";
 
 interface FieldDef {
   key: string;

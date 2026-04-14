@@ -59,6 +59,8 @@ export default function Drivers() {
   const [detailDriver, setDetailDriver] = useState<any | null>(null);
   const [driverReservations, setDriverReservations] = useState<any[]>([]);
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
   const navigate = useNavigate();
 
   const fetchData = async () => {

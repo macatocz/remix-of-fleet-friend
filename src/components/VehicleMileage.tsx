@@ -92,9 +92,9 @@ export default function VehicleMileage({ vehicleId, contractualKmPerYear, leasin
 
     const percentage = expectedKmNow > 0 ? Math.round((totalDriven / expectedKmNow) * 100) : 0;
 
-    if (percentage > 110) {
+    if (percentage > 95) {
       mileageStatus = { percentage, message: `Překročení smluvního nájezdu (${percentage}%)`, type: "critical" };
-    } else if (percentage > 90) {
+    } else if (percentage >= 80) {
       mileageStatus = { percentage, message: `Blížíte se smluvnímu limitu (${percentage}%)`, type: "warning" };
     } else {
       mileageStatus = { percentage, message: `Nájezd v normě (${percentage}% limitu)`, type: "ok" };

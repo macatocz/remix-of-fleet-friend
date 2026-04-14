@@ -155,6 +155,41 @@ export type Database = {
           },
         ]
       }
+      vehicle_mileage: {
+        Row: {
+          created_at: string
+          id: string
+          km: number
+          note: string | null
+          recorded_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          km: number
+          note?: string | null
+          recorded_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          km?: number
+          note?: string | null
+          recorded_at?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_mileage_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vehicles: {
         Row: {
           cena_pronajmu: string | null

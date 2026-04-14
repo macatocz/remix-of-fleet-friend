@@ -159,16 +159,16 @@ export default function VehicleNotifications() {
               const expectedKmNow = (elapsedDays / totalLeasingDays) * totalContractKm;
               const percentage = expectedKmNow > 0 ? Math.round((totalDriven / expectedKmNow) * 100) : 0;
 
-              if (percentage > 90) {
-                const priorityDays = percentage > 110 ? -1 : 30;
+              if (percentage >= 70) {
+                const priorityDays = percentage > 95 ? -1 : percentage >= 80 ? 30 : 90;
                 result.push({
                   vehicleId: v.id,
                   vehicleLabel: label,
-                  message: percentage > 110
+                  message: percentage > 95
                     ? `Překročení smluvního nájezdu! (${percentage}% – ${totalDriven.toLocaleString("cs-CZ")} km)`
-                    : `Blíží se limit nájezdu (${percentage}% – ${totalDriven.toLocaleString("cs-CZ")} km)`,
+                    : `Čerpání nájezdu ${percentage}% (${totalDriven.toLocaleString("cs-CZ")} km)`,
                   daysLeft: priorityDays,
-                  type: percentage > 110 ? "critical" : "warning",
+                  type: percentage > 95 ? "critical" : percentage >= 80 ? "warning" : "info",
                   date: formatDate(now),
                 });
               }

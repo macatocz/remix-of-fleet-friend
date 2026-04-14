@@ -96,7 +96,7 @@ export default function VehicleNotifications() {
               ? `STK expirovala před ${Math.abs(days)} dny!`
               : `STK vyprší za ${days} dní (${formatDate(stkDate)})`,
             daysLeft: days,
-            type: days < 0 ? "critical" : days <= 60 ? "warning" : "info",
+            type: days <= 30 ? "critical" : days <= 60 ? "warning" : "info",
             date: formatDate(stkDate),
           });
         }
@@ -114,7 +114,7 @@ export default function VehicleNotifications() {
               ? `Zelená karta expirovala před ${Math.abs(days)} dny!`
               : `Zelená karta vyprší za ${days} dní (${formatDate(zkDate)})`,
             daysLeft: days,
-            type: days < 0 ? "critical" : days <= 60 ? "warning" : "info",
+            type: days <= 30 ? "critical" : days <= 60 ? "warning" : "info",
             date: formatDate(zkDate),
           });
         }
@@ -133,7 +133,7 @@ export default function VehicleNotifications() {
                 ? `Leasing vypršel před ${Math.abs(days)} dny!`
                 : `Leasing vyprší za ${days} dní (${formatDate(lDate)})`,
               daysLeft: days,
-              type: days < 0 ? "critical" : days <= 60 ? "warning" : "info",
+              type: days <= 30 ? "critical" : days <= 60 ? "warning" : "info",
               date: formatDate(lDate),
             });
           }

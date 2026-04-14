@@ -622,12 +622,14 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
                   <th key={col.key} className={`px-1 py-1.5 text-left text-xs font-medium text-muted-foreground ${col.minW}`}>{col.label}</th>
                 ))}
                 <th className="w-8"></th>
+              </tr>
             </thead>
             <tbody>
               {calRows.map((row, rowIdx) => {
                 const weekend = isWeekend(row.date);
                 const dayNum = parseInt(row.date.split("-")[2]);
                 const dayName = getDayName(row.date);
+                const hasData = !!(row.id || row.km_end || row.route_from || row.description || row.purpose || row.fuel_quantity);
                 return (
                   <tr
                     key={row.date}
@@ -643,6 +645,17 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
                         {renderCell(row, col, rowIdx, colIdx, true)}
                       </td>
                     ))}
+                    <td className="px-0.5 py-0.5">
+                      {hasData && (
+                        <button
+                          className="h-7 w-7 flex items-center justify-center text-destructive/60 hover:text-destructive rounded-sm hover:bg-destructive/10"
+                          onClick={() => clearCalRow(rowIdx)}
+                          title="Vymazat řádek"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 );
               })}

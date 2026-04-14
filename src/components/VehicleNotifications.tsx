@@ -62,15 +62,19 @@ function formatDate(d: Date): string {
 
 export default function VehicleNotifications() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [mileageData, setMileageData] = useState<MileageRecord[]>([]);
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({
     critical: false, warning: false, info: false,
   });
 
   useEffect(() => {
-    supabase.from("vehicles").select("id, znacka, rz, spravce, stk, zelena_karta, datum_ukonceni_leasingu, typ_vlastnictvi, status")
+    supabase.from("vehicles").select("id, znacka, rz, spravce, stk, zelena_karta, datum_ukonceni_leasingu, datum_zahajeni_leasingu, typ_vlastnictvi, najezd_za_rok, status")
       .eq("status", "aktivní")
       .then(({ data }) => setVehicles((data as Vehicle[]) || []));
+    supabase.from("vehicle_mileage").select("vehicle_id, km, recorded_at")
+      .order("recorded_at", { ascending: false })
+      .then(({ data }) => setMileageData((data as MileageRecord[]) || []));
   }, []);
 
   const alerts = useMemo(() => {

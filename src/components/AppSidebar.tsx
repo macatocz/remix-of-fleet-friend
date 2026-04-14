@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Car, Users, CalendarDays, Wrench, DollarSign, Settings
+  LayoutDashboard, Car, Users, CalendarDays, Wrench, DollarSign, Settings, BookOpen
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -15,6 +15,7 @@ const mainItems = [
   { title: "Řidiči", url: "/ridici", icon: Users },
   { title: "Rezervace", url: "/rezervace", icon: CalendarDays },
   { title: "Servis", url: "/servis", icon: Wrench },
+  { title: "Kniha jízd", url: "/kniha-jizd", icon: BookOpen },
   { title: "Náklady", url: "/naklady", icon: DollarSign },
 ];
 

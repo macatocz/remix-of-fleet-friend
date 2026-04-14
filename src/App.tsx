@@ -13,6 +13,7 @@ import Drivers from "@/pages/Drivers";
 import Reservations from "@/pages/Reservations";
 import Service from "@/pages/Service";
 import Costs from "@/pages/Costs";
+import TripLog from "@/pages/TripLog";
 import SettingsPage from "@/pages/SettingsPage";
 import Login from "@/pages/Login";
 import NotFound from "@/pages/NotFound";
@@ -41,6 +42,7 @@ const App = () => (
               <Route path="/ridici" element={<Drivers />} />
               <Route path="/rezervace" element={<Reservations />} />
               <Route path="/servis" element={<Service />} />
+              <Route path="/kniha-jizd" element={<TripLog />} />
               <Route path="/naklady" element={<Costs />} />
               <Route path="/nastaveni" element={<SettingsPage />} />
             </Route>

@@ -15,7 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import {
   format, addDays, startOfWeek, endOfWeek, isToday, isSameDay, parseISO,
-  isWithinInterval, addWeeks, subWeeks
+  isWithinInterval, addWeeks, subWeeks, startOfMonth, endOfMonth, addMonths, subMonths,
+  getDay, isSameMonth
 } from "date-fns";
 import { cs } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";

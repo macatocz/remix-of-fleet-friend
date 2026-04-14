@@ -263,7 +263,17 @@ export default function Drivers() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Řidiči</h1>
-        <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />Přidat řidiče</Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={drivers.length === 0}>
+            <Download className="mr-2 h-4 w-4" />Export
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing}>
+            {importing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+            Import
+          </Button>
+          <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleImport} />
+          <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />Přidat řidiče</Button>
+        </div>
       </div>
 
       {/* Form dialog */}

@@ -134,8 +134,11 @@ export default function Service() {
     setSaving(false);
   };
 
-  const handleDelete = async (table: string, id: string) => {
-    const { error } = await supabase.from(table).delete().eq("id", id);
+  const handleDelete = async (table: "service_records" | "inspections" | "insurance", id: string) => {
+    let error: any = null;
+    if (table === "service_records") ({ error } = await supabase.from("service_records").delete().eq("id", id));
+    else if (table === "inspections") ({ error } = await supabase.from("inspections").delete().eq("id", id));
+    else ({ error } = await supabase.from("insurance").delete().eq("id", id));
     if (error) {
       toast({ title: "Chyba při mazání", description: error.message, variant: "destructive" });
     } else {

@@ -80,6 +80,86 @@ export default function Drivers() {
 
   useEffect(() => { fetchData(); }, []);
 
+  const handleExport = () => {
+    const exportData = drivers.map(d => ({
+      "Jméno": d.first_name,
+      "Příjmení": d.last_name,
+      "Telefon": d.phone || "",
+      "Email": d.email || "",
+      "Oddělení": d.department || "",
+      "Vozidlo": d.vehicles ? `${d.vehicles.znacka || ""} (${d.vehicles.rz || ""})` : "",
+      "Stav": d.status,
+      "Poznámky": d.notes || "",
+    }));
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    ws["!cols"] = [
+      { wch: 15 }, { wch: 15 }, { wch: 18 }, { wch: 25 },
+      { wch: 15 }, { wch: 25 }, { wch: 10 }, { wch: 30 },
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Řidiči");
+    XLSX.writeFile(wb, `ridici_export_${new Date().toISOString().split("T")[0]}.xlsx`);
+    toast({ title: "Export dokončen", description: `Exportováno ${exportData.length} řidičů.` });
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      const data = await file.arrayBuffer();
+      const wb = XLSX.read(data);
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows: any[] = XLSX.utils.sheet_to_json(ws);
+
+      const colMap: Record<string, string> = {
+        "jméno": "first_name", "jmeno": "first_name", "first_name": "first_name", "name": "first_name",
+        "příjmení": "last_name", "prijmeni": "last_name", "last_name": "last_name", "surname": "last_name",
+        "telefon": "phone", "phone": "phone", "tel": "phone",
+        "email": "email", "e-mail": "email",
+        "oddělení": "department", "oddeleni": "department", "department": "department", "středisko": "department", "stredisko": "department",
+        "poznámky": "notes", "poznamky": "notes", "notes": "notes",
+        "stav": "status", "status": "status",
+      };
+
+      const toInsert: any[] = [];
+      for (const row of rows) {
+        const mapped: any = {};
+        for (const [key, val] of Object.entries(row)) {
+          const normalized = key.toLowerCase().trim();
+          const field = colMap[normalized];
+          if (field) mapped[field] = String(val).trim();
+        }
+        if (!mapped.first_name || !mapped.last_name) continue;
+        toInsert.push({
+          first_name: mapped.first_name,
+          last_name: mapped.last_name,
+          phone: mapped.phone || null,
+          email: mapped.email || null,
+          department: mapped.department || null,
+          notes: mapped.notes || null,
+          status: mapped.status === "neaktivní" ? "neaktivní" : "aktivní",
+        });
+      }
+
+      if (toInsert.length === 0) {
+        toast({ title: "Prázdný soubor", description: "Nebyly nalezeny žádné platné řádky (vyžadováno Jméno a Příjmení).", variant: "destructive" });
+      } else {
+        const { error } = await supabase.from("drivers").insert(toInsert);
+        if (error) {
+          toast({ title: "Chyba importu", description: error.message, variant: "destructive" });
+        } else {
+          toast({ title: "Import dokončen", description: `Importováno ${toInsert.length} řidičů.` });
+          fetchData();
+        }
+      }
+    } catch (err: any) {
+      toast({ title: "Chyba při čtení souboru", description: err.message, variant: "destructive" });
+    }
+    setImporting(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const openCreate = () => {
     setEditingId(null);
     setForm(emptyForm);

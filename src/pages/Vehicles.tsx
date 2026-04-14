@@ -22,6 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Search, Columns3, Loader2, Save, Bookmark, Trash2, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import VehicleImport from "@/components/VehicleImport";
 
 // All available columns definition
 const ALL_COLUMNS = [
@@ -248,10 +249,12 @@ export default function Vehicles() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Vozidla</h1>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="mr-2 h-4 w-4" />Přidat vozidlo</Button>
-          </DialogTrigger>
+        <div className="flex items-center gap-2">
+          <VehicleImport onImported={fetchVehicles} />
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button><Plus className="mr-2 h-4 w-4" />Přidat vozidlo</Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Nové vozidlo</DialogTitle>
@@ -361,7 +364,8 @@ export default function Vehicles() {
               </Button>
             </div>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
 
       <Card>

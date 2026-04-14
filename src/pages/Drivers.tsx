@@ -113,11 +113,13 @@ export default function Drivers() {
       const rows: any[] = XLSX.utils.sheet_to_json(ws);
 
       const colMap: Record<string, string> = {
-        "jméno": "first_name", "jmeno": "first_name", "first_name": "first_name", "name": "first_name",
+        "jméno": "full_name", "jmeno": "full_name", "name": "full_name",
+        "first_name": "first_name", "křestní": "first_name",
         "příjmení": "last_name", "prijmeni": "last_name", "last_name": "last_name", "surname": "last_name",
-        "telefon": "phone", "phone": "phone", "tel": "phone",
-        "email": "email", "e-mail": "email",
-        "oddělení": "department", "oddeleni": "department", "department": "department", "středisko": "department", "stredisko": "department",
+        "telefon": "phone", "phone": "phone", "tel": "phone", "pracovní mobil": "phone", "pracovni mobil": "phone",
+        "email": "email", "e-mail": "email", "pracovní e-mail": "email", "pracovni e-mail": "email",
+        "oddělení": "department", "oddeleni": "department", "department": "department",
+        "středisko": "department", "stredisko": "department",
         "poznámky": "notes", "poznamky": "notes", "notes": "notes",
         "stav": "status", "status": "status",
       };
@@ -128,8 +130,22 @@ export default function Drivers() {
         for (const [key, val] of Object.entries(row)) {
           const normalized = key.toLowerCase().trim();
           const field = colMap[normalized];
-          if (field) mapped[field] = String(val).trim();
+          if (field && val != null) mapped[field] = String(val).trim();
         }
+
+        // Handle HR format: "Příjmení Jméno, titul" in a single "Jméno" column
+        if (mapped.full_name && !mapped.first_name && !mapped.last_name) {
+          const namePart = mapped.full_name.split(",")[0].trim();
+          const parts = namePart.split(/\s+/);
+          if (parts.length >= 2) {
+            mapped.last_name = parts[0];
+            mapped.first_name = parts[1];
+          } else {
+            mapped.last_name = parts[0] || "";
+            mapped.first_name = "";
+          }
+        }
+
         if (!mapped.first_name || !mapped.last_name) continue;
         toInsert.push({
           first_name: mapped.first_name,

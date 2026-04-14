@@ -136,6 +136,100 @@ export type Database = {
           },
         ]
       }
+      inspections: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          notes: string | null
+          result: string | null
+          type: string
+          updated_at: string
+          valid_until: string
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          notes?: string | null
+          result?: string | null
+          type?: string
+          updated_at?: string
+          valid_until: string
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          result?: string | null
+          type?: string
+          updated_at?: string
+          valid_until?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspections_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      insurance: {
+        Row: {
+          annual_cost: number | null
+          created_at: string
+          id: string
+          insurer: string
+          notes: string | null
+          policy_number: string | null
+          type: string
+          updated_at: string
+          valid_from: string | null
+          valid_until: string
+          vehicle_id: string
+        }
+        Insert: {
+          annual_cost?: number | null
+          created_at?: string
+          id?: string
+          insurer: string
+          notes?: string | null
+          policy_number?: string | null
+          type?: string
+          updated_at?: string
+          valid_from?: string | null
+          valid_until: string
+          vehicle_id: string
+        }
+        Update: {
+          annual_cost?: number | null
+          created_at?: string
+          id?: string
+          insurer?: string
+          notes?: string | null
+          policy_number?: string | null
+          type?: string
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -209,6 +303,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "reservations_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_records: {
+        Row: {
+          cost: number | null
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          status: string
+          type: string
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          cost?: number | null
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          status?: string
+          type: string
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          cost?: number | null
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          status?: string
+          type?: string
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_records_vehicle_id_fkey"
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"

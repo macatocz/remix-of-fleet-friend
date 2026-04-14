@@ -7,12 +7,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
-import { Plus, Loader2, Trash2, Save, TrendingUp, Fuel, Route, DollarSign, Filter, CalendarDays, List } from "lucide-react";
+import { Plus, Loader2, Trash2, Save, TrendingUp, Fuel, Route, DollarSign, Filter, CalendarDays, List, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend
 } from "recharts";
+import TripLogExport from "@/components/TripLogExport";
 
 interface TripRow {
   id?: string;
@@ -73,6 +74,7 @@ function getDayName(dateStr: string) {
 }
 
 export default function VehicleTripLogInline({ vehicleId }: Props) {
+  const [vehicleLabel, setVehicleLabel] = useState("");
   const [rows, setRows] = useState<TripRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -209,7 +211,12 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
   useEffect(() => {
     supabase.from("drivers").select("id, first_name, last_name").eq("status", "aktivní")
       .then(({ data }) => setDrivers((data as any[]) || []));
-  }, []);
+    // Fetch vehicle label
+    supabase.from("vehicles").select("znacka, rz, spravce").eq("id", vehicleId).maybeSingle()
+      .then(({ data }) => {
+        if (data) setVehicleLabel(`${data.znacka || ""} (${data.rz || ""})`);
+      });
+  }, [vehicleId]);
 
   // Ctrl+S
   useEffect(() => {

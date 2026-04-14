@@ -139,10 +139,47 @@ export default function VehicleNotifications() {
           }
         }
       }
+
+      // Mileage check for leasing vehicles
+      if (v.typ_vlastnictvi && v.typ_vlastnictvi !== "majetek" && v.najezd_za_rok && v.datum_zahajeni_leasingu) {
+        const contractKm = parseInt((v.najezd_za_rok || "").replace(/\D/g, ""));
+        if (contractKm > 0) {
+          const vMileage = mileageData.filter(m => m.vehicle_id === v.id);
+          if (vMileage.length >= 2) {
+            const latest = vMileage[0];
+            const oldest = vMileage[vMileage.length - 1];
+            const totalDriven = latest.km - oldest.km;
+            const startDate = parseDateString(v.datum_zahajeni_leasingu);
+            const endDate = parseDateString(v.datum_ukonceni_leasingu);
+            if (startDate) {
+              const now = new Date();
+              const elapsedDays = (now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+              const totalLeasingDays = endDate ? (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24) : 365;
+              const totalContractKm = (contractKm / 365) * totalLeasingDays;
+              const expectedKmNow = (elapsedDays / totalLeasingDays) * totalContractKm;
+              const percentage = expectedKmNow > 0 ? Math.round((totalDriven / expectedKmNow) * 100) : 0;
+
+              if (percentage > 90) {
+                const priorityDays = percentage > 110 ? -1 : 30;
+                result.push({
+                  vehicleId: v.id,
+                  vehicleLabel: label,
+                  message: percentage > 110
+                    ? `Překročení smluvního nájezdu! (${percentage}% – ${totalDriven.toLocaleString("cs-CZ")} km)`
+                    : `Blíží se limit nájezdu (${percentage}% – ${totalDriven.toLocaleString("cs-CZ")} km)`,
+                  daysLeft: priorityDays,
+                  type: percentage > 110 ? "critical" : "warning",
+                  date: formatDate(now),
+                });
+              }
+            }
+          }
+        }
+      }
     }
 
     return result.sort((a, b) => a.daysLeft - b.daysLeft);
-  }, [vehicles]);
+  }, [vehicles, mileageData]);
 
   const critical = alerts.filter(a => a.type === "critical");
   const warning = alerts.filter(a => a.type === "warning");

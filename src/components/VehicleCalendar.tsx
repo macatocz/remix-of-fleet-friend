@@ -62,7 +62,7 @@ export default function VehicleCalendar({ vehicleId }: { vehicleId: string }) {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<"week" | "day">("week");
+  const [view, setView] = useState<"week" | "day" | "month">("week");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formDriver, setFormDriver] = useState("");
   const [formDateFrom, setFormDateFrom] = useState("");
@@ -102,7 +102,9 @@ export default function VehicleCalendar({ vehicleId }: { vehicleId: string }) {
   };
 
   const navigate = (dir: number) => {
-    if (view === "week") {
+    if (view === "month") {
+      setCurrentDate(prev => dir > 0 ? addMonths(prev, 1) : subMonths(prev, 1));
+    } else if (view === "week") {
       setCurrentDate(prev => dir > 0 ? addWeeks(prev, 1) : subWeeks(prev, 1));
     } else {
       setCurrentDate(prev => addDays(prev, dir));

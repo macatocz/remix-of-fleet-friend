@@ -198,6 +198,13 @@ export default function VehicleDetail() {
 
   useEffect(() => { fetchVehicle(); }, [id]);
 
+  useEffect(() => {
+    if (!id) return;
+    supabase.from("vehicle_mileage").select("km, recorded_at")
+      .eq("vehicle_id", id).order("recorded_at", { ascending: false })
+      .then(({ data }) => setMileageRecords((data as any[]) || []));
+  }, [id]);
+
   const startEditing = () => {
     setEditData({});
     setEditing(true);

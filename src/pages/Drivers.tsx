@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,9 +19,10 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
-import { Plus, Search, X, Pencil, Trash2, Loader2, Users, Car, CalendarDays } from "lucide-react";
+import { Plus, Search, X, Pencil, Trash2, Loader2, Users, Car, CalendarDays, Download, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import * as XLSX from "xlsx";
 
 interface DriverForm {
   first_name: string;
@@ -58,6 +59,8 @@ export default function Drivers() {
   const [detailDriver, setDetailDriver] = useState<any | null>(null);
   const [driverReservations, setDriverReservations] = useState<any[]>([]);
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
   const navigate = useNavigate();
 
   const fetchData = async () => {
@@ -76,6 +79,86 @@ export default function Drivers() {
   };
 
   useEffect(() => { fetchData(); }, []);
+
+  const handleExport = () => {
+    const exportData = drivers.map(d => ({
+      "Jméno": d.first_name,
+      "Příjmení": d.last_name,
+      "Telefon": d.phone || "",
+      "Email": d.email || "",
+      "Oddělení": d.department || "",
+      "Vozidlo": d.vehicles ? `${d.vehicles.znacka || ""} (${d.vehicles.rz || ""})` : "",
+      "Stav": d.status,
+      "Poznámky": d.notes || "",
+    }));
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    ws["!cols"] = [
+      { wch: 15 }, { wch: 15 }, { wch: 18 }, { wch: 25 },
+      { wch: 15 }, { wch: 25 }, { wch: 10 }, { wch: 30 },
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Řidiči");
+    XLSX.writeFile(wb, `ridici_export_${new Date().toISOString().split("T")[0]}.xlsx`);
+    toast({ title: "Export dokončen", description: `Exportováno ${exportData.length} řidičů.` });
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      const data = await file.arrayBuffer();
+      const wb = XLSX.read(data);
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows: any[] = XLSX.utils.sheet_to_json(ws);
+
+      const colMap: Record<string, string> = {
+        "jméno": "first_name", "jmeno": "first_name", "first_name": "first_name", "name": "first_name",
+        "příjmení": "last_name", "prijmeni": "last_name", "last_name": "last_name", "surname": "last_name",
+        "telefon": "phone", "phone": "phone", "tel": "phone",
+        "email": "email", "e-mail": "email",
+        "oddělení": "department", "oddeleni": "department", "department": "department", "středisko": "department", "stredisko": "department",
+        "poznámky": "notes", "poznamky": "notes", "notes": "notes",
+        "stav": "status", "status": "status",
+      };
+
+      const toInsert: any[] = [];
+      for (const row of rows) {
+        const mapped: any = {};
+        for (const [key, val] of Object.entries(row)) {
+          const normalized = key.toLowerCase().trim();
+          const field = colMap[normalized];
+          if (field) mapped[field] = String(val).trim();
+        }
+        if (!mapped.first_name || !mapped.last_name) continue;
+        toInsert.push({
+          first_name: mapped.first_name,
+          last_name: mapped.last_name,
+          phone: mapped.phone || null,
+          email: mapped.email || null,
+          department: mapped.department || null,
+          notes: mapped.notes || null,
+          status: mapped.status === "neaktivní" ? "neaktivní" : "aktivní",
+        });
+      }
+
+      if (toInsert.length === 0) {
+        toast({ title: "Prázdný soubor", description: "Nebyly nalezeny žádné platné řádky (vyžadováno Jméno a Příjmení).", variant: "destructive" });
+      } else {
+        const { error } = await supabase.from("drivers").insert(toInsert);
+        if (error) {
+          toast({ title: "Chyba importu", description: error.message, variant: "destructive" });
+        } else {
+          toast({ title: "Import dokončen", description: `Importováno ${toInsert.length} řidičů.` });
+          fetchData();
+        }
+      }
+    } catch (err: any) {
+      toast({ title: "Chyba při čtení souboru", description: err.message, variant: "destructive" });
+    }
+    setImporting(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const openCreate = () => {
     setEditingId(null);
@@ -180,7 +263,17 @@ export default function Drivers() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Řidiči</h1>
-        <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />Přidat řidiče</Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={drivers.length === 0}>
+            <Download className="mr-2 h-4 w-4" />Export
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing}>
+            {importing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+            Import
+          </Button>
+          <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleImport} />
+          <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />Přidat řidiče</Button>
+        </div>
       </div>
 
       {/* Form dialog */}

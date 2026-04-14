@@ -80,14 +80,14 @@ export default function VehicleTripLog({ vehicleId }: Props) {
 
     let q = supabase
       .from("trip_logs")
-      .select("*")
+      .select("*, vehicles(znacka, rz)")
       .gte("date", startDate)
       .lte("date", endDate)
       .order("date", { ascending: true });
     if (vehicleId) q = q.eq("vehicle_id", vehicleId);
     const { data, error } = await q;
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
-    setLogs((data as TripLog[]) || []);
+    setLogs((data as any[]) || []);
     setLoading(false);
   };
 
@@ -295,7 +295,7 @@ export default function VehicleTripLog({ vehicleId }: Props) {
                   <TableCell className="whitespace-nowrap">{new Date(log.date).toLocaleDateString("cs-CZ")}</TableCell>
                   <TableCell>{log.time?.slice(0, 5) || "—"}</TableCell>
                   <TableCell>{log.break_minutes ? `${log.break_minutes} min` : "—"}</TableCell>
-                  {!vehicleId && <TableCell className="whitespace-nowrap">{log.vehicle_id.slice(0, 8)}</TableCell>}
+                  {!vehicleId && <TableCell className="whitespace-nowrap">{(log as any).vehicles ? `${(log as any).vehicles.znacka} (${(log as any).vehicles.rz})` : "—"}</TableCell>}
                   <TableCell>{log.description || "—"}</TableCell>
                   <TableCell>{log.purpose || "—"}</TableCell>
                   <TableCell className="whitespace-nowrap">{log.route_from && log.route_to ? `${log.route_from} → ${log.route_to}` : log.route_from || log.route_to || "—"}</TableCell>

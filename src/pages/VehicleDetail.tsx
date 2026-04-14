@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import VehicleDocuments from "@/components/VehicleDocuments";
 import VehicleCalendar from "@/components/VehicleCalendar";
 import VehicleMileage from "@/components/VehicleMileage";
+import VehicleAlerts from "@/components/VehicleAlerts";
 
 interface FieldDef {
   key: string;
@@ -181,6 +182,7 @@ export default function VehicleDetail() {
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [mileageRecords, setMileageRecords] = useState<{ km: number; recorded_at: string }[]>([]);
   const { toast } = useToast();
 
   const fetchVehicle = async () => {
@@ -195,6 +197,13 @@ export default function VehicleDetail() {
   };
 
   useEffect(() => { fetchVehicle(); }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    supabase.from("vehicle_mileage").select("km, recorded_at")
+      .eq("vehicle_id", id).order("recorded_at", { ascending: false })
+      .then(({ data }) => setMileageRecords((data as any[]) || []));
+  }, [id]);
 
   const startEditing = () => {
     setEditData({});
@@ -313,6 +322,8 @@ export default function VehicleDetail() {
           )}
         </div>
       </div>
+
+      <VehicleAlerts vehicle={vehicle} mileageRecords={mileageRecords} />
 
       <Tabs defaultValue="info">
         <TabsList>

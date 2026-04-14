@@ -400,7 +400,7 @@ export default function VehicleDetail() {
         <TabsContent value="triplog" className="mt-6">
           <Card>
             <CardContent className="pt-6">
-              <VehicleTripLog vehicleId={vehicle.id} />
+              <VehicleTripLogInline vehicleId={vehicle.id} />
             </CardContent>
           </Card>
         </TabsContent>

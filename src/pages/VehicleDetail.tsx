@@ -182,6 +182,7 @@ export default function VehicleDetail() {
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [mileageRecords, setMileageRecords] = useState<{ km: number; recorded_at: string }[]>([]);
   const { toast } = useToast();
 
   const fetchVehicle = async () => {

@@ -21,7 +21,7 @@ import VehicleCalendar from "@/components/VehicleCalendar";
 import VehicleMileage from "@/components/VehicleMileage";
 import VehicleAlerts from "@/components/VehicleAlerts";
 import VehicleService from "@/components/VehicleService";
-import VehicleTripLog from "@/components/VehicleTripLog";
+import VehicleTripLogInline from "@/components/VehicleTripLogInline";
 
 interface FieldDef {
   key: string;
@@ -400,7 +400,7 @@ export default function VehicleDetail() {
         <TabsContent value="triplog" className="mt-6">
           <Card>
             <CardContent className="pt-6">
-              <VehicleTripLog vehicleId={vehicle.id} />
+              <VehicleTripLogInline vehicleId={vehicle.id} />
             </CardContent>
           </Card>
         </TabsContent>

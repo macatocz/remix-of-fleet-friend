@@ -223,103 +223,178 @@ export default function VehicleCalendar({ vehicleId }: { vehicleId: string }) {
       </div>
 
       {/* Calendar grid */}
-      <div className="border rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <div className="min-w-[600px]">
-            {/* Header row with days */}
-            <div className={cn("grid border-b bg-muted/50", view === "week" ? "grid-cols-[60px_repeat(7,1fr)]" : "grid-cols-[60px_1fr]")}>
-              <div className="p-2 text-xs text-muted-foreground border-r" />
-              {weekDays.map((day, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    "p-2 text-center border-r last:border-r-0 cursor-pointer hover:bg-muted transition-colors",
-                    isToday(day) && "bg-primary/10"
-                  )}
-                  onClick={() => { setCurrentDate(day); setView("day"); }}
-                >
-                  <div className="text-xs text-muted-foreground">{format(day, "EEE", { locale: cs })}</div>
-                  <div className={cn(
-                    "text-sm font-medium w-7 h-7 rounded-full flex items-center justify-center mx-auto",
-                    isToday(day) && "bg-primary text-primary-foreground"
-                  )}>
-                    {format(day, "d")}
-                  </div>
-                </div>
-              ))}
-            </div>
+      {view === "month" ? (
+        /* Month view */
+        (() => {
+          const monthStart = startOfMonth(currentDate);
+          const monthEnd = endOfMonth(currentDate);
+          const calStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+          const calEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+          const calDays: Date[] = [];
+          let d = calStart;
+          while (d <= calEnd) {
+            calDays.push(d);
+            d = addDays(d, 1);
+          }
+          const weeks: Date[][] = [];
+          for (let i = 0; i < calDays.length; i += 7) {
+            weeks.push(calDays.slice(i, i + 7));
+          }
+          const dayNames = ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"];
 
-            {/* Time grid */}
-            <div className="relative">
-              {HOURS.map(hour => (
-                <div key={hour} className={cn("grid border-b last:border-b-0", view === "week" ? "grid-cols-[60px_repeat(7,1fr)]" : "grid-cols-[60px_1fr]")}>
-                  <div className="p-1 pr-2 text-xs text-muted-foreground text-right border-r h-12 flex items-start justify-end">
-                    {String(hour).padStart(2, "0")}:00
+          return (
+            <div className="border rounded-lg overflow-hidden">
+              <div className="grid grid-cols-7 bg-muted/50 border-b">
+                {dayNames.map(dn => (
+                  <div key={dn} className="p-2 text-center text-xs font-medium text-muted-foreground border-r last:border-r-0">
+                    {dn}
                   </div>
-                  {weekDays.map((day, di) => {
+                ))}
+              </div>
+              {weeks.map((week, wi) => (
+                <div key={wi} className="grid grid-cols-7 border-b last:border-b-0">
+                  {week.map((day, di) => {
                     const dayRes = getReservationsForDay(day);
-                    const slotRes = dayRes.filter(r => {
-                      const from = parseTime(r.time_from);
-                      const to = parseTime(r.time_to);
-                      return hour >= from && hour < to;
-                    });
-
+                    const inMonth = isSameMonth(day, currentDate);
                     return (
                       <div
                         key={di}
                         className={cn(
-                          "border-r last:border-r-0 h-12 relative cursor-pointer hover:bg-muted/30 transition-colors",
+                          "border-r last:border-r-0 min-h-[80px] p-1 cursor-pointer hover:bg-muted/30 transition-colors",
+                          !inMonth && "opacity-40 bg-muted/20",
                           isToday(day) && "bg-primary/5"
                         )}
-                        onClick={() => {
-                          if (slotRes.length === 0) openNewReservation(day, hour);
-                        }}
+                        onClick={() => { setCurrentDate(day); setView("day"); }}
                       >
-                        {slotRes.filter(r => {
-                          const from = parseTime(r.time_from);
-                          return Math.floor(from) === hour || (from < 7 && hour === 7);
-                        }).map(r => {
-                          const from = parseTime(r.time_from);
-                          const to = parseTime(r.time_to);
-                          const duration = Math.max(to - from, 0.5);
-                          const topOffset = (Math.max(from, 7) - hour) * 48;
-                          const height = duration * 48;
-
-                          return (
+                        <div className={cn(
+                          "text-xs font-medium mb-1 w-6 h-6 rounded-full flex items-center justify-center",
+                          isToday(day) && "bg-primary text-primary-foreground"
+                        )}>
+                          {format(day, "d")}
+                        </div>
+                        <div className="space-y-0.5">
+                          {dayRes.slice(0, 3).map(r => (
                             <div
                               key={r.id}
                               className={cn(
-                                "absolute left-0.5 right-0.5 rounded px-1.5 py-0.5 text-[10px] leading-tight border cursor-pointer z-10 overflow-hidden",
+                                "text-[10px] leading-tight rounded px-1 py-0.5 truncate border cursor-pointer",
                                 statusColor[r.status] || "bg-primary/20 border-primary/40"
                               )}
-                              style={{
-                                top: `${Math.max(topOffset, 0)}px`,
-                                height: `${Math.min(height, 48 * (19 - hour))}px`,
-                                minHeight: "20px",
-                              }}
                               onClick={(e) => { e.stopPropagation(); setDetailRes(r); }}
                             >
-                              <div className="font-medium truncate">{r.driver_name}</div>
-                              {height > 30 && (
-                                <div className="truncate opacity-80">
-                                  {r.time_from?.slice(0, 5)} – {r.time_to?.slice(0, 5)}
-                                </div>
-                              )}
-                              {height > 50 && r.purpose && (
-                                <div className="truncate opacity-70">{r.purpose}</div>
-                              )}
+                              {r.driver_name}
                             </div>
-                          );
-                        })}
+                          ))}
+                          {dayRes.length > 3 && (
+                            <div className="text-[10px] text-muted-foreground pl-1">+{dayRes.length - 3} dalších</div>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
                 </div>
               ))}
             </div>
+          );
+        })()
+      ) : (
+        /* Day / Week view */
+        <div className="border rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <div className="min-w-[600px]">
+              <div className={cn("grid border-b bg-muted/50", view === "week" ? "grid-cols-[60px_repeat(7,1fr)]" : "grid-cols-[60px_1fr]")}>
+                <div className="p-2 text-xs text-muted-foreground border-r" />
+                {weekDays.map((day, i) => (
+                  <div
+                    key={i}
+                    className={cn(
+                      "p-2 text-center border-r last:border-r-0 cursor-pointer hover:bg-muted transition-colors",
+                      isToday(day) && "bg-primary/10"
+                    )}
+                    onClick={() => { setCurrentDate(day); setView("day"); }}
+                  >
+                    <div className="text-xs text-muted-foreground">{format(day, "EEE", { locale: cs })}</div>
+                    <div className={cn(
+                      "text-sm font-medium w-7 h-7 rounded-full flex items-center justify-center mx-auto",
+                      isToday(day) && "bg-primary text-primary-foreground"
+                    )}>
+                      {format(day, "d")}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="relative">
+                {HOURS.map(hour => (
+                  <div key={hour} className={cn("grid border-b last:border-b-0", view === "week" ? "grid-cols-[60px_repeat(7,1fr)]" : "grid-cols-[60px_1fr]")}>
+                    <div className="p-1 pr-2 text-xs text-muted-foreground text-right border-r h-12 flex items-start justify-end">
+                      {String(hour).padStart(2, "0")}:00
+                    </div>
+                    {weekDays.map((day, di) => {
+                      const dayRes = getReservationsForDay(day);
+                      const slotRes = dayRes.filter(r => {
+                        const from = parseTime(r.time_from);
+                        const to = parseTime(r.time_to);
+                        return hour >= from && hour < to;
+                      });
+
+                      return (
+                        <div
+                          key={di}
+                          className={cn(
+                            "border-r last:border-r-0 h-12 relative cursor-pointer hover:bg-muted/30 transition-colors",
+                            isToday(day) && "bg-primary/5"
+                          )}
+                          onClick={() => {
+                            if (slotRes.length === 0) openNewReservation(day, hour);
+                          }}
+                        >
+                          {slotRes.filter(r => {
+                            const from = parseTime(r.time_from);
+                            return Math.floor(from) === hour || (from < 7 && hour === 7);
+                          }).map(r => {
+                            const from = parseTime(r.time_from);
+                            const to = parseTime(r.time_to);
+                            const duration = Math.max(to - from, 0.5);
+                            const topOffset = (Math.max(from, 7) - hour) * 48;
+                            const height = duration * 48;
+
+                            return (
+                              <div
+                                key={r.id}
+                                className={cn(
+                                  "absolute left-0.5 right-0.5 rounded px-1.5 py-0.5 text-[10px] leading-tight border cursor-pointer z-10 overflow-hidden",
+                                  statusColor[r.status] || "bg-primary/20 border-primary/40"
+                                )}
+                                style={{
+                                  top: `${Math.max(topOffset, 0)}px`,
+                                  height: `${Math.min(height, 48 * (19 - hour))}px`,
+                                  minHeight: "20px",
+                                }}
+                                onClick={(e) => { e.stopPropagation(); setDetailRes(r); }}
+                              >
+                                <div className="font-medium truncate">{r.driver_name}</div>
+                                {height > 30 && (
+                                  <div className="truncate opacity-80">
+                                    {r.time_from?.slice(0, 5)} – {r.time_to?.slice(0, 5)}
+                                  </div>
+                                )}
+                                {height > 50 && r.purpose && (
+                                  <div className="truncate opacity-70">{r.purpose}</div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* All-day / multi-day reservations summary */}
       {reservations.filter(r => r.date_from !== r.date_to).length > 0 && (

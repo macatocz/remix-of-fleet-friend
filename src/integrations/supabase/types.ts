@@ -354,6 +354,87 @@ export type Database = {
           },
         ]
       }
+      trip_logs: {
+        Row: {
+          break_minutes: number | null
+          created_at: string
+          date: string
+          description: string | null
+          driver_id: string | null
+          fuel_price: number | null
+          fuel_quantity: number | null
+          id: string
+          km_end: number | null
+          km_start: number | null
+          km_total: number | null
+          other_price: number | null
+          other_quantity: number | null
+          purpose: string | null
+          route_from: string | null
+          route_to: string | null
+          time: string | null
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          break_minutes?: number | null
+          created_at?: string
+          date?: string
+          description?: string | null
+          driver_id?: string | null
+          fuel_price?: number | null
+          fuel_quantity?: number | null
+          id?: string
+          km_end?: number | null
+          km_start?: number | null
+          km_total?: number | null
+          other_price?: number | null
+          other_quantity?: number | null
+          purpose?: string | null
+          route_from?: string | null
+          route_to?: string | null
+          time?: string | null
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          break_minutes?: number | null
+          created_at?: string
+          date?: string
+          description?: string | null
+          driver_id?: string | null
+          fuel_price?: number | null
+          fuel_quantity?: number | null
+          id?: string
+          km_end?: number | null
+          km_start?: number | null
+          km_total?: number | null
+          other_price?: number | null
+          other_quantity?: number | null
+          purpose?: string | null
+          route_from?: string | null
+          route_to?: string | null
+          time?: string | null
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_logs_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_logs_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string

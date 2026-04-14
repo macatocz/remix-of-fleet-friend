@@ -679,15 +679,15 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
       {multiMonthData.length > 0 && (
         <Card className="shadow-none">
           <CardContent className="p-4 space-y-3">
-            <p className="text-sm font-medium">Statistiky za poslední 4 měsíce</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <p className="text-sm font-medium">Roční statistiky (posledních 12 měsíců)</p>
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 text-xs max-h-[300px] overflow-y-auto">
               {multiMonthData.map(m => (
                 <div key={m.month} className="border rounded-md p-2 space-y-1">
                   <p className="font-medium text-sm">{m.month}</p>
                   <div className="flex justify-between"><span className="text-muted-foreground">Km:</span><span className="font-medium">{m.km.toLocaleString("cs-CZ")}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">PHM:</span><span>{m.fuel} l</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Spotřeba:</span><span>{m.consumption > 0 ? `${m.consumption} l/100` : "—"}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Náklady:</span><span className="font-medium">{m.totalCost.toLocaleString("cs-CZ")} Kč</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">l/100:</span><span>{m.consumption > 0 ? m.consumption : "—"}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Kč:</span><span className="font-medium">{m.totalCost.toLocaleString("cs-CZ")}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Jízd:</span><span>{m.trips}</span></div>
                 </div>
               ))}

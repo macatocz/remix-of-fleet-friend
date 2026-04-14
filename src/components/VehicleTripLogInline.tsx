@@ -288,6 +288,29 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
     });
   };
 
+  const clearCalRow = async (rowIdx: number) => {
+    const row = calRows[rowIdx];
+    if (row.id) {
+      const { error } = await supabase.from("trip_logs").delete().eq("id", row.id);
+      if (error) { toast({ title: "Chyba", description: error.message, variant: "destructive" }); return; }
+      toast({ title: "Záznam smazán" });
+      await fetchLogs();
+      return;
+    }
+    setCalRows(prev => {
+      const updated = [...prev];
+      updated[rowIdx] = {
+        ...updated[rowIdx],
+        driver_id: null, time: null, break_minutes: null,
+        description: null, purpose: null, route_from: null, route_to: null,
+        km_start: null, km_end: null, km_total: null,
+        fuel_quantity: null, fuel_price: null, other_quantity: null, other_price: null,
+        _dirty: false,
+      };
+      return updated;
+    });
+  };
+
   const buildPayload = (row: TripRow) => ({
     vehicle_id: row.vehicle_id,
     driver_id: row.driver_id || null,

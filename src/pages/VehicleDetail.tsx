@@ -323,6 +323,8 @@ export default function VehicleDetail() {
         </div>
       </div>
 
+      <VehicleAlerts vehicle={vehicle} mileageRecords={mileageRecords} />
+
       <Tabs defaultValue="info">
         <TabsList>
           <TabsTrigger value="info">

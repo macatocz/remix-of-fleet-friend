@@ -211,6 +211,10 @@ export default function VehicleCalendar({ vehicleId }: { vehicleId: string }) {
               className={cn("px-3 py-1 text-xs font-medium transition-colors", view === "week" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted")}
               onClick={() => setView("week")}
             >Týden</button>
+            <button
+              className={cn("px-3 py-1 text-xs font-medium transition-colors", view === "month" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted")}
+              onClick={() => setView("month")}
+            >Měsíc</button>
           </div>
           <Button size="sm" onClick={() => openNewReservation()}>
             <Plus className="mr-1 h-4 w-4" />Nová rezervace

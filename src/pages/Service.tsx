@@ -169,7 +169,7 @@ export default function Service() {
     </div>
   );
 
-  const DeleteButton = ({ table, id, label }: { table: string; id: string; label: string }) => (
+  const DeleteButton = ({ table, id, label }: { table: "service_records" | "inspections" | "insurance"; id: string; label: string }) => (
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>

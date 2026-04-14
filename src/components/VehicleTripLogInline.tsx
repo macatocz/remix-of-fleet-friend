@@ -159,11 +159,11 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
     setCalRows(result);
   };
 
-  // Fetch multi-month stats (last 4 months)
+  // Fetch multi-month stats (last 12 months)
   const fetchMultiMonth = async () => {
     const now = new Date();
     const months: { label: string; start: string; end: string }[] = [];
-    for (let i = 3; i >= 0; i--) {
+    for (let i = 11; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const year = d.getFullYear();
       const month = d.getMonth() + 1;

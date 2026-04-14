@@ -494,6 +494,7 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
               <CalendarDays className="h-3.5 w-3.5" />Měsíc
             </button>
           </div>
+          <TripLogExport vehicleId={vehicleId} selectedMonth={selectedMonth} vehicleLabel={vehicleLabel} />
           {dirtyCount > 0 && <span className="text-xs text-muted-foreground">{dirtyCount} neuložených</span>}
           {viewMode === "free" && (
             <Button size="sm" variant="outline" onClick={addRow}><Plus className="mr-1 h-4 w-4" />Řádek</Button>

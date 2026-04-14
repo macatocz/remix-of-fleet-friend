@@ -621,7 +621,7 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
                 {CAL_COLUMNS.map(col => (
                   <th key={col.key} className={`px-1 py-1.5 text-left text-xs font-medium text-muted-foreground ${col.minW}`}>{col.label}</th>
                 ))}
-              </tr>
+                <th className="w-8"></th>
             </thead>
             <tbody>
               {calRows.map((row, rowIdx) => {

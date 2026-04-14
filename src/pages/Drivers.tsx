@@ -19,7 +19,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
-import { Plus, Search, X, Pencil, Trash2, Loader2, Users, Car, CalendarDays, Download, Upload } from "lucide-react";
+import { Plus, Search, X, Pencil, Trash2, Loader2, Users, Car, CalendarDays, Download, Upload, UserCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
@@ -380,6 +380,14 @@ export default function Drivers() {
                 <div><span className="text-muted-foreground">Email:</span> {detailDriver.email || "—"}</div>
                 <div><span className="text-muted-foreground">Oddělení:</span> {detailDriver.department || "—"}</div>
                 <div><span className="text-muted-foreground">Stav:</span> {statusBadge(detailDriver.status)}</div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-muted-foreground">Účet:</span>
+                  {detailDriver.user_id ? (
+                    <Badge variant="default" className="gap-1 text-xs"><UserCheck className="h-3 w-3" />Propojený</Badge>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </div>
                 <div className="col-span-2 flex items-center gap-2">
                   <Car className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Vozidlo:</span>
@@ -495,7 +503,14 @@ export default function Drivers() {
               <TableBody>
                 {filtered.map(d => (
                   <TableRow key={d.id} className="cursor-pointer" onClick={() => openDetail(d)}>
-                    <TableCell className="font-medium">{d.first_name} {d.last_name}</TableCell>
+                    <TableCell className="font-medium">
+                      <span className="flex items-center gap-1.5">
+                        {d.first_name} {d.last_name}
+                        {d.user_id && (
+                          <span title="Má uživatelský účet"><UserCheck className="h-3.5 w-3.5 text-primary" /></span>
+                        )}
+                      </span>
+                    </TableCell>
                     <TableCell>{d.phone || "—"}</TableCell>
                     <TableCell>{d.email || "—"}</TableCell>
                     <TableCell>{d.department || "—"}</TableCell>

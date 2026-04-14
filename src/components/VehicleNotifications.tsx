@@ -12,8 +12,16 @@ interface Vehicle {
   stk: string | null;
   zelena_karta: string | null;
   datum_ukonceni_leasingu: string | null;
+  datum_zahajeni_leasingu: string | null;
   typ_vlastnictvi: string | null;
+  najezd_za_rok: string | null;
   status: string;
+}
+
+interface MileageRecord {
+  vehicle_id: string;
+  km: number;
+  recorded_at: string;
 }
 
 interface Alert {

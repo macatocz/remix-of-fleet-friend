@@ -80,14 +80,14 @@ export default function VehicleTripLog({ vehicleId }: Props) {
 
     let q = supabase
       .from("trip_logs")
-      .select("*")
+      .select("*, vehicles(znacka, rz)")
       .gte("date", startDate)
       .lte("date", endDate)
       .order("date", { ascending: true });
     if (vehicleId) q = q.eq("vehicle_id", vehicleId);
     const { data, error } = await q;
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
-    setLogs((data as TripLog[]) || []);
+    setLogs((data as any[]) || []);
     setLoading(false);
   };
 

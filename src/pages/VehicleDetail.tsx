@@ -13,11 +13,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, FileText, CalendarDays, Info, Loader2, Pencil, Save, X, Trash2 } from "lucide-react";
+import { ArrowLeft, FileText, CalendarDays, Info, Loader2, Pencil, Save, X, Trash2, Gauge } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import VehicleDocuments from "@/components/VehicleDocuments";
 import VehicleCalendar from "@/components/VehicleCalendar";
+import VehicleMileage from "@/components/VehicleMileage";
 
 interface FieldDef {
   key: string;
@@ -324,6 +325,9 @@ export default function VehicleDetail() {
           <TabsTrigger value="documents">
             <FileText className="mr-2 h-4 w-4" />Dokumenty
           </TabsTrigger>
+          <TabsTrigger value="mileage">
+            <Gauge className="mr-2 h-4 w-4" />Nájezdy
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="info" className="mt-6">
@@ -349,6 +353,19 @@ export default function VehicleDetail() {
           <Card>
             <CardContent className="pt-6">
               <VehicleDocuments vehicleId={vehicle.id} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="mileage" className="mt-6">
+          <Card>
+            <CardContent className="pt-6">
+              <VehicleMileage
+                vehicleId={vehicle.id}
+                contractualKmPerYear={vehicle.najezd_za_rok}
+                leasingStart={vehicle.datum_zahajeni_leasingu}
+                leasingEnd={vehicle.datum_ukonceni_leasingu}
+              />
             </CardContent>
           </Card>
         </TabsContent>

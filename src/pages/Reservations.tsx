@@ -69,6 +69,8 @@ export default function Reservations() {
   const [searchText, setSearchText] = useState("");
   const [filterVehicle, setFilterVehicle] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingPayload, setPendingPayload] = useState<any>(null);
   const { toast } = useToast();
 
   const fetchData = async () => {
@@ -90,10 +92,10 @@ export default function Reservations() {
 
   useEffect(() => { fetchData(); }, []);
 
-  const checkCollision = async (vehicleId: string, dateFrom: string, dateTo: string, timeFrom: string, timeTo: string, excludeId?: string): Promise<boolean> => {
+  const checkCollision = async (vehicleId: string, dateFrom: string, dateTo: string, timeFrom: string, timeTo: string, excludeId?: string): Promise<{ hardCollision: boolean; softCollision: boolean }> => {
     let query = supabase
       .from("reservations")
-      .select("id, time_from, time_to")
+      .select("id, time_from, time_to, status")
       .eq("vehicle_id", vehicleId)
       .in("status", ["čeká", "schváleno"])
       .lte("date_from", dateTo)
@@ -104,13 +106,22 @@ export default function Reservations() {
     }
 
     const { data } = await query;
-    if (!data || data.length === 0) return false;
+    if (!data || data.length === 0) return { hardCollision: false, softCollision: false };
 
-    return data.some(r => {
+    let hardCollision = false;
+    let softCollision = false;
+
+    data.forEach(r => {
       const existFrom = r.time_from?.slice(0, 5) || "08:00";
       const existTo = r.time_to?.slice(0, 5) || "17:00";
-      return timeFrom < existTo && timeTo > existFrom;
+      const timeOverlap = timeFrom < existTo && timeTo > existFrom;
+      if (timeOverlap) {
+        if (r.status === "schváleno") hardCollision = true;
+        if (r.status === "čeká") softCollision = true;
+      }
     });
+
+    return { hardCollision, softCollision };
   };
 
   const openCreate = () => {
@@ -133,34 +144,8 @@ export default function Reservations() {
     setDialogOpen(true);
   };
 
-  const handleSave = async () => {
-    if (!form.vehicle_id || !form.driver_name || !form.date_from || !form.date_to) {
-      toast({ title: "Vyplňte povinná pole", description: "Vozidlo, řidič a data jsou povinná.", variant: "destructive" });
-      return;
-    }
+  const saveReservation = async (payload: any) => {
     setSaving(true);
-
-    const hasCollision = await checkCollision(
-      form.vehicle_id, form.date_from, form.date_to,
-      form.time_from || "08:00", form.time_to || "17:00",
-      editingId || undefined
-    );
-    if (hasCollision) {
-      toast({ title: "Kolize rezervací", description: "Vozidlo je v tomto období a čase již rezervováno.", variant: "destructive" });
-      setSaving(false);
-      return;
-    }
-
-    const payload = {
-      vehicle_id: form.vehicle_id,
-      driver_name: form.driver_name,
-      date_from: form.date_from,
-      date_to: form.date_to,
-      time_from: form.time_from || "08:00",
-      time_to: form.time_to || "17:00",
-      purpose: form.purpose || null,
-    };
-
     const { error } = editingId
       ? await supabase.from("reservations").update(payload).eq("id", editingId)
       : await supabase.from("reservations").insert([payload]);
@@ -175,6 +160,53 @@ export default function Reservations() {
       fetchData();
     }
     setSaving(false);
+  };
+
+  const handleSave = async () => {
+    if (!form.vehicle_id || !form.driver_name || !form.date_from || !form.date_to) {
+      toast({ title: "Vyplňte povinná pole", description: "Vozidlo, řidič a data jsou povinná.", variant: "destructive" });
+      return;
+    }
+    setSaving(true);
+
+    const payload = {
+      vehicle_id: form.vehicle_id,
+      driver_name: form.driver_name,
+      date_from: form.date_from,
+      date_to: form.date_to,
+      time_from: form.time_from || "08:00",
+      time_to: form.time_to || "17:00",
+      purpose: form.purpose || null,
+    };
+
+    const { hardCollision, softCollision } = await checkCollision(
+      form.vehicle_id, form.date_from, form.date_to,
+      payload.time_from, payload.time_to,
+      editingId || undefined
+    );
+
+    if (hardCollision) {
+      toast({ title: "Kolize rezervací", description: "Vozidlo je v tomto čase již rezervováno (schválená rezervace).", variant: "destructive" });
+      setSaving(false);
+      return;
+    }
+
+    if (softCollision) {
+      setPendingPayload(payload);
+      setConfirmOpen(true);
+      setSaving(false);
+      return;
+    }
+
+    await saveReservation(payload);
+  };
+
+  const handleConfirmSoftCollision = async () => {
+    setConfirmOpen(false);
+    if (pendingPayload) {
+      await saveReservation(pendingPayload);
+      setPendingPayload(null);
+    }
   };
 
   const handleDelete = async (id: string) => {

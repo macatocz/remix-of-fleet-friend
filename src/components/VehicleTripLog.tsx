@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useSortableTable } from "@/hooks/useSortableTable";
+import { SortableTableHead } from "@/components/ui/sortable-table-head";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,6 +60,7 @@ const emptyForm = {
 };
 
 export default function VehicleTripLog({ vehicleId }: Props) {
+  const { sortKey, sortDirection, handleSort, sortData } = useSortableTable("date");
   const [logs, setLogs] = useState<TripLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -271,26 +274,29 @@ export default function VehicleTripLog({ vehicleId }: Props) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Datum</TableHead>
-                <TableHead>Čas</TableHead>
-                <TableHead>Přestávka</TableHead>
-                {!vehicleId && <TableHead>Vozidlo</TableHead>}
+                <SortableTableHead sortKey="date" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort}>Datum</SortableTableHead>
+                <SortableTableHead sortKey="time" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort}>Čas</SortableTableHead>
+                <SortableTableHead sortKey="break_minutes" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort}>Přestávka</SortableTableHead>
+                {!vehicleId && <SortableTableHead sortKey="vehicle" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort}>Vozidlo</SortableTableHead>}
                 <TableHead>Popis</TableHead>
                 <TableHead>Účel</TableHead>
                 <TableHead>Z – do</TableHead>
-                <TableHead className="text-right">Poč. km</TableHead>
-                <TableHead className="text-right">Kon. km</TableHead>
-                <TableHead className="text-right">Km</TableHead>
-                <TableHead className="text-right">PHM (l)</TableHead>
-                <TableHead className="text-right">PHM (Kč)</TableHead>
-                <TableHead className="text-right">Ost. (Kč)</TableHead>
+                <SortableTableHead sortKey="km_start" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} className="text-right">Poč. km</SortableTableHead>
+                <SortableTableHead sortKey="km_end" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} className="text-right">Kon. km</SortableTableHead>
+                <SortableTableHead sortKey="km_total" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} className="text-right">Km</SortableTableHead>
+                <SortableTableHead sortKey="fuel_quantity" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} className="text-right">PHM (l)</SortableTableHead>
+                <SortableTableHead sortKey="fuel_price" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} className="text-right">PHM (Kč)</SortableTableHead>
+                <SortableTableHead sortKey="other_price" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} className="text-right">Ost. (Kč)</SortableTableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {logs.length === 0 ? (
                 <TableRow><TableCell colSpan={vehicleId ? 13 : 14} className="text-center text-muted-foreground py-8">Žádné záznamy v tomto měsíci</TableCell></TableRow>
-              ) : logs.map(log => (
+              ) : sortData(logs, (item: any, key: string) => {
+                if (key === "vehicle") return (item as any).vehicles?.znacka || "";
+                return item[key];
+              }).map(log => (
                 <TableRow key={log.id}>
                   <TableCell className="whitespace-nowrap">{new Date(log.date).toLocaleDateString("cs-CZ")}</TableCell>
                   <TableCell>{log.time?.slice(0, 5) || "—"}</TableCell>

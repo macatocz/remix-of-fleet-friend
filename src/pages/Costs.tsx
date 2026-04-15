@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useSortableTable } from "@/hooks/useSortableTable";
+import { SortableTableHead } from "@/components/ui/sortable-table-head";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -35,6 +37,8 @@ export default function Costs() {
   const [fuelLogs, setFuelLogs] = useState<any[]>([]);
   const [serviceLogs, setServiceLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const fuelSort = useSortableTable("date", "desc");
+  const serviceLogSort = useSortableTable("date", "desc");
 
   useEffect(() => {
     supabase.from("vehicles").select("id, znacka, rz").order("znacka")
@@ -254,17 +258,21 @@ export default function Costs() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Datum</TableHead>
-                        {selectedVehicle === "all" && <TableHead>Vozidlo</TableHead>}
-                        <TableHead>Řidič</TableHead>
+                        <SortableTableHead sortKey="date" currentSortKey={fuelSort.sortKey} sortDirection={fuelSort.sortDirection} onSort={fuelSort.handleSort}>Datum</SortableTableHead>
+                        {selectedVehicle === "all" && <SortableTableHead sortKey="vehicle" currentSortKey={fuelSort.sortKey} sortDirection={fuelSort.sortDirection} onSort={fuelSort.handleSort}>Vozidlo</SortableTableHead>}
+                        <SortableTableHead sortKey="driver" currentSortKey={fuelSort.sortKey} sortDirection={fuelSort.sortDirection} onSort={fuelSort.handleSort}>Řidič</SortableTableHead>
                         <TableHead>Trasa</TableHead>
-                        <TableHead className="text-right">Litry</TableHead>
-                        <TableHead className="text-right">Cena PHM</TableHead>
-                        <TableHead className="text-right">Km</TableHead>
+                        <SortableTableHead sortKey="fuel_quantity" currentSortKey={fuelSort.sortKey} sortDirection={fuelSort.sortDirection} onSort={fuelSort.handleSort} className="text-right">Litry</SortableTableHead>
+                        <SortableTableHead sortKey="fuel_price" currentSortKey={fuelSort.sortKey} sortDirection={fuelSort.sortDirection} onSort={fuelSort.handleSort} className="text-right">Cena PHM</SortableTableHead>
+                        <SortableTableHead sortKey="km_total" currentSortKey={fuelSort.sortKey} sortDirection={fuelSort.sortDirection} onSort={fuelSort.handleSort} className="text-right">Km</SortableTableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {fuelLogs.slice(0, 50).map((f: any) => (
+                      {fuelSort.sortData(fuelLogs, (item: any, key: string) => {
+                        if (key === "vehicle") return item.vehicles?.znacka || "";
+                        if (key === "driver") return item.drivers ? `${item.drivers.last_name} ${item.drivers.first_name}` : "";
+                        return item[key];
+                      }).slice(0, 50).map((f: any) => (
                         <TableRow key={f.id}>
                           <TableCell className="whitespace-nowrap">{new Date(f.date).toLocaleDateString("cs-CZ")}</TableCell>
                           {selectedVehicle === "all" && <TableCell className="whitespace-nowrap">{f.vehicles ? `${f.vehicles.znacka} (${f.vehicles.rz})` : "—"}</TableCell>}
@@ -294,16 +302,19 @@ export default function Costs() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Datum</TableHead>
-                        {selectedVehicle === "all" && <TableHead>Vozidlo</TableHead>}
-                        <TableHead>Typ</TableHead>
+                        <SortableTableHead sortKey="date" currentSortKey={serviceLogSort.sortKey} sortDirection={serviceLogSort.sortDirection} onSort={serviceLogSort.handleSort}>Datum</SortableTableHead>
+                        {selectedVehicle === "all" && <SortableTableHead sortKey="vehicle" currentSortKey={serviceLogSort.sortKey} sortDirection={serviceLogSort.sortDirection} onSort={serviceLogSort.handleSort}>Vozidlo</SortableTableHead>}
+                        <SortableTableHead sortKey="type" currentSortKey={serviceLogSort.sortKey} sortDirection={serviceLogSort.sortDirection} onSort={serviceLogSort.handleSort}>Typ</SortableTableHead>
                         <TableHead>Popis</TableHead>
-                        <TableHead>Stav</TableHead>
-                        <TableHead className="text-right">Náklady</TableHead>
+                        <SortableTableHead sortKey="status" currentSortKey={serviceLogSort.sortKey} sortDirection={serviceLogSort.sortDirection} onSort={serviceLogSort.handleSort}>Stav</SortableTableHead>
+                        <SortableTableHead sortKey="cost" currentSortKey={serviceLogSort.sortKey} sortDirection={serviceLogSort.sortDirection} onSort={serviceLogSort.handleSort} className="text-right">Náklady</SortableTableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {serviceLogs.map((s: any) => (
+                      {serviceLogSort.sortData(serviceLogs, (item: any, key: string) => {
+                        if (key === "vehicle") return item.vehicles?.znacka || "";
+                        return item[key];
+                      }).map((s: any) => (
                         <TableRow key={s.id}>
                           <TableCell className="whitespace-nowrap">{new Date(s.date).toLocaleDateString("cs-CZ")}</TableCell>
                           {selectedVehicle === "all" && <TableCell className="whitespace-nowrap">{s.vehicles ? `${s.vehicles.znacka} (${s.vehicles.rz})` : "—"}</TableCell>}

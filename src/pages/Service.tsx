@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useSortableTable } from "@/hooks/useSortableTable";
+import { SortableTableHead } from "@/components/ui/sortable-table-head";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +31,9 @@ export default function Service() {
   const [serviceRecords, setServiceRecords] = useState<any[]>([]);
   const [inspections, setInspections] = useState<any[]>([]);
   const [insurances, setInsurances] = useState<any[]>([]);
+  const serviceSort = useSortableTable("date", "desc");
+  const inspectionSort = useSortableTable("valid_until");
+  const insuranceSort = useSortableTable("valid_until");
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState<"service" | "inspection" | "insurance">("service");
@@ -322,17 +327,20 @@ export default function Service() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Vozidlo</TableHead>
-                      <TableHead>Typ</TableHead>
-                      <TableHead>Datum</TableHead>
-                      <TableHead>Náklady</TableHead>
-                      <TableHead>Stav</TableHead>
+                      <SortableTableHead sortKey="vehicle" currentSortKey={serviceSort.sortKey} sortDirection={serviceSort.sortDirection} onSort={serviceSort.handleSort}>Vozidlo</SortableTableHead>
+                      <SortableTableHead sortKey="type" currentSortKey={serviceSort.sortKey} sortDirection={serviceSort.sortDirection} onSort={serviceSort.handleSort}>Typ</SortableTableHead>
+                      <SortableTableHead sortKey="date" currentSortKey={serviceSort.sortKey} sortDirection={serviceSort.sortDirection} onSort={serviceSort.handleSort}>Datum</SortableTableHead>
+                      <SortableTableHead sortKey="cost" currentSortKey={serviceSort.sortKey} sortDirection={serviceSort.sortDirection} onSort={serviceSort.handleSort}>Náklady</SortableTableHead>
+                      <SortableTableHead sortKey="status" currentSortKey={serviceSort.sortKey} sortDirection={serviceSort.sortDirection} onSort={serviceSort.handleSort}>Stav</SortableTableHead>
                       <TableHead>Popis</TableHead>
                       <TableHead className="w-[80px]">Akce</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {serviceRecords.map(s => (
+                    {serviceSort.sortData(serviceRecords, (item: any, key: string) => {
+                      if (key === "vehicle") return item.vehicles?.znacka || "";
+                      return item[key];
+                    }).map(s => (
                       <TableRow key={s.id}>
                         <TableCell className="font-medium">{vLabel(s.vehicles)}</TableCell>
                         <TableCell>{s.type}</TableCell>
@@ -370,17 +378,20 @@ export default function Service() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Vozidlo</TableHead>
-                      <TableHead>Typ</TableHead>
-                      <TableHead>Datum</TableHead>
-                      <TableHead>Platnost do</TableHead>
-                      <TableHead>Výsledek</TableHead>
+                      <SortableTableHead sortKey="vehicle" currentSortKey={inspectionSort.sortKey} sortDirection={inspectionSort.sortDirection} onSort={inspectionSort.handleSort}>Vozidlo</SortableTableHead>
+                      <SortableTableHead sortKey="type" currentSortKey={inspectionSort.sortKey} sortDirection={inspectionSort.sortDirection} onSort={inspectionSort.handleSort}>Typ</SortableTableHead>
+                      <SortableTableHead sortKey="date" currentSortKey={inspectionSort.sortKey} sortDirection={inspectionSort.sortDirection} onSort={inspectionSort.handleSort}>Datum</SortableTableHead>
+                      <SortableTableHead sortKey="valid_until" currentSortKey={inspectionSort.sortKey} sortDirection={inspectionSort.sortDirection} onSort={inspectionSort.handleSort}>Platnost do</SortableTableHead>
+                      <SortableTableHead sortKey="result" currentSortKey={inspectionSort.sortKey} sortDirection={inspectionSort.sortDirection} onSort={inspectionSort.handleSort}>Výsledek</SortableTableHead>
                       <TableHead>Stav</TableHead>
                       <TableHead className="w-[80px]">Akce</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {inspections.map(i => (
+                    {inspectionSort.sortData(inspections, (item: any, key: string) => {
+                      if (key === "vehicle") return item.vehicles?.znacka || "";
+                      return item[key];
+                    }).map(i => (
                       <TableRow key={i.id}>
                         <TableCell className="font-medium">{vLabel(i.vehicles)}</TableCell>
                         <TableCell>{i.type}</TableCell>
@@ -414,18 +425,21 @@ export default function Service() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Vozidlo</TableHead>
-                      <TableHead>Pojišťovna</TableHead>
-                      <TableHead>Typ</TableHead>
-                      <TableHead>Č. smlouvy</TableHead>
-                      <TableHead>Platnost do</TableHead>
-                      <TableHead>Roční náklad</TableHead>
+                      <SortableTableHead sortKey="vehicle" currentSortKey={insuranceSort.sortKey} sortDirection={insuranceSort.sortDirection} onSort={insuranceSort.handleSort}>Vozidlo</SortableTableHead>
+                      <SortableTableHead sortKey="insurer" currentSortKey={insuranceSort.sortKey} sortDirection={insuranceSort.sortDirection} onSort={insuranceSort.handleSort}>Pojišťovna</SortableTableHead>
+                      <SortableTableHead sortKey="type" currentSortKey={insuranceSort.sortKey} sortDirection={insuranceSort.sortDirection} onSort={insuranceSort.handleSort}>Typ</SortableTableHead>
+                      <SortableTableHead sortKey="policy_number" currentSortKey={insuranceSort.sortKey} sortDirection={insuranceSort.sortDirection} onSort={insuranceSort.handleSort}>Č. smlouvy</SortableTableHead>
+                      <SortableTableHead sortKey="valid_until" currentSortKey={insuranceSort.sortKey} sortDirection={insuranceSort.sortDirection} onSort={insuranceSort.handleSort}>Platnost do</SortableTableHead>
+                      <SortableTableHead sortKey="annual_cost" currentSortKey={insuranceSort.sortKey} sortDirection={insuranceSort.sortDirection} onSort={insuranceSort.handleSort}>Roční náklad</SortableTableHead>
                       <TableHead>Stav</TableHead>
                       <TableHead className="w-[80px]">Akce</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {insurances.map(ins => (
+                    {insuranceSort.sortData(insurances, (item: any, key: string) => {
+                      if (key === "vehicle") return item.vehicles?.znacka || "";
+                      return item[key];
+                    }).map(ins => (
                       <TableRow key={ins.id}>
                         <TableCell className="font-medium">{vLabel(ins.vehicles)}</TableCell>
                         <TableCell>{ins.insurer}</TableCell>

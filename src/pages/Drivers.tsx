@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import { useSortableTable } from "@/hooks/useSortableTable";
+import { SortableTableHead } from "@/components/ui/sortable-table-head";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -254,7 +256,9 @@ export default function Drivers() {
     setDriverReservations(data || []);
   };
 
-  const filtered = drivers.filter(d => {
+  const { sortKey, sortDirection, handleSort, sortData } = useSortableTable("last_name");
+
+  const filtered = sortData(drivers.filter(d => {
     if (filterStatus !== "all" && d.status !== filterStatus) return false;
     if (search) {
       const s = search.toLowerCase();
@@ -267,6 +271,10 @@ export default function Drivers() {
       if (!match) return false;
     }
     return true;
+  }), (item: any, key: string) => {
+    if (key === "name") return `${item.last_name} ${item.first_name}`;
+    if (key === "vehicle") return item.vehicles?.znacka || "";
+    return item[key];
   });
 
   const statusBadge = (status: string) => {
@@ -491,12 +499,12 @@ export default function Drivers() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Jméno</TableHead>
-                  <TableHead>Telefon</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Oddělení</TableHead>
-                  <TableHead>Vozidlo</TableHead>
-                  <TableHead>Stav</TableHead>
+                  <SortableTableHead sortKey="name" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort}>Jméno</SortableTableHead>
+                  <SortableTableHead sortKey="phone" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort}>Telefon</SortableTableHead>
+                  <SortableTableHead sortKey="email" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort}>Email</SortableTableHead>
+                  <SortableTableHead sortKey="department" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort}>Oddělení</SortableTableHead>
+                  <SortableTableHead sortKey="vehicle" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort}>Vozidlo</SortableTableHead>
+                  <SortableTableHead sortKey="status" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort}>Stav</SortableTableHead>
                   <TableHead>Akce</TableHead>
                 </TableRow>
               </TableHeader>

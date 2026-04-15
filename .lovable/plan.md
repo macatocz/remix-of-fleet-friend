@@ -1,21 +1,25 @@
 
 
-# Vylepšená kontrola kolizí rezervací
+# Vylepšení správy dokumentů vozidla
 
-## Změny v `src/pages/Reservations.tsx`
+## 1. Oprava: české znaky v názvech souborů (kritický bug)
+Supabase Storage nepodporuje diakritiku v klíčích. Řešení: sanitizovat `filePath` — nahradit diakritiku ASCII ekvivalenty a nepovolené znaky podtržítkem. Původní název souboru zůstane uložený v DB sloupci `name`.
 
-1. **Upravit `checkCollision`** — vrací `{ hardCollision: boolean, softCollision: boolean }`. Dotaz rozšířit o sloupec `status`, rozdělit výsledky na `schváleno` (hard) vs `čeká` (soft).
+Přidáme helper funkci `sanitizeFileName(name)` která odstraní diakritiku (`normalize("NFD").replace(...)`) a nahradí mezery/speciální znaky.
 
-2. **Nové state** — `confirmOpen: boolean` pro potvrzovací dialog, `pendingPayload: ref` pro dočasné uložení dat před potvrzením.
+## 2. Potvrzovací dialog před smazáním
+Přidat `AlertDialog` s textem „Opravdu chcete smazat dokument {název}?" a tlačítky Zrušit/Smazat.
 
-3. **Upravit `handleSave`**:
-   - Hard kolize → destructive toast, stop.
-   - Soft kolize (bez hard) → otevřít `AlertDialog` s textem „V tomto čase již existuje neschválená rezervace. Chcete přesto pokračovat?"
-   - Žádná kolize → uložit rovnou.
+## 3. Filtrování dokumentů podle kategorie
+Přidat volitelný filtr nad seznamem — select „Všechny kategorie" + jednotlivé kategorie. Filtruje se na klientu.
 
-4. **Přidat `AlertDialog`** pro potvrzení měkké kolize — po kliknutí „Pokračovat" se zavolá uložení bez opětovné kontroly kolize.
+## 4. Oprava toast logiky
+Počítat úspěšné/neúspěšné uploady. Toast zobrazí „Nahráno X z Y souborů" nebo jen „Dokumenty nahrány" pokud vše OK.
 
-5. **Extrahovat `saveReservation(payload)`** — společná funkce pro vlastní uložení (insert/update), volaná z `handleSave` i z potvrzovacího dialogu.
+## 5. Drag & drop zona
+Přidat vizuální drop zónu pro jednodušší nahrávání souborů přetažením.
 
-Rozsah: 1 soubor, žádné DB migrace.
+## Rozsah
+- 1 soubor: `VehicleDocuments.tsx`
+- 0 DB migrací
 

@@ -1,47 +1,25 @@
 
 
-# Tankovací karty – přehled a správa
+# Přehled tankovacích karet v sidebaru
 
 ## Co se změní
 
-### 1. Nová databázová tabulka `fuel_cards`
+### 1. Nová stránka `/tankovaci-karty` (`src/pages/FuelCards.tsx`)
+- Zobrazí **všechny tankovací karty** napříč vozidly v jedné tabulce
+- Sloupce: Vozidlo (RZ + značka), Provider, Číslo karty, PIN (skrytý), Vlastník, Platnost do, Stav
+- Filtry: provider, stav (aktivní/blokovaná/zrušená)
+- Klik na řádek = přechod na detail vozidla (tab Tankování)
+- Badge pro stav karty (zelená/žlutá/šedá)
+- Zvýraznění karet s blížící se expirací
 
-| Sloupec | Typ | Popis |
-|---------|-----|-------|
-| id | uuid PK | |
-| vehicle_id | uuid NOT NULL | Vazba na vozidlo |
-| provider | text NOT NULL | MOL, Shell, Bonett, Jiné |
-| card_number | text | Číslo karty |
-| pin | text | PIN ke kartě |
-| owner_name | text | Vlastník (předvyplní se ze správce vozidla) |
-| status | text DEFAULT 'aktivní' | aktivní / blokovaná / zrušená |
-| valid_until | date | Platnost do |
-| notes | text | Poznámky |
-| created_at, updated_at | timestamptz | |
+### 2. Nová položka v sidebaru (`src/components/AppSidebar.tsx`)
+- Přidání **„Tankovací karty"** s ikonou `CreditCard` do hlavního menu (pod Náklady)
 
-RLS: authenticated users – full CRUD (konzistentní s ostatními tabulkami).
-
-### 2. Nový komponent `VehicleFuelCards.tsx`
-
-- Tabulka s přehledem karet přiřazených k vozidlu
-- Přidání nové karty (dialog) – provider (dropdown: MOL, Shell, Bonett, Jiné), číslo karty, PIN, vlastník (předvyplněn ze `vehicle.spravce`), platnost, stav
-- Editace a mazání existujících karet
-- Badge pro stav karty (aktivní = zelená, blokovaná = žlutá, zrušená = šedá)
-- PIN skrytý ve výchozím stavu (tlačítko pro zobrazení)
-
-### 3. Nový tab na kartě vozidla
-
-- Přidání tabu **„Tankování"** (ikona CreditCard) do `VehicleDetail.tsx` vedle stávajících tabů
-- Tab zobrazí komponent `VehicleFuelCards`
-- Předá `vehicleId` a `defaultOwner` (ze `vehicle.spravce`)
-
-### 4. Stávající pole `tankovaci_karty` na vehicles
-
-Ponecháno beze změny (staré textové pole pro zpětnou kompatibilitu). Nová tabulka je strukturovaná náhrada.
+### 3. Nová route v `src/App.tsx`
+- Route `/tankovaci-karty` → `FuelCards`
 
 ## Technické kroky
-
-1. Migrace: CREATE TABLE `fuel_cards` + RLS policies
-2. Vytvořit `src/components/VehicleFuelCards.tsx`
-3. Přidat tab do `VehicleDetail.tsx`
+1. Vytvořit `src/pages/FuelCards.tsx` — fetch z `fuel_cards` + join na `vehicles` (rz, znacka)
+2. Přidat položku do sidebaru
+3. Přidat route do App.tsx
 

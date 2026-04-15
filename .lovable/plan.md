@@ -1,18 +1,33 @@
 
 
-# Zobrazení stavu tachometru na kartě vozidla
+# Řazení sloupců v přehledových tabulkách
 
-## Aktuální stav
-Data z `trip_logs.km_end` se načítají, ale slouží pouze pro výpočet upozornění v `VehicleAlerts`. Samotný stav tachometru (poslední km) se nikde nezobrazuje.
+## Co se změní
+Všechny hlavní přehledové tabulky získají možnost řazení kliknutím na záhlaví sloupce. Kliknutí přepne mezi vzestupným (▲) a sestupným (▼) řazením. Aktivní sloupec bude vizuálně odlišen šipkou.
 
-## Návrh
-Přidat **informační kartu** do horní části detailu vozidla (vedle RZ, značky, modelu) zobrazující:
-- **Stav tachometru**: poslední hodnota `km_end` z knihy jízd (formát: `123 456 km`)
-- **K datu**: datum posledního záznamu
-- Pokud nejsou žádné záznamy v knize jízd → zobrazit „Žádný záznam"
+## Dotčené stránky
 
-## Technický rozsah
-Jediný soubor: `src/pages/VehicleDetail.tsx`
-- Z již načtených `mileageRecords` (seřazených sestupně) vzít první záznam = aktuální stav
-- Zobrazit v hlavičce vozidla (oblast s RZ a základními info) jako malý badge nebo info řádek s ikonou `Gauge`
+| Stránka | Soubor | Tabulky |
+|---------|--------|---------|
+| Vozidla | `Vehicles.tsx` | Hlavní tabulka vozidel (dynamické sloupce) |
+| Řidiči | `Drivers.tsx` | Tabulka řidičů |
+| Servis | `Service.tsx` | Servisní záznamy, STK/emise, pojištění (3 tabulky) |
+| Náklady | `Costs.tsx` | Tabulka nákladů |
+| Kniha jízd | `TripLog.tsx` | Tabulka jízd |
+| Tankování | `FuelCards.tsx` | Tabulka tankovacích karet |
+
+## Technický přístup
+
+1. **Vytvořit reusable hook `useSortableTable`** — state pro `sortKey` a `sortDirection` (`asc`/`desc`), funkce `handleSort(key)` pro přepínání, a `sortData(data)` pro seřazení pole.
+
+2. **Vytvořit komponentu `SortableTableHead`** — wrapper kolem `TableHead`, který při kliknutí volá `handleSort` a zobrazuje šipku (▲/▼) u aktivního sloupce. Kurzor `cursor-pointer`.
+
+3. **Aplikovat na každou stránku** — nahradit statické `<TableHead>` za `<SortableTableHead>`, data před renderem seřadit pomocí `sortData()`. Řazení bude pracovat s již filtrovanými daty (po vyhledávání).
+
+4. **Řazení typů** — čísla numericky, datumy chronologicky, text abecedně (case-insensitive, české locale `cs-CZ`).
+
+## Rozsah
+- 1 nový soubor: `src/hooks/useSortableTable.ts`
+- 1 nová komponenta: `src/components/ui/sortable-table-head.tsx`
+- 6 upravených stránek
 

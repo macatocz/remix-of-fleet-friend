@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { ArrowLeft, FileText, CalendarDays, Info, Loader2, Pencil, Save, X, Trash2, Gauge, Wrench, BookOpen, CreditCard, CalendarIcon } from "lucide-react";
+import { ArrowLeft, FileText, CalendarDays, Info, Loader2, Pencil, Save, X, Trash2, Wrench, BookOpen, CreditCard, CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format, parseISO, differenceInMonths } from "date-fns";
@@ -23,7 +23,7 @@ import { cs } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import VehicleDocuments from "@/components/VehicleDocuments";
 import VehicleCalendar from "@/components/VehicleCalendar";
-import VehicleMileage from "@/components/VehicleMileage";
+
 import VehicleAlerts from "@/components/VehicleAlerts";
 import VehicleService from "@/components/VehicleService";
 import VehicleTripLogInline from "@/components/VehicleTripLogInline";
@@ -358,9 +358,11 @@ export default function VehicleDetail() {
 
   useEffect(() => {
     if (!id) return;
-    supabase.from("vehicle_mileage").select("km, recorded_at")
-      .eq("vehicle_id", id).order("recorded_at", { ascending: false })
-      .then(({ data }) => setMileageRecords((data as any[]) || []));
+    supabase.from("trip_logs").select("km_end, date")
+      .eq("vehicle_id", id).not("km_end", "is", null).order("date", { ascending: false })
+      .then(({ data }) => setMileageRecords(
+        ((data as any[]) || []).map(r => ({ km: r.km_end, recorded_at: r.date }))
+      ));
   }, [id]);
 
   const startEditing = () => {
@@ -499,9 +501,6 @@ export default function VehicleDetail() {
           <TabsTrigger value="documents">
             <FileText className="mr-2 h-4 w-4" />Dokumenty
           </TabsTrigger>
-          <TabsTrigger value="mileage">
-            <Gauge className="mr-2 h-4 w-4" />Nájezdy
-          </TabsTrigger>
           <TabsTrigger value="service">
             <Wrench className="mr-2 h-4 w-4" />Servis
           </TabsTrigger>
@@ -540,18 +539,6 @@ export default function VehicleDetail() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="mileage" className="mt-6">
-          <Card>
-            <CardContent className="pt-6">
-              <VehicleMileage
-                vehicleId={vehicle.id}
-                contractualKmPerYear={vehicle.najezd_za_rok}
-                leasingStart={vehicle.datum_zahajeni_leasingu}
-                leasingEnd={vehicle.datum_ukonceni_leasingu}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         <TabsContent value="service" className="mt-6">
           <Card>

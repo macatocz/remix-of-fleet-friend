@@ -22,6 +22,7 @@ import VehicleMileage from "@/components/VehicleMileage";
 import VehicleAlerts from "@/components/VehicleAlerts";
 import VehicleService from "@/components/VehicleService";
 import VehicleTripLogInline from "@/components/VehicleTripLogInline";
+import VehicleFuelCards from "@/components/VehicleFuelCards";
 
 interface FieldDef {
   key: string;

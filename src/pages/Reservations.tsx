@@ -60,6 +60,7 @@ const emptyForm: ReservationForm = {
 export default function Reservations() {
   const [reservations, setReservations] = useState<any[]>([]);
   const [vehicles, setVehicles] = useState<any[]>([]);
+  const [drivers, setDrivers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<ReservationForm>(emptyForm);
@@ -72,9 +73,10 @@ export default function Reservations() {
 
   const fetchData = async () => {
     setLoading(true);
-    const [resResult, vehResult] = await Promise.all([
+    const [resResult, vehResult, drvResult] = await Promise.all([
       supabase.from("reservations").select("*, vehicles(znacka, rz)").order("date_from", { ascending: false }),
       supabase.from("vehicles").select("id, znacka, rz").eq("status", "aktivní").order("znacka"),
+      supabase.from("drivers").select("id, first_name, last_name").eq("status", "aktivní").order("last_name"),
     ]);
     if (resResult.error) {
       toast({ title: "Chyba", description: resResult.error.message, variant: "destructive" });
@@ -82,6 +84,7 @@ export default function Reservations() {
       setReservations(resResult.data || []);
     }
     setVehicles(vehResult.data || []);
+    setDrivers(drvResult.data || []);
     setLoading(false);
   };
 
@@ -222,7 +225,19 @@ export default function Reservations() {
             </div>
             <div>
               <Label>Řidič *</Label>
-              <Input placeholder="Jméno řidiče" value={form.driver_name} onChange={e => setForm(p => ({ ...p, driver_name: e.target.value }))} />
+              <Select value={form.driver_name} onValueChange={v => setForm(p => ({ ...p, driver_name: v }))}>
+                <SelectTrigger><SelectValue placeholder="Vyberte řidiče" /></SelectTrigger>
+                <SelectContent>
+                  {drivers.map(d => {
+                    const fullName = `${d.first_name} ${d.last_name}`.trim();
+                    return (
+                      <SelectItem key={d.id} value={fullName}>
+                        {fullName}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>

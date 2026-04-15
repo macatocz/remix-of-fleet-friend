@@ -1,15 +1,21 @@
 
 
-# Výběr řidiče z databáze ve formuláři rezervace
+# Vylepšená kontrola kolizí rezervací
 
-## Co se změní
-Pole „Řidič" ve formuláři nové/editované rezervace se změní z volného textového vstupu na **Select dropdown** s řidiči načtenými z tabulky `drivers` (pouze aktivní). Stále se uloží `driver_name` (textová hodnota), takže není potřeba měnit DB schéma.
+## Změny v `src/pages/Reservations.tsx`
 
-## Technické kroky (1 soubor: `Reservations.tsx`)
+1. **Upravit `checkCollision`** — vrací `{ hardCollision: boolean, softCollision: boolean }`. Dotaz rozšířit o sloupec `status`, rozdělit výsledky na `schváleno` (hard) vs `čeká` (soft).
 
-1. **Fetch řidičů** — do `fetchData` přidat dotaz na `drivers` (`id, first_name, last_name`), filtr `status = 'aktivní'`, uložit do nového state `drivers`.
+2. **Nové state** — `confirmOpen: boolean` pro potvrzovací dialog, `pendingPayload: ref` pro dočasné uložení dat před potvrzením.
 
-2. **Nahradit Input za Select** — pole „Řidič" bude `<Select>` s hodnotami ve formátu `"Jméno Příjmení"`. Hodnota `form.driver_name` se nastaví na vybraného řidiče jako text string (kompatibilní se stávajícím `driver_name` sloupcem v DB).
+3. **Upravit `handleSave`**:
+   - Hard kolize → destructive toast, stop.
+   - Soft kolize (bez hard) → otevřít `AlertDialog` s textem „V tomto čase již existuje neschválená rezervace. Chcete přesto pokračovat?"
+   - Žádná kolize → uložit rovnou.
 
-3. **Zachovat zpětnou kompatibilitu** — existující rezervace s ručně zadanými jmény se zobrazí beze změny v tabulce (sloupec `driver_name` zůstává text).
+4. **Přidat `AlertDialog`** pro potvrzení měkké kolize — po kliknutí „Pokračovat" se zavolá uložení bez opětovné kontroly kolize.
+
+5. **Extrahovat `saveReservation(payload)`** — společná funkce pro vlastní uložení (insert/update), volaná z `handleSave` i z potvrzovacího dialogu.
+
+Rozsah: 1 soubor, žádné DB migrace.
 

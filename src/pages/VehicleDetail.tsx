@@ -408,6 +408,14 @@ export default function VehicleDetail() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="fuelcards" className="mt-6">
+          <Card>
+            <CardContent className="pt-6">
+              <VehicleFuelCards vehicleId={vehicle.id} defaultOwner={vehicle.spravce} />
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );

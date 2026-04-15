@@ -225,7 +225,19 @@ export default function Reservations() {
             </div>
             <div>
               <Label>Řidič *</Label>
-              <Input placeholder="Jméno řidiče" value={form.driver_name} onChange={e => setForm(p => ({ ...p, driver_name: e.target.value }))} />
+              <Select value={form.driver_name} onValueChange={v => setForm(p => ({ ...p, driver_name: v }))}>
+                <SelectTrigger><SelectValue placeholder="Vyberte řidiče" /></SelectTrigger>
+                <SelectContent>
+                  {drivers.map(d => {
+                    const fullName = `${d.first_name} ${d.last_name}`.trim();
+                    return (
+                      <SelectItem key={d.id} value={fullName}>
+                        {fullName}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>

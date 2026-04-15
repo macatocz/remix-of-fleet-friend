@@ -13,9 +13,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, FileText, CalendarDays, Info, Loader2, Pencil, Save, X, Trash2, Gauge, Wrench, BookOpen, CreditCard } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { ArrowLeft, FileText, CalendarDays, Info, Loader2, Pencil, Save, X, Trash2, Gauge, Wrench, BookOpen, CreditCard, CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { format, parseISO, differenceInMonths } from "date-fns";
+import { cs } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import VehicleDocuments from "@/components/VehicleDocuments";
 import VehicleCalendar from "@/components/VehicleCalendar";
 import VehicleMileage from "@/components/VehicleMileage";
@@ -23,17 +28,26 @@ import VehicleAlerts from "@/components/VehicleAlerts";
 import VehicleService from "@/components/VehicleService";
 import VehicleTripLogInline from "@/components/VehicleTripLogInline";
 import VehicleFuelCards from "@/components/VehicleFuelCards";
+import VehicleVignettes from "@/components/VehicleVignettes";
 
 interface FieldDef {
   key: string;
   label: string;
-  type?: "text" | "select" | "textarea";
+  type?: "text" | "select" | "textarea" | "date" | "driver_select" | "currency" | "computed" | "vignettes";
   options?: { value: string; label: string }[];
+  suffix?: string;
+  computeFn?: (vehicle: any, editData: Record<string, string>) => string;
 }
+
+const BRANCH_OPTIONS = [
+  { value: "Praha", label: "Praha" },
+  { value: "Brno", label: "Brno" },
+  { value: "Liberec", label: "Liberec" },
+];
 
 const BASIC_FIELDS: FieldDef[] = [
   { key: "znacka", label: "Značka / Model" },
-  { key: "spravce", label: "Správce" },
+  { key: "spravce", label: "Správce", type: "driver_select" },
   { key: "rz", label: "RZ" },
   { key: "vin", label: "VIN" },
   { key: "vlastnik", label: "Vlastník" },
@@ -49,11 +63,22 @@ const BASIC_FIELDS: FieldDef[] = [
 
 const LEASING_FIELDS: FieldDef[] = [
   { key: "leasingova_spolecnost", label: "Leasingová spol." },
-  { key: "doba_leasingu", label: "Doba leasingu" },
+  {
+    key: "doba_leasingu", label: "Doba leasingu (měsíce)", type: "computed",
+    computeFn: (vehicle, editData) => {
+      const from = editData.datum_zahajeni_leasingu ?? vehicle.datum_zahajeni_leasingu;
+      const to = editData.datum_ukonceni_leasingu ?? vehicle.datum_ukonceni_leasingu;
+      if (!from || !to) return "—";
+      try {
+        const months = differenceInMonths(parseISO(to), parseISO(from));
+        return months > 0 ? `${months}` : "—";
+      } catch { return "—"; }
+    }
+  },
   { key: "najezd_za_rok", label: "Nájezd/rok" },
-  { key: "mesicni_splatka", label: "Měsíční splátka" },
-  { key: "datum_zahajeni_leasingu", label: "Leasing od" },
-  { key: "datum_ukonceni_leasingu", label: "Leasing do" },
+  { key: "mesicni_splatka", label: "Měsíční splátka", type: "currency", suffix: "Kč" },
+  { key: "datum_zahajeni_leasingu", label: "Leasing od", type: "date" },
+  { key: "datum_ukonceni_leasingu", label: "Leasing do", type: "date" },
   { key: "cislo_smlouvy_leasing", label: "Č. smlouvy leasing" },
 ];
 
@@ -64,28 +89,25 @@ const DOC_FIELDS: FieldDef[] = [
     options: [{ value: "ANO", label: "ANO" }, { value: "NE", label: "NE" }]
   },
   { key: "tankovaci_karty", label: "Tankovací karty" },
-  { key: "stk", label: "STK" },
-  { key: "dalnicni_znamka", label: "Dálniční známka" },
-  { key: "zelena_karta", label: "Zelená karta" },
+  { key: "stk", label: "STK do", type: "date" },
+  { key: "dalnicni_znamka", label: "Dálniční známka", type: "vignettes" },
+  { key: "zelena_karta", label: "Zelená karta do", type: "date" },
 ];
 
 const OPS_FIELDS: FieldDef[] = [
-  { key: "v_uzivani_od", label: "V užívání od" },
-  { key: "v_uzivani_do", label: "V užívání do" },
+  { key: "v_uzivani_od", label: "V užívání od", type: "date" },
+  { key: "v_uzivani_do", label: "V užívání do", type: "date" },
   { key: "misto_uskladneni_pneu", label: "Uskladnění pneu" },
   {
     key: "lekarnicka", label: "Lékárnička", type: "select",
     options: [{ value: "ANO", label: "ANO" }, { value: "NE", label: "NE" }]
   },
-  { key: "cena_pronajmu", label: "Cena pronájmu" },
-  { key: "srazka_soukrome", label: "Srážka soukr." },
+  { key: "cena_pronajmu", label: "Cena bez DPH", type: "currency", suffix: "Kč" },
+  { key: "srazka_soukrome", label: "Srážka soukr.", type: "currency", suffix: "Kč" },
   { key: "parkovaci_stani", label: "Parkování" },
-  { key: "nahradni_klic", label: "Náhradní klíč" },
+  { key: "nahradni_klic", label: "Náhradní klíč", type: "select", options: BRANCH_OPTIONS },
   { key: "poznamky", label: "Poznámky", type: "textarea" },
-  {
-    key: "lokalita", label: "Lokalita", type: "select",
-    options: [{ value: "Praha", label: "Praha" }, { value: "Liberec", label: "Liberec" }]
-  },
+  { key: "lokalita", label: "Lokalita", type: "select", options: BRANCH_OPTIONS },
   {
     key: "status", label: "Stav", type: "select",
     options: [
@@ -111,7 +133,85 @@ const statusBadge = (status: string) => {
   }
 };
 
+function isValidDateStr(val: string | null | undefined): boolean {
+  if (!val) return false;
+  try {
+    const d = parseISO(val);
+    return !isNaN(d.getTime());
+  } catch { return false; }
+}
+
+function formatDateDisplay(val: string | null | undefined): string {
+  if (!isValidDateStr(val)) return "—";
+  return format(parseISO(val!), "d.M.yyyy");
+}
+
+// ── Editable field components ──
+
+function DatePickerField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const date = isValidDateStr(value) ? parseISO(value) : undefined;
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          className={cn("h-8 text-sm w-full justify-start", !date && "text-muted-foreground")}
+        >
+          <CalendarIcon className="mr-2 h-3 w-3" />
+          {date ? format(date, "d.M.yyyy") : "Vyberte datum"}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={date}
+          onSelect={(d) => onChange(d ? format(d, "yyyy-MM-dd") : "")}
+          locale={cs}
+          className="p-3 pointer-events-auto"
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function CurrencyField({ value, onChange, suffix }: { value: string; onChange: (v: string) => void; suffix: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <Input
+        className="h-8 text-sm flex-1"
+        type="number"
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      <span className="text-sm text-muted-foreground whitespace-nowrap">{suffix}</span>
+    </div>
+  );
+}
+
+function DriverSelectField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [drivers, setDrivers] = useState<{ id: string; name: string }[]>([]);
+  useEffect(() => {
+    supabase.from("drivers").select("id, first_name, last_name").eq("status", "aktivní")
+      .then(({ data }) => {
+        setDrivers((data || []).map((d: any) => ({ id: d.id, name: `${d.first_name} ${d.last_name}` })));
+      });
+  }, []);
+  return (
+    <Select value={value || ""} onValueChange={onChange}>
+      <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Vyberte řidiče" /></SelectTrigger>
+      <SelectContent>
+        {drivers.map((d) => (
+          <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 function EditableField({ field, value, onChange }: { field: FieldDef; value: string; onChange: (v: string) => void }) {
+  if (field.type === "date") return <DatePickerField value={value} onChange={onChange} />;
+  if (field.type === "currency") return <CurrencyField value={value} onChange={onChange} suffix={field.suffix || "Kč"} />;
+  if (field.type === "driver_select") return <DriverSelectField value={value} onChange={onChange} />;
   if (field.type === "select" && field.options) {
     return (
       <Select value={value || ""} onValueChange={onChange}>
@@ -134,8 +234,32 @@ function FieldRow({ field, vehicle, editing, editData, onEdit }: {
   const renderValue = (key: string, val: any) => {
     if (key === "status") return statusBadge(val || "aktivní");
     if (key === "typ_vlastnictvi") return typVlastnictviLabel[val] || val || "—";
+    if (field.type === "date") return formatDateDisplay(val);
+    if (field.type === "currency") return val ? `${val} ${field.suffix || "Kč"}` : "—";
+    if (field.type === "computed" && field.computeFn) return field.computeFn(vehicle, editData);
     return val || "—";
   };
+
+  // Skip vignettes in regular FieldRow — handled separately
+  if (field.type === "vignettes") return null;
+
+  if (field.type === "computed") {
+    const computed = field.computeFn ? field.computeFn(vehicle, editData) : "—";
+    if (editing) {
+      return (
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">{field.label}</Label>
+          <Input className="h-8 text-sm bg-muted" value={computed} readOnly />
+        </div>
+      );
+    }
+    return (
+      <div className="flex justify-between">
+        <dt className="text-muted-foreground">{field.label}</dt>
+        <dd className="font-medium text-right max-w-[200px] truncate">{computed}</dd>
+      </div>
+    );
+  }
 
   if (editing) {
     return (
@@ -157,6 +281,8 @@ function FieldRow({ field, vehicle, editing, editData, onEdit }: {
 function EditableCard({ title, fields, vehicle, editing, editData, onEdit }: {
   title: string; fields: FieldDef[]; vehicle: any; editing: boolean; editData: Record<string, string>; onEdit: (key: string, val: string) => void;
 }) {
+  const vignetteField = fields.find(f => f.type === "vignettes");
+
   return (
     <Card>
       <CardHeader>
@@ -165,10 +291,26 @@ function EditableCard({ title, fields, vehicle, editing, editData, onEdit }: {
       <CardContent>
         <div className={editing ? "space-y-3" : ""}>
           {editing ? (
-            fields.map(f => <FieldRow key={f.key} field={f} vehicle={vehicle} editing editData={editData} onEdit={onEdit} />)
+            <>
+              {fields.filter(f => f.type !== "vignettes").map(f => <FieldRow key={f.key} field={f} vehicle={vehicle} editing editData={editData} onEdit={onEdit} />)}
+              {vignetteField && (
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">{vignetteField.label}</Label>
+                  <VehicleVignettes vehicleId={vehicle.id} editing />
+                </div>
+              )}
+            </>
           ) : (
             <dl className="space-y-3 text-sm">
-              {fields.map(f => <FieldRow key={f.key} field={f} vehicle={vehicle} editing={false} editData={editData} onEdit={onEdit} />)}
+              {fields.filter(f => f.type !== "vignettes").map(f => <FieldRow key={f.key} field={f} vehicle={vehicle} editing={false} editData={editData} onEdit={onEdit} />)}
+              {vignetteField && (
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">{vignetteField.label}</dt>
+                  <dd className="font-medium text-right">
+                    <VehicleVignettes vehicleId={vehicle.id} editing={false} />
+                  </dd>
+                </div>
+              )}
             </dl>
           )}
         </div>
@@ -223,12 +365,17 @@ export default function VehicleDetail() {
   };
 
   const handleSave = async () => {
-    if (Object.keys(editData).length === 0) {
+    // Remove computed fields from save payload
+    const payload = { ...editData };
+    delete payload.doba_leasingu;
+    delete payload.dalnicni_znamka;
+
+    if (Object.keys(payload).length === 0) {
       setEditing(false);
       return;
     }
     setSaving(true);
-    const { error } = await supabase.from("vehicles").update(editData as any).eq("id", id!);
+    const { error } = await supabase.from("vehicles").update(payload as any).eq("id", id!);
     if (error) {
       toast({ title: "Chyba při ukládání", description: error.message, variant: "destructive" });
     } else {

@@ -324,7 +324,24 @@ export default function VehicleDetail() {
   const [editData, setEditData] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [mileageRecords, setMileageRecords] = useState<{ km: number; recorded_at: string }[]>([]);
+  const [branchOptions, setBranchOptions] = useState<{ value: string; label: string }[]>([
+    { value: "Praha", label: "Praha" },
+    { value: "Brno", label: "Brno" },
+    { value: "Liberec", label: "Liberec" },
+  ]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    supabase.from("app_settings").select("value").eq("key", "branches").maybeSingle()
+      .then(({ data }) => {
+        if (data?.value) {
+          try {
+            const arr = JSON.parse(data.value) as string[];
+            setBranchOptions(arr.map(b => ({ value: b, label: b })));
+          } catch {}
+        }
+      });
+  }, []);
 
   const fetchVehicle = async () => {
     if (!id) return;
@@ -503,7 +520,7 @@ export default function VehicleDetail() {
               <EditableCard title="Leasing" fields={LEASING_FIELDS} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit} />
             )}
             <EditableCard title="Dokumenty a kontroly" fields={DOC_FIELDS} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit} />
-            <EditableCard title="Provozní údaje" fields={OPS_FIELDS} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit} />
+            <EditableCard title="Provozní údaje" fields={getOpsFields(branchOptions)} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit} />
           </div>
         </TabsContent>
 

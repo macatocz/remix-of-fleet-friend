@@ -348,6 +348,9 @@ export default function VehicleDetail() {
           <TabsTrigger value="triplog">
             <BookOpen className="mr-2 h-4 w-4" />Kniha jízd
           </TabsTrigger>
+          <TabsTrigger value="fuelcards">
+            <CreditCard className="mr-2 h-4 w-4" />Tankování
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="info" className="mt-6">

@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSortableTable } from "@/hooks/useSortableTable";
+import { SortableTableHead } from "@/components/ui/sortable-table-head";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -207,13 +209,15 @@ export default function Vehicles() {
     toast({ title: "Pohled aktualizován" });
   };
 
-  const filtered = vehicles.filter((v) => {
+  const { sortKey, sortDirection, handleSort, sortData } = useSortableTable();
+
+  const filtered = sortData(vehicles.filter((v) => {
     const searchStr = `${v.znacka || ""} ${v.spravce || ""} ${v.rz || ""} ${v.vin || ""}`.toLowerCase();
     const matchSearch = searchStr.includes(search.toLowerCase());
     const matchStatus = statusFilter === "all" || v.status === statusFilter;
     const matchLokalita = lokalitaFilter === "all" || v.lokalita === lokalitaFilter;
     return matchSearch && matchStatus && matchLokalita;
-  });
+  }));
 
   const lokality = [...new Set(vehicles.map(v => v.lokalita).filter(Boolean))];
 
@@ -463,7 +467,7 @@ export default function Vehicles() {
                 <TableHeader>
                   <TableRow>
                     {ALL_COLUMNS.filter(c => visibleColumns.includes(c.key)).map(col => (
-                      <TableHead key={col.key} className="whitespace-nowrap">{col.label}</TableHead>
+                      <SortableTableHead key={col.key} sortKey={col.key} currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} className="whitespace-nowrap">{col.label}</SortableTableHead>
                     ))}
                   </TableRow>
                 </TableHeader>

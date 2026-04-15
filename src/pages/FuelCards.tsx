@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useSortableTable } from "@/hooks/useSortableTable";
+import { SortableTableHead } from "@/components/ui/sortable-table-head";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -39,10 +41,15 @@ export default function FuelCards() {
     },
   });
 
-  const filtered = cards.filter((c: any) => {
+  const { sortKey, sortDirection, handleSort, sortData } = useSortableTable();
+
+  const filtered = sortData(cards.filter((c: any) => {
     if (providerFilter !== "all" && c.provider !== providerFilter) return false;
     if (statusFilter !== "all" && c.status !== statusFilter) return false;
     return true;
+  }), (item: any, key: string) => {
+    if (key === "vehicle") return item.vehicles?.rz || "";
+    return item[key];
   });
 
   const togglePin = (id: string) => {
@@ -100,13 +107,13 @@ export default function FuelCards() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Vozidlo</TableHead>
-              <TableHead>Provider</TableHead>
-              <TableHead>Číslo karty</TableHead>
+              <SortableTableHead sortKey="vehicle" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort}>Vozidlo</SortableTableHead>
+              <SortableTableHead sortKey="provider" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort}>Provider</SortableTableHead>
+              <SortableTableHead sortKey="card_number" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort}>Číslo karty</SortableTableHead>
               <TableHead>PIN</TableHead>
-              <TableHead>Vlastník</TableHead>
-              <TableHead>Platnost do</TableHead>
-              <TableHead>Stav</TableHead>
+              <SortableTableHead sortKey="owner_name" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort}>Vlastník</SortableTableHead>
+              <SortableTableHead sortKey="valid_until" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort}>Platnost do</SortableTableHead>
+              <SortableTableHead sortKey="status" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort}>Stav</SortableTableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

@@ -73,9 +73,10 @@ export default function Reservations() {
 
   const fetchData = async () => {
     setLoading(true);
-    const [resResult, vehResult] = await Promise.all([
+    const [resResult, vehResult, drvResult] = await Promise.all([
       supabase.from("reservations").select("*, vehicles(znacka, rz)").order("date_from", { ascending: false }),
       supabase.from("vehicles").select("id, znacka, rz").eq("status", "aktivní").order("znacka"),
+      supabase.from("drivers").select("id, first_name, last_name").eq("status", "aktivní").order("last_name"),
     ]);
     if (resResult.error) {
       toast({ title: "Chyba", description: resResult.error.message, variant: "destructive" });
@@ -83,6 +84,7 @@ export default function Reservations() {
       setReservations(resResult.data || []);
     }
     setVehicles(vehResult.data || []);
+    setDrivers(drvResult.data || []);
     setLoading(false);
   };
 

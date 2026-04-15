@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, FileText, CalendarDays, Info, Loader2, Pencil, Save, X, Trash2, Gauge, Wrench, BookOpen } from "lucide-react";
+import { ArrowLeft, FileText, CalendarDays, Info, Loader2, Pencil, Save, X, Trash2, Gauge, Wrench, BookOpen, CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import VehicleDocuments from "@/components/VehicleDocuments";
@@ -22,6 +22,7 @@ import VehicleMileage from "@/components/VehicleMileage";
 import VehicleAlerts from "@/components/VehicleAlerts";
 import VehicleService from "@/components/VehicleService";
 import VehicleTripLogInline from "@/components/VehicleTripLogInline";
+import VehicleFuelCards from "@/components/VehicleFuelCards";
 
 interface FieldDef {
   key: string;
@@ -347,6 +348,9 @@ export default function VehicleDetail() {
           <TabsTrigger value="triplog">
             <BookOpen className="mr-2 h-4 w-4" />Kniha jízd
           </TabsTrigger>
+          <TabsTrigger value="fuelcards">
+            <CreditCard className="mr-2 h-4 w-4" />Tankování
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="info" className="mt-6">
@@ -401,6 +405,14 @@ export default function VehicleDetail() {
           <Card>
             <CardContent className="pt-6">
               <VehicleTripLogInline vehicleId={vehicle.id} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="fuelcards" className="mt-6">
+          <Card>
+            <CardContent className="pt-6">
+              <VehicleFuelCards vehicleId={vehicle.id} defaultOwner={vehicle.spravce} />
             </CardContent>
           </Card>
         </TabsContent>

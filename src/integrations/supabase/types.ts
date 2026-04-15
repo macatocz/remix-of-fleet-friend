@@ -136,6 +136,56 @@ export type Database = {
           },
         ]
       }
+      fuel_cards: {
+        Row: {
+          card_number: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          owner_name: string | null
+          pin: string | null
+          provider: string
+          status: string
+          updated_at: string
+          valid_until: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          card_number?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          owner_name?: string | null
+          pin?: string | null
+          provider: string
+          status?: string
+          updated_at?: string
+          valid_until?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          card_number?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          owner_name?: string | null
+          pin?: string | null
+          provider?: string
+          status?: string
+          updated_at?: string
+          valid_until?: string | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fuel_cards_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inspections: {
         Row: {
           created_at: string

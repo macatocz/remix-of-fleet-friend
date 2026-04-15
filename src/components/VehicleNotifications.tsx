@@ -72,9 +72,12 @@ export default function VehicleNotifications() {
     supabase.from("vehicles").select("id, znacka, rz, spravce, stk, zelena_karta, datum_ukonceni_leasingu, datum_zahajeni_leasingu, typ_vlastnictvi, najezd_za_rok, status")
       .eq("status", "aktivní")
       .then(({ data }) => setVehicles((data as Vehicle[]) || []));
-    supabase.from("vehicle_mileage").select("vehicle_id, km, recorded_at")
-      .order("recorded_at", { ascending: false })
-      .then(({ data }) => setMileageData((data as MileageRecord[]) || []));
+    supabase.from("trip_logs").select("vehicle_id, km_end, date")
+      .not("km_end", "is", null)
+      .order("date", { ascending: false })
+      .then(({ data }) => setMileageData(
+        ((data as any[]) || []).map(r => ({ vehicle_id: r.vehicle_id, km: r.km_end, recorded_at: r.date }))
+      ));
   }, []);
 
   const alerts = useMemo(() => {

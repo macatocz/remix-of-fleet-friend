@@ -320,6 +320,21 @@ export default function Reservations() {
         </DialogContent>
       </Dialog>
 
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Možná kolize rezervací</AlertDialogTitle>
+            <AlertDialogDescription>
+              V tomto čase již existuje neschválená rezervace pro dané vozidlo. Chcete přesto pokračovat s vytvořením rezervace?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingPayload(null)}>Zrušit</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmSoftCollision}>Pokračovat</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">

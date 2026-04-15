@@ -5,12 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, Save, Loader2 } from "lucide-react";
+import { Settings, Save, Loader2, Plus, X, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export function GeneralSettings() {
   const [settings, setSettings] = useState<Record<string, string>>({});
+  const [branches, setBranches] = useState<string[]>([]);
+  const [newBranch, setNewBranch] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -21,7 +23,12 @@ export function GeneralSettings() {
       .then(({ data }) => {
         if (data) {
           const map: Record<string, string> = {};
-          data.forEach((r) => { map[r.key] = r.value || ""; });
+          data.forEach((r) => {
+            map[r.key] = r.value || "";
+            if (r.key === "branches" && r.value) {
+              try { setBranches(JSON.parse(r.value)); } catch {}
+            }
+          });
           setSettings(map);
         }
         setLoading(false);
@@ -31,9 +38,21 @@ export function GeneralSettings() {
   const update = (key: string, value: string) =>
     setSettings((prev) => ({ ...prev, [key]: value }));
 
+  const addBranch = () => {
+    const trimmed = newBranch.trim();
+    if (!trimmed || branches.includes(trimmed)) return;
+    setBranches((prev) => [...prev, trimmed]);
+    setNewBranch("");
+  };
+
+  const removeBranch = (branch: string) => {
+    setBranches((prev) => prev.filter((b) => b !== branch));
+  };
+
   const handleSave = async () => {
     setSaving(true);
-    const promises = Object.entries(settings).map(([key, value]) =>
+    const allSettings = { ...settings, branches: JSON.stringify(branches) };
+    const promises = Object.entries(allSettings).map(([key, value]) =>
       supabase.from("app_settings").update({ value }).eq("key", key)
     );
     const results = await Promise.all(promises);
@@ -54,7 +73,7 @@ export function GeneralSettings() {
           <Settings className="h-5 w-5" />
           Obecné nastavení
         </CardTitle>
-        <CardDescription>Formáty, měna a nastavení notifikací</CardDescription>
+        <CardDescription>Formáty, měna, pobočky a nastavení notifikací</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -79,6 +98,37 @@ export function GeneralSettings() {
                 <SelectItem value="USD">USD ($)</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+        </div>
+
+        <div className="border-t pt-4">
+          <h3 className="font-medium mb-3 flex items-center gap-2">
+            <MapPin className="h-4 w-4" />
+            Pobočky / Lokality
+          </h3>
+          <p className="text-sm text-muted-foreground mb-3">
+            Pobočky se používají pro výběr lokality a umístění náhradního klíče u vozidel.
+          </p>
+          <div className="flex flex-wrap gap-2 mb-3">
+            {branches.map((branch) => (
+              <div key={branch} className="flex items-center gap-1 bg-secondary text-secondary-foreground rounded-md px-3 py-1 text-sm">
+                {branch}
+                <button onClick={() => removeBranch(branch)} className="ml-1 hover:text-destructive">
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2 max-w-sm">
+            <Input
+              placeholder="Nová pobočka…"
+              value={newBranch}
+              onChange={(e) => setNewBranch(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addBranch())}
+            />
+            <Button variant="outline" size="sm" onClick={addBranch} disabled={!newBranch.trim()}>
+              <Plus className="h-4 w-4 mr-1" /> Přidat
+            </Button>
           </div>
         </div>
 

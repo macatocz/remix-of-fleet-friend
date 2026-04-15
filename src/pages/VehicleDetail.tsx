@@ -39,7 +39,7 @@ interface FieldDef {
   computeFn?: (vehicle: any, editData: Record<string, string>) => string;
 }
 
-// Branch options are now loaded dynamically from app_settings
+// Branch options loaded dynamically — see useBranchOptions below
 
 const BASIC_FIELDS: FieldDef[] = [
   { key: "znacka", label: "Značka / Model" },
@@ -90,7 +90,7 @@ const DOC_FIELDS: FieldDef[] = [
   { key: "zelena_karta", label: "Zelená karta do", type: "date" },
 ];
 
-const OPS_FIELDS: FieldDef[] = [
+const getOpsFields = (branchOptions: { value: string; label: string }[]): FieldDef[] => [
   { key: "v_uzivani_od", label: "V užívání od", type: "date" },
   { key: "v_uzivani_do", label: "V užívání do", type: "date" },
   { key: "misto_uskladneni_pneu", label: "Uskladnění pneu" },
@@ -101,9 +101,9 @@ const OPS_FIELDS: FieldDef[] = [
   { key: "cena_pronajmu", label: "Cena bez DPH", type: "currency", suffix: "Kč" },
   { key: "srazka_soukrome", label: "Srážka soukr.", type: "currency", suffix: "Kč" },
   { key: "parkovaci_stani", label: "Parkování" },
-  { key: "nahradni_klic", label: "Náhradní klíč", type: "select", options: BRANCH_OPTIONS },
+  { key: "nahradni_klic", label: "Náhradní klíč", type: "select", options: branchOptions },
   { key: "poznamky", label: "Poznámky", type: "textarea" },
-  { key: "lokalita", label: "Lokalita", type: "select", options: BRANCH_OPTIONS },
+  { key: "lokalita", label: "Lokalita", type: "select", options: branchOptions },
   {
     key: "status", label: "Stav", type: "select",
     options: [

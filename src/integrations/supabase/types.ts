@@ -83,6 +83,38 @@ export type Database = {
         }
         Relationships: []
       }
+      document_folders: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_folders_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drivers: {
         Row: {
           created_at: string

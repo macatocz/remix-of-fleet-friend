@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { ArrowLeft, FileText, CalendarDays, Info, Loader2, Pencil, Save, X, Trash2, Wrench, BookOpen, CreditCard, CalendarIcon } from "lucide-react";
+import { ArrowLeft, FileText, CalendarDays, Info, Loader2, Pencil, Save, X, Trash2, Wrench, BookOpen, CreditCard, CalendarIcon, Gauge } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format, parseISO, differenceInMonths } from "date-fns";
@@ -444,6 +444,17 @@ export default function VehicleDetail() {
         <div>
           <h1 className="text-2xl font-bold">{vehicle.znacka || "Vozidlo"}</h1>
           <p className="text-muted-foreground">{vehicle.rz || "—"} · {vehicle.spravce || "—"}</p>
+          <div className="flex items-center gap-1.5 mt-1 text-sm text-muted-foreground">
+            <Gauge className="h-4 w-4" />
+            {mileageRecords.length > 0 ? (
+              <span>
+                <span className="font-medium text-foreground">{mileageRecords[0].km.toLocaleString("cs-CZ")} km</span>
+                {" "}· k {format(parseISO(mileageRecords[0].recorded_at), "d. M. yyyy", { locale: cs })}
+              </span>
+            ) : (
+              <span>Žádný záznam</span>
+            )}
+          </div>
         </div>
         <div className="ml-auto flex items-center gap-2">
           {statusBadge(vehicle.status)}

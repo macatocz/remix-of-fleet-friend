@@ -10,20 +10,15 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle
+} from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Trash2, FileText, Download, Loader2, Folder, ArrowLeft } from "lucide-react";
-
-const CATEGORIES = [
-  "Technický průkaz",
-  "Pojistná smlouva",
-  "Zelená karta",
-  "STK protokol",
-  "Servisní záznam",
-  "Faktura",
-  "Předávací protokol",
-  "Ostatní",
-];
+import {
+  Upload, Trash2, FileText, Download, Loader2, Folder,
+  ArrowLeft, Plus, Pencil, FolderInput
+} from "lucide-react";
 
 interface VehicleDocument {
   id: string;
@@ -33,6 +28,14 @@ interface VehicleDocument {
   file_size: number | null;
   mime_type: string | null;
   category: string | null;
+  created_at: string;
+}
+
+interface DocumentFolder {
+  id: string;
+  vehicle_id: string;
+  name: string;
+  sort_order: number;
   created_at: string;
 }
 
@@ -57,83 +60,96 @@ function pluralFiles(count: number): string {
   return `${count} souborů`;
 }
 
+const DEFAULT_FOLDERS = [
+  "Technický průkaz", "Pojistná smlouva", "Zelená karta", "STK protokol",
+  "Servisní záznam", "Faktura", "Předávací protokol", "Ostatní",
+];
+
 export default function VehicleDocuments({ vehicleId }: { vehicleId: string }) {
   const [documents, setDocuments] = useState<VehicleDocument[]>([]);
+  const [folders, setFolders] = useState<DocumentFolder[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [activeFolder, setActiveFolder] = useState<string | null>(null);
-  const [uploadCategory, setUploadCategory] = useState("Ostatní");
+  const [uploadCategory, setUploadCategory] = useState("");
   const [deleteDoc, setDeleteDoc] = useState<VehicleDocument | null>(null);
   const [dragging, setDragging] = useState(false);
   const dropRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  const fetchDocs = async () => {
+  // Folder management state
+  const [folderDialog, setFolderDialog] = useState<{ mode: "create" | "rename"; folder?: DocumentFolder } | null>(null);
+  const [folderName, setFolderName] = useState("");
+  const [deleteFolderTarget, setDeleteFolderTarget] = useState<DocumentFolder | null>(null);
+  const [moveDocTarget, setMoveDocTarget] = useState<VehicleDocument | null>(null);
+  const [moveToFolder, setMoveToFolder] = useState("");
+
+  const fetchData = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("vehicle_documents")
-      .select("*")
-      .eq("vehicle_id", vehicleId)
-      .order("created_at", { ascending: false });
-    if (!error) setDocuments((data as VehicleDocument[]) || []);
+    const [docsRes, foldersRes] = await Promise.all([
+      supabase.from("vehicle_documents").select("*").eq("vehicle_id", vehicleId).order("created_at", { ascending: false }),
+      supabase.from("document_folders").select("*").eq("vehicle_id", vehicleId).order("sort_order", { ascending: true }) as any,
+    ]);
+    if (!docsRes.error) setDocuments((docsRes.data as VehicleDocument[]) || []);
+    if (!foldersRes.error) {
+      const f = (foldersRes.data as DocumentFolder[]) || [];
+      setFolders(f);
+      if (f.length > 0 && !uploadCategory) setUploadCategory(f[0].name);
+    }
     setLoading(false);
   };
 
-  useEffect(() => { fetchDocs(); }, [vehicleId]);
+  useEffect(() => { fetchData(); }, [vehicleId]);
+
+  // Ensure default folders exist for this vehicle
+  useEffect(() => {
+    if (!loading && folders.length === 0) {
+      const seedFolders = async () => {
+        const inserts = DEFAULT_FOLDERS.map((name, i) => ({
+          vehicle_id: vehicleId, name, sort_order: i,
+        }));
+        await (supabase.from("document_folders") as any).insert(inserts);
+        fetchData();
+      };
+      seedFolders();
+    }
+  }, [loading, folders.length, vehicleId]);
 
   const uploadFiles = async (files: File[], category: string) => {
     if (files.length === 0) return;
     setUploading(true);
-    let success = 0;
-    let failed = 0;
+    let success = 0, failed = 0;
 
     for (const file of files) {
       const safeName = sanitizeFileName(file.name);
       const filePath = `${vehicleId}/${Date.now()}_${safeName}`;
-      const { error: uploadErr } = await supabase.storage
-        .from("vehicle-documents")
-        .upload(filePath, file);
-
+      const { error: uploadErr } = await supabase.storage.from("vehicle-documents").upload(filePath, file);
       if (uploadErr) { failed++; continue; }
 
       const { error: insertErr } = await supabase.from("vehicle_documents").insert({
-        vehicle_id: vehicleId,
-        name: file.name,
-        file_path: filePath,
-        file_size: file.size,
-        mime_type: file.type,
-        category,
+        vehicle_id: vehicleId, name: file.name, file_path: filePath,
+        file_size: file.size, mime_type: file.type, category,
       } as any);
-
       if (insertErr) { failed++; } else { success++; }
     }
 
-    if (failed === 0) {
-      toast({ title: success === 1 ? "Dokument nahrán" : `Nahráno ${success} dokumentů` });
-    } else {
-      toast({
-        title: `Nahráno ${success} z ${files.length} souborů`,
-        description: `${failed} se nepodařilo nahrát`,
-        variant: "destructive",
-      });
-    }
-
+    toast(failed === 0
+      ? { title: success === 1 ? "Dokument nahrán" : `Nahráno ${success} dokumentů` }
+      : { title: `Nahráno ${success} z ${files.length}`, description: `${failed} se nepodařilo`, variant: "destructive" as const }
+    );
     setUploading(false);
-    fetchDocs();
+    fetchData();
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    const cat = activeFolder || uploadCategory;
-    await uploadFiles(Array.from(files), cat);
+    await uploadFiles(Array.from(files), activeFolder || uploadCategory);
     e.target.value = "";
   };
 
   const handleDownload = async (doc: VehicleDocument) => {
-    const { data, error } = await supabase.storage
-      .from("vehicle-documents")
-      .createSignedUrl(doc.file_path, 60);
+    const { data, error } = await supabase.storage.from("vehicle-documents").createSignedUrl(doc.file_path, 60);
     if (error || !data?.signedUrl) {
       toast({ title: "Chyba", description: "Nepodařilo se stáhnout soubor", variant: "destructive" });
       return;
@@ -141,40 +157,95 @@ export default function VehicleDocuments({ vehicleId }: { vehicleId: string }) {
     window.open(data.signedUrl, "_blank");
   };
 
-  const confirmDelete = async () => {
+  const confirmDeleteDoc = async () => {
     if (!deleteDoc) return;
     await supabase.storage.from("vehicle-documents").remove([deleteDoc.file_path]);
     await supabase.from("vehicle_documents").delete().eq("id", deleteDoc.id as any);
     toast({ title: "Dokument smazán" });
     setDeleteDoc(null);
-    fetchDocs();
+    fetchData();
+  };
+
+  // ── Folder CRUD ──
+  const handleCreateFolder = async () => {
+    const trimmed = folderName.trim();
+    if (!trimmed) return;
+    if (folders.some(f => f.name === trimmed)) {
+      toast({ title: "Složka s tímto názvem již existuje", variant: "destructive" });
+      return;
+    }
+    await (supabase.from("document_folders") as any).insert({
+      vehicle_id: vehicleId, name: trimmed, sort_order: folders.length,
+    });
+    toast({ title: `Složka „${trimmed}" vytvořena` });
+    setFolderDialog(null);
+    setFolderName("");
+    fetchData();
+  };
+
+  const handleRenameFolder = async () => {
+    if (!folderDialog?.folder) return;
+    const trimmed = folderName.trim();
+    if (!trimmed) return;
+    const oldName = folderDialog.folder.name;
+    if (folders.some(f => f.name === trimmed && f.id !== folderDialog.folder!.id)) {
+      toast({ title: "Složka s tímto názvem již existuje", variant: "destructive" });
+      return;
+    }
+    // Update folder name
+    await (supabase.from("document_folders") as any).update({ name: trimmed }).eq("id", folderDialog.folder.id);
+    // Update category on documents in that folder
+    await supabase.from("vehicle_documents").update({ category: trimmed } as any).eq("vehicle_id", vehicleId).eq("category", oldName);
+    toast({ title: `Složka přejmenována na „${trimmed}"` });
+    if (activeFolder === oldName) setActiveFolder(trimmed);
+    setFolderDialog(null);
+    setFolderName("");
+    fetchData();
+  };
+
+  const confirmDeleteFolder = async () => {
+    if (!deleteFolderTarget) return;
+    const docsInFolder = documents.filter(d => d.category === deleteFolderTarget.name);
+    if (docsInFolder.length > 0) {
+      // Move docs to "Ostatní"
+      for (const doc of docsInFolder) {
+        await supabase.from("vehicle_documents").update({ category: "Ostatní" } as any).eq("id", doc.id);
+      }
+    }
+    await (supabase.from("document_folders") as any).delete().eq("id", deleteFolderTarget.id);
+    toast({ title: `Složka „${deleteFolderTarget.name}" smazána`, description: docsInFolder.length > 0 ? `${docsInFolder.length} dokumentů přesunuto do „Ostatní"` : undefined });
+    if (activeFolder === deleteFolderTarget.name) setActiveFolder(null);
+    setDeleteFolderTarget(null);
+    fetchData();
+  };
+
+  const handleMoveDoc = async () => {
+    if (!moveDocTarget || !moveToFolder) return;
+    await supabase.from("vehicle_documents").update({ category: moveToFolder } as any).eq("id", moveDocTarget.id);
+    toast({ title: `Přesunuto do „${moveToFolder}"` });
+    setMoveDocTarget(null);
+    setMoveToFolder("");
+    fetchData();
   };
 
   // Drag & drop
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault(); e.stopPropagation(); setDragging(true);
-  }, []);
-
+  const handleDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setDragging(true); }, []);
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault(); e.stopPropagation();
     if (dropRef.current && !dropRef.current.contains(e.relatedTarget as Node)) setDragging(false);
   }, []);
-
   const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault(); e.stopPropagation(); setDragging(false);
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) await uploadFiles(files, activeFolder || uploadCategory);
   }, [vehicleId, activeFolder, uploadCategory]);
 
-  // Count docs per category
-  const folderCounts = CATEGORIES.map(cat => ({
-    category: cat,
-    count: documents.filter(d => d.category === cat).length,
+  const folderCounts = folders.map(f => ({
+    ...f,
+    count: documents.filter(d => d.category === f.name).length,
   }));
 
-  const folderDocs = activeFolder
-    ? documents.filter(d => d.category === activeFolder)
-    : [];
+  const folderDocs = activeFolder ? documents.filter(d => d.category === activeFolder) : [];
 
   if (loading) {
     return <div className="flex justify-center py-6"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
@@ -184,7 +255,6 @@ export default function VehicleDocuments({ vehicleId }: { vehicleId: string }) {
   if (activeFolder) {
     return (
       <div className="space-y-4">
-        {/* Header */}
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => setActiveFolder(null)}>
             <ArrowLeft className="h-4 w-4 mr-1" /> Zpět
@@ -196,18 +266,13 @@ export default function VehicleDocuments({ vehicleId }: { vehicleId: string }) {
 
         {/* Upload zone */}
         <div
-          ref={dropRef}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
+          ref={dropRef} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
           className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
             dragging ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-muted-foreground/50"
           }`}
         >
           <Upload className="h-6 w-6 mx-auto mb-1 text-muted-foreground" />
-          <p className="text-xs text-muted-foreground mb-2">
-            Přetáhněte soubory sem — automaticky se uloží do „{activeFolder}"
-          </p>
+          <p className="text-xs text-muted-foreground mb-2">Přetáhněte soubory sem — uloží se do „{activeFolder}"</p>
           <Label htmlFor="file-upload-folder" className="cursor-pointer">
             <Button asChild disabled={uploading} size="sm" variant="outline">
               <span>
@@ -233,6 +298,9 @@ export default function VehicleDocuments({ vehicleId }: { vehicleId: string }) {
                     {formatSize(doc.file_size)} · {new Date(doc.created_at).toLocaleDateString("cs")}
                   </p>
                 </div>
+                <Button variant="ghost" size="icon" onClick={() => { setMoveDocTarget(doc); setMoveToFolder(""); }} title="Přesunout">
+                  <FolderInput className="h-4 w-4" />
+                </Button>
                 <Button variant="ghost" size="icon" onClick={() => handleDownload(doc)} title="Stáhnout">
                   <Download className="h-4 w-4" />
                 </Button>
@@ -244,8 +312,12 @@ export default function VehicleDocuments({ vehicleId }: { vehicleId: string }) {
           </div>
         )}
 
-        {/* Delete dialog */}
-        <DeleteDialog deleteDoc={deleteDoc} setDeleteDoc={setDeleteDoc} onConfirm={confirmDelete} />
+        <DeleteDocDialog deleteDoc={deleteDoc} setDeleteDoc={setDeleteDoc} onConfirm={confirmDeleteDoc} />
+        <MoveDocDialog
+          doc={moveDocTarget} folders={folders} currentFolder={activeFolder}
+          moveToFolder={moveToFolder} setMoveToFolder={setMoveToFolder}
+          onClose={() => setMoveDocTarget(null)} onConfirm={handleMoveDoc}
+        />
       </div>
     );
   }
@@ -255,51 +327,110 @@ export default function VehicleDocuments({ vehicleId }: { vehicleId: string }) {
     <div className="space-y-4">
       {/* Folder grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-        {folderCounts.map(({ category: cat, count }) => (
-          <button
-            key={cat}
-            onClick={() => setActiveFolder(cat)}
-            className={`flex flex-col items-center gap-1 p-4 rounded-lg border transition-colors text-center hover:bg-accent/50 ${
-              count === 0 ? "opacity-50" : "bg-card"
-            }`}
-          >
-            <Folder className={`h-8 w-8 ${count > 0 ? "text-primary" : "text-muted-foreground"}`} />
-            <span className="text-xs font-medium leading-tight">{cat}</span>
-            <span className="text-[11px] text-muted-foreground">{pluralFiles(count)}</span>
-          </button>
+        {folderCounts.map(({ id, name, count }) => (
+          <div key={id} className={`relative group flex flex-col items-center gap-1 p-4 rounded-lg border transition-colors text-center hover:bg-accent/50 cursor-pointer ${count === 0 ? "opacity-50" : "bg-card"}`}>
+            <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 flex gap-0.5 transition-opacity">
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); setFolderDialog({ mode: "rename", folder: folders.find(f => f.id === id)! }); setFolderName(name); }} title="Přejmenovat">
+                <Pencil className="h-3 w-3" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteFolderTarget(folders.find(f => f.id === id)!); }} title="Smazat složku">
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </div>
+            <div onClick={() => setActiveFolder(name)} className="flex flex-col items-center gap-1 w-full">
+              <Folder className={`h-8 w-8 ${count > 0 ? "text-primary" : "text-muted-foreground"}`} />
+              <span className="text-xs font-medium leading-tight">{name}</span>
+              <span className="text-[11px] text-muted-foreground">{pluralFiles(count)}</span>
+            </div>
+          </div>
         ))}
+
+        {/* New folder button */}
+        <button
+          onClick={() => { setFolderDialog({ mode: "create" }); setFolderName(""); }}
+          className="flex flex-col items-center justify-center gap-1 p-4 rounded-lg border border-dashed border-muted-foreground/30 hover:border-muted-foreground/60 transition-colors text-muted-foreground hover:text-foreground"
+        >
+          <Plus className="h-8 w-8" />
+          <span className="text-xs font-medium">Nová složka</span>
+        </button>
       </div>
 
       {/* Upload from overview */}
-      <div className="flex items-end gap-3 pt-2">
-        <div className="w-48">
-          <Label className="text-xs">Složka</Label>
-          <Select value={uploadCategory} onValueChange={setUploadCategory}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-            </SelectContent>
-          </Select>
+      {folders.length > 0 && (
+        <div className="flex items-end gap-3 pt-2">
+          <div className="w-48">
+            <Label className="text-xs">Složka</Label>
+            <Select value={uploadCategory} onValueChange={setUploadCategory}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {folders.map(f => <SelectItem key={f.id} value={f.name}>{f.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="file-upload-overview" className="cursor-pointer">
+              <Button asChild disabled={uploading} size="sm">
+                <span>
+                  {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                  Nahrát dokument
+                </span>
+              </Button>
+            </Label>
+            <Input id="file-upload-overview" type="file" multiple className="hidden" onChange={handleUpload} />
+          </div>
         </div>
-        <div>
-          <Label htmlFor="file-upload-overview" className="cursor-pointer">
-            <Button asChild disabled={uploading} size="sm">
-              <span>
-                {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                Nahrát dokument
-              </span>
-            </Button>
-          </Label>
-          <Input id="file-upload-overview" type="file" multiple className="hidden" onChange={handleUpload} />
-        </div>
-      </div>
+      )}
 
-      <DeleteDialog deleteDoc={deleteDoc} setDeleteDoc={setDeleteDoc} onConfirm={confirmDelete} />
+      {/* Dialogs */}
+      <DeleteDocDialog deleteDoc={deleteDoc} setDeleteDoc={setDeleteDoc} onConfirm={confirmDeleteDoc} />
+
+      {/* Folder create/rename dialog */}
+      <Dialog open={!!folderDialog} onOpenChange={(open) => !open && setFolderDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{folderDialog?.mode === "create" ? "Nová složka" : "Přejmenovat složku"}</DialogTitle>
+          </DialogHeader>
+          <div className="py-2">
+            <Label>Název složky</Label>
+            <Input value={folderName} onChange={e => setFolderName(e.target.value)} placeholder="Název složky"
+              onKeyDown={e => { if (e.key === "Enter") folderDialog?.mode === "create" ? handleCreateFolder() : handleRenameFolder(); }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFolderDialog(null)}>Zrušit</Button>
+            <Button onClick={folderDialog?.mode === "create" ? handleCreateFolder : handleRenameFolder}>
+              {folderDialog?.mode === "create" ? "Vytvořit" : "Přejmenovat"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete folder confirmation */}
+      <AlertDialog open={!!deleteFolderTarget} onOpenChange={(open) => !open && setDeleteFolderTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Smazat složku „{deleteFolderTarget?.name}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {documents.filter(d => d.category === deleteFolderTarget?.name).length > 0
+                ? `Dokumenty ve složce budou přesunuty do „Ostatní".`
+                : "Složka je prázdná a bude odstraněna."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Zrušit</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteFolder} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Smazat
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
-function DeleteDialog({ deleteDoc, setDeleteDoc, onConfirm }: {
+// ── Sub-components ──
+
+function DeleteDocDialog({ deleteDoc, setDeleteDoc, onConfirm }: {
   deleteDoc: VehicleDocument | null;
   setDeleteDoc: (d: VehicleDocument | null) => void;
   onConfirm: () => void;
@@ -321,5 +452,39 @@ function DeleteDialog({ deleteDoc, setDeleteDoc, onConfirm }: {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  );
+}
+
+function MoveDocDialog({ doc, folders, currentFolder, moveToFolder, setMoveToFolder, onClose, onConfirm }: {
+  doc: VehicleDocument | null;
+  folders: DocumentFolder[];
+  currentFolder: string;
+  moveToFolder: string;
+  setMoveToFolder: (v: string) => void;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  const otherFolders = folders.filter(f => f.name !== currentFolder);
+  return (
+    <Dialog open={!!doc} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Přesunout „{doc?.name}"</DialogTitle>
+        </DialogHeader>
+        <div className="py-2">
+          <Label>Cílová složka</Label>
+          <Select value={moveToFolder} onValueChange={setMoveToFolder}>
+            <SelectTrigger><SelectValue placeholder="Vyberte složku" /></SelectTrigger>
+            <SelectContent>
+              {otherFolders.map(f => <SelectItem key={f.id} value={f.name}>{f.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Zrušit</Button>
+          <Button onClick={onConfirm} disabled={!moveToFolder}>Přesunout</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

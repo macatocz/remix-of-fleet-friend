@@ -1,40 +1,25 @@
 
 
-# Úprava polí na kartě vozidla – záložka Údaje
+# Zrušení záložky Nájezdy – tachometr z knihy jízd
 
-## Přehled změn
+## Co se změní
 
-Všechna pole v DB zůstanou TEXT — změny jsou čistě v UI. Stávající textová data, která neodpovídají novému formátu, se zobrazí jako prázdná ("—"), ale v DB zůstanou.
+Záložka **Nájezdy** na kartě vozidla se odstraní. Stav tachometru se bude počítat výhradně z posledního záznamu v `trip_logs.km_end`. Tabulka `vehicle_mileage` zůstane v DB (pro historická data), ale nebude se do ní zapisovat ani z ní číst.
 
-### Změny typů polí
+## Dopad na komponenty
 
-| Pole | Nový typ UI | Poznámka |
-|------|------------|----------|
-| **spravce** | Dropdown z tabulky `drivers` | Výběr řidiče |
-| **v_uzivani_od** | Datepicker | |
-| **v_uzivani_do** | Datepicker | |
-| **cena_pronajmu** → **Cena bez DPH** | Číselný input + suffix „Kč" | `type="number"` |
-| **srazka_soukrome** | Číselný input + suffix „Kč" | `type="number"` |
-| **mesicni_splatka** | Číselný input + suffix „Kč" | `type="number"` |
-| **nahradni_klic** | Dropdown: Praha, Brno, Liberec | Pobočka kde je klíč |
-| **lokalita** | Select: Praha, Brno, Liberec | Přidáno Brno |
-| **stk** → **STK do** | Datepicker | |
-| **zelena_karta** → **Zelená karta do** | Datepicker | |
-| **datum_zahajeni_leasingu** | Datepicker | |
-| **datum_ukonceni_leasingu** | Datepicker | |
-| **doba_leasingu** | Readonly, auto-výpočet | Rozdíl od/do v měsících |
-
-### Dálniční známka – nová tabulka `vehicle_vignettes`
-
-Nahradí textové pole. Tabulka: `id`, `vehicle_id`, `country` (CZE/DE/SVK/AUT), `valid_until` (date).
-
-UI: checkboxy pro země + datepicker expirace u každé zaškrtnuté.
+| Soubor | Změna |
+|--------|-------|
+| **VehicleDetail.tsx** | Odstranit tab „Nájezdy", import `VehicleMileage`, `Gauge`. Změnit fetch `vehicle_mileage` → fetch `trip_logs` (`km_end`, `date`) pro daný `vehicle_id`, seřazené sestupně. Předat do `VehicleAlerts`. |
+| **VehicleAlerts.tsx** | Beze změny rozhraní — stále přijímá `mileageRecords` (pole `{km, recorded_at}`), jen data přijdou z `trip_logs` místo `vehicle_mileage`. |
+| **VehicleNotifications.tsx** | Změnit fetch z `vehicle_mileage` na `trip_logs` — select `vehicle_id, km_end, date`, přemapovat na stejný formát `{vehicle_id, km, recorded_at}`. |
+| **VehicleMileage.tsx** | Smazat soubor (již se nepoužívá). |
 
 ## Technické kroky
 
-1. **Migrace**: CREATE TABLE `vehicle_vignettes` + RLS (authenticated CRUD)
-2. **Rozšířit `FieldDef`** o typy: `date`, `driver_select`, `currency` (number + Kč), `computed`, `vignettes`
-3. **Upravit `EditableField`** — datepicker, driver dropdown (fetch z `drivers`), currency input (`<input type="number">` + „Kč"), computed readonly, vignettes editor
-4. **Aktualizovat definice polí** v BASIC_FIELDS, LEASING_FIELDS, DOC_FIELDS, OPS_FIELDS
-5. **Vytvořit sub-komponent `VehicleVignettes`** pro správu dálničních známek
+1. **VehicleDetail.tsx**: Odstranit tab „Nájezdy" a `TabsContent value="mileage"`. Změnit useEffect fetch na `trip_logs` (sloupce `km_end`, `date`), filtrovat záznamy kde `km_end` není null.
+2. **VehicleNotifications.tsx**: Změnit fetch z `vehicle_mileage` na `trip_logs`, přemapovat pole.
+3. **Smazat** `src/components/VehicleMileage.tsx`.
+
+Žádné DB migrace nejsou potřeba.
 

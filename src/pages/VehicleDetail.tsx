@@ -39,11 +39,7 @@ interface FieldDef {
   computeFn?: (vehicle: any, editData: Record<string, string>) => string;
 }
 
-const BRANCH_OPTIONS = [
-  { value: "Praha", label: "Praha" },
-  { value: "Brno", label: "Brno" },
-  { value: "Liberec", label: "Liberec" },
-];
+// Branch options are now loaded dynamically from app_settings
 
 const BASIC_FIELDS: FieldDef[] = [
   { key: "znacka", label: "Značka / Model" },

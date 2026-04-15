@@ -582,6 +582,38 @@ export type Database = {
           },
         ]
       }
+      vehicle_vignettes: {
+        Row: {
+          country: string
+          created_at: string
+          id: string
+          valid_until: string
+          vehicle_id: string
+        }
+        Insert: {
+          country: string
+          created_at?: string
+          id?: string
+          valid_until: string
+          vehicle_id: string
+        }
+        Update: {
+          country?: string
+          created_at?: string
+          id?: string
+          valid_until?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_vignettes_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vehicles: {
         Row: {
           cena_pronajmu: string | null

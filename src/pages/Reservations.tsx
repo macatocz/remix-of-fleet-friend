@@ -60,6 +60,7 @@ const emptyForm: ReservationForm = {
 export default function Reservations() {
   const [reservations, setReservations] = useState<any[]>([]);
   const [vehicles, setVehicles] = useState<any[]>([]);
+  const [drivers, setDrivers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<ReservationForm>(emptyForm);

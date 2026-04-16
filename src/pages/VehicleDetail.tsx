@@ -281,7 +281,7 @@ function FieldRow({ field, vehicle, editing, editData, onEdit }: {
     return (
       <div className="space-y-1">
         <Label className="text-xs text-muted-foreground">{field.label}</Label>
-        <EditableField field={field} value={editData[field.key] ?? vehicle[field.key] ?? ""} onChange={v => onEdit(field.key, v)} />
+        <EditableField field={field} value={editData[field.key] ?? vehicle[field.key] ?? ""} onChange={v => onEdit(field.key, v)} onEdit={onEdit} />
       </div>
     );
   }

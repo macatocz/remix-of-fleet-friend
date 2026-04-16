@@ -48,6 +48,15 @@ const BASIC_FIELDS: FieldDef[] = [
   { key: "vin", label: "VIN" },
   { key: "vlastnik", label: "Vlastník" },
   {
+    key: "kategorie", label: "Kategorie", type: "select",
+    options: [
+      { value: "Ředitel", label: "Ředitel" },
+      { value: "Projektový manažer", label: "Projektový manažer" },
+      { value: "Konzultant Senior", label: "Konzultant Senior" },
+      { value: "Konzultant", label: "Konzultant" },
+    ]
+  },
+  {
     key: "typ_vlastnictvi", label: "Typ vlastnictví", type: "select",
     options: [
       { value: "majetek", label: "Majetek" },

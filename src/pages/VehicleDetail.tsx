@@ -84,7 +84,7 @@ const DOC_FIELDS: FieldDef[] = [
     key: "maly_tp", label: "Malý TP", type: "select",
     options: [{ value: "ANO", label: "ANO" }, { value: "NE", label: "NE" }]
   },
-  { key: "tankovaci_karty", label: "Tankovací karty" },
+  { key: "tankovaci_karty", label: "Tankovací karty", type: "select", options: [{ value: "ANO", label: "ANO" }, { value: "NE", label: "NE" }] },
   { key: "stk", label: "STK do", type: "date" },
   { key: "dalnicni_znamka", label: "Dálniční známka", type: "vignettes" },
   { key: "zelena_karta", label: "Zelená karta do", type: "date" },
@@ -544,7 +544,7 @@ export default function VehicleDetail() {
             <BookOpen className="mr-2 h-4 w-4" />Kniha jízd
           </TabsTrigger>
           <TabsTrigger value="fuelcards">
-            <CreditCard className="mr-2 h-4 w-4" />Tankování
+            <CreditCard className="mr-2 h-4 w-4" />Tankovací karty
           </TabsTrigger>
         </TabsList>
 

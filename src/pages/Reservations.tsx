@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from "@/components/ui/table";
@@ -21,6 +22,7 @@ import {
 import { Plus, CalendarDays, Loader2, Pencil, Trash2, Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const statusBadge = (status: string) => {
   switch (status) {
@@ -58,6 +60,7 @@ const emptyForm: ReservationForm = {
 };
 
 export default function Reservations() {
+  const { user } = useAuth();
   const [reservations, setReservations] = useState<any[]>([]);
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [drivers, setDrivers] = useState<any[]>([]);
@@ -69,15 +72,24 @@ export default function Reservations() {
   const [searchText, setSearchText] = useState("");
   const [filterVehicle, setFilterVehicle] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [myVehiclesOnly, setMyVehiclesOnly] = useState(false);
+  const [currentDriverId, setCurrentDriverId] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingPayload, setPendingPayload] = useState<any>(null);
   const { toast } = useToast();
 
+  // Fetch current user's driver ID
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase.from("drivers").select("id").eq("user_id", user.id).maybeSingle()
+      .then(({ data }) => setCurrentDriverId(data?.id || null));
+  }, [user?.id]);
+
   const fetchData = async () => {
     setLoading(true);
     const [resResult, vehResult, drvResult] = await Promise.all([
-      supabase.from("reservations").select("*, vehicles(znacka, rz)").order("date_from", { ascending: false }),
-      supabase.from("vehicles").select("id, znacka, rz").eq("status", "aktivní").order("znacka"),
+      supabase.from("reservations").select("*, vehicles(znacka, rz, spravce_id)").order("date_from", { ascending: false }),
+      supabase.from("vehicles").select("id, znacka, rz, spravce_id").eq("status", "aktivní").order("znacka"),
       supabase.from("drivers").select("id, first_name, last_name").eq("status", "aktivní").order("last_name"),
     ]);
     if (resResult.error) {
@@ -375,6 +387,12 @@ export default function Reservations() {
                 <SelectItem value="dokončeno">Dokončeno</SelectItem>
               </SelectContent>
             </Select>
+            {currentDriverId && (
+              <div className="flex items-center gap-2">
+                <Switch checked={myVehiclesOnly} onCheckedChange={setMyVehiclesOnly} id="my-vehicles" />
+                <Label htmlFor="my-vehicles" className="text-sm whitespace-nowrap cursor-pointer">Moje vozidla</Label>
+              </div>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -384,6 +402,7 @@ export default function Reservations() {
             const filtered = reservations.filter(r => {
               if (filterVehicle !== "all" && r.vehicle_id !== filterVehicle) return false;
               if (filterStatus !== "all" && r.status !== filterStatus) return false;
+              if (myVehiclesOnly && currentDriverId && r.vehicles?.spravce_id !== currentDriverId) return false;
               if (searchText) {
                 const s = searchText.toLowerCase();
                 const match = (r.driver_name || "").toLowerCase().includes(s)

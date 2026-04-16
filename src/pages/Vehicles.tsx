@@ -103,7 +103,7 @@ const statusBadge = (status: string) => {
 };
 
 interface VehicleFormData {
-  znacka: string; spravce: string; rz: string; vin: string; vlastnik: string;
+  znacka: string; spravce: string; spravce_id: string | null; rz: string; vin: string; vlastnik: string;
   typ_vlastnictvi: string; leasingova_spolecnost: string; doba_leasingu: string;
   najezd_za_rok: string; mesicni_splatka: string; datum_zahajeni_leasingu: string;
   datum_ukonceni_leasingu: string; cislo_smlouvy_leasing: string;
@@ -115,7 +115,7 @@ interface VehicleFormData {
 }
 
 const emptyForm: VehicleFormData = {
-  znacka: "", spravce: "", rz: "", vin: "", vlastnik: "",
+  znacka: "", spravce: "", spravce_id: null, rz: "", vin: "", vlastnik: "",
   typ_vlastnictvi: "majetek", leasingova_spolecnost: "", doba_leasingu: "",
   najezd_za_rok: "", mesicni_splatka: "", datum_zahajeni_leasingu: "",
   datum_ukonceni_leasingu: "", cislo_smlouvy_leasing: "",
@@ -141,6 +141,8 @@ export default function Vehicles() {
   const [activeViewId, setActiveViewId] = useState<string | null>(null);
   const [saveViewDialogOpen, setSaveViewDialogOpen] = useState(false);
   const [newViewName, setNewViewName] = useState("");
+  const [driversList, setDriversList] = useState<{ id: string; name: string }[]>([]);
+  const [companyName, setCompanyName] = useState("");
   const { toast } = useToast();
 
   const fetchVehicles = async () => {
@@ -154,7 +156,16 @@ export default function Vehicles() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchVehicles(); }, []);
+  useEffect(() => {
+    fetchVehicles();
+    Promise.all([
+      supabase.from("drivers").select("id, first_name, last_name").eq("status", "aktivní"),
+      supabase.from("company_settings").select("name").limit(1).maybeSingle(),
+    ]).then(([drvRes, compRes]) => {
+      setDriversList((drvRes.data || []).map((d: any) => ({ id: d.id, name: `${d.first_name} ${d.last_name}` })));
+      setCompanyName(compRes.data?.name || "Společnost");
+    });
+  }, []);
 
   const toggleColumn = (key: ColumnKey) => {
     setVisibleColumns(prev => {
@@ -270,7 +281,28 @@ export default function Vehicles() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div><Label>VIN</Label><Input placeholder="VIN kód" value={form.vin} onChange={e => updateForm("vin", e.target.value)} /></div>
-                <div><Label>Správce</Label><Input placeholder="Jméno správce" value={form.spravce} onChange={e => updateForm("spravce", e.target.value)} /></div>
+                <div>
+                  <Label>Správce</Label>
+                  <Select
+                    value={form.spravce_id || (form.spravce === "POOL" ? "__pool__" : "")}
+                    onValueChange={v => {
+                      if (v === "__pool__") {
+                        setForm(p => ({ ...p, spravce: "POOL", spravce_id: null }));
+                      } else {
+                        const driver = driversList.find(d => d.id === v);
+                        setForm(p => ({ ...p, spravce: driver?.name || "", spravce_id: v }));
+                      }
+                    }}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Vyberte správce" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__pool__">🏢 POOL – {companyName}</SelectItem>
+                      {driversList.map(d => (
+                        <SelectItem key={d.id} value={d.id}>👤 {d.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div><Label>Vlastník</Label><Input placeholder="Arval / Majetek" value={form.vlastnik} onChange={e => updateForm("vlastnik", e.target.value)} /></div>

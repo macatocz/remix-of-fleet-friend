@@ -131,7 +131,20 @@ export default function VehicleImport({ onImported }: Props) {
     }
 
     setImporting(true);
-    const { error } = await supabase.from("vehicles").insert(validRows.map(r => r.data));
+
+    // Fetch drivers to resolve spravce_id
+    const { data: allDrivers } = await supabase.from("drivers").select("id, first_name, last_name");
+    const driverMap = new Map((allDrivers || []).map((d: any) => [`${d.first_name} ${d.last_name}`, d.id]));
+
+    const rows = validRows.map(r => {
+      const row: Record<string, any> = { ...r.data };
+      if (row.spravce && driverMap.has(row.spravce)) {
+        row.spravce_id = driverMap.get(row.spravce);
+      }
+      return row;
+    });
+
+    const { error } = await supabase.from("vehicles").insert(rows);
     if (error) {
       toast({ title: "Chyba importu", description: error.message, variant: "destructive" });
     } else {

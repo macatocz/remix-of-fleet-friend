@@ -668,6 +668,7 @@ export type Database = {
           poznamky: string | null
           rz: string | null
           spravce: string | null
+          spravce_id: string | null
           srazka_soukrome: string | null
           status: string
           stk: string | null
@@ -703,6 +704,7 @@ export type Database = {
           poznamky?: string | null
           rz?: string | null
           spravce?: string | null
+          spravce_id?: string | null
           srazka_soukrome?: string | null
           status?: string
           stk?: string | null
@@ -738,6 +740,7 @@ export type Database = {
           poznamky?: string | null
           rz?: string | null
           spravce?: string | null
+          spravce_id?: string | null
           srazka_soukrome?: string | null
           status?: string
           stk?: string | null
@@ -752,7 +755,15 @@ export type Database = {
           zelena_karta?: string | null
           znacka?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_spravce_id_fkey"
+            columns: ["spravce_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

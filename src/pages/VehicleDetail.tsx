@@ -401,9 +401,14 @@ export default function VehicleDetail() {
 
   const handleSave = async () => {
     // Remove computed fields from save payload
-    const payload = { ...editData };
+    const payload: Record<string, any> = { ...editData };
     delete payload.doba_leasingu;
     delete payload.dalnicni_znamka;
+
+    // Convert spravce_id null marker
+    if (payload.spravce_id === "__null__") {
+      payload.spravce_id = null;
+    }
 
     if (Object.keys(payload).length === 0) {
       setEditing(false);

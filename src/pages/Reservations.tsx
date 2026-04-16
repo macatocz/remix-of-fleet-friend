@@ -60,6 +60,7 @@ const emptyForm: ReservationForm = {
 };
 
 export default function Reservations() {
+  const { user } = useAuth();
   const [reservations, setReservations] = useState<any[]>([]);
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [drivers, setDrivers] = useState<any[]>([]);
@@ -71,15 +72,24 @@ export default function Reservations() {
   const [searchText, setSearchText] = useState("");
   const [filterVehicle, setFilterVehicle] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [myVehiclesOnly, setMyVehiclesOnly] = useState(false);
+  const [currentDriverId, setCurrentDriverId] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingPayload, setPendingPayload] = useState<any>(null);
   const { toast } = useToast();
 
+  // Fetch current user's driver ID
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase.from("drivers").select("id").eq("user_id", user.id).maybeSingle()
+      .then(({ data }) => setCurrentDriverId(data?.id || null));
+  }, [user?.id]);
+
   const fetchData = async () => {
     setLoading(true);
     const [resResult, vehResult, drvResult] = await Promise.all([
-      supabase.from("reservations").select("*, vehicles(znacka, rz)").order("date_from", { ascending: false }),
-      supabase.from("vehicles").select("id, znacka, rz").eq("status", "aktivní").order("znacka"),
+      supabase.from("reservations").select("*, vehicles(znacka, rz, spravce_id)").order("date_from", { ascending: false }),
+      supabase.from("vehicles").select("id, znacka, rz, spravce_id").eq("status", "aktivní").order("znacka"),
       supabase.from("drivers").select("id, first_name, last_name").eq("status", "aktivní").order("last_name"),
     ]);
     if (resResult.error) {

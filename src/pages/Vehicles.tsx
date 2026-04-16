@@ -103,7 +103,7 @@ const statusBadge = (status: string) => {
 };
 
 interface VehicleFormData {
-  znacka: string; spravce: string; rz: string; vin: string; vlastnik: string;
+  znacka: string; spravce: string; spravce_id: string | null; rz: string; vin: string; vlastnik: string;
   typ_vlastnictvi: string; leasingova_spolecnost: string; doba_leasingu: string;
   najezd_za_rok: string; mesicni_splatka: string; datum_zahajeni_leasingu: string;
   datum_ukonceni_leasingu: string; cislo_smlouvy_leasing: string;
@@ -115,7 +115,7 @@ interface VehicleFormData {
 }
 
 const emptyForm: VehicleFormData = {
-  znacka: "", spravce: "", rz: "", vin: "", vlastnik: "",
+  znacka: "", spravce: "", spravce_id: null, rz: "", vin: "", vlastnik: "",
   typ_vlastnictvi: "majetek", leasingova_spolecnost: "", doba_leasingu: "",
   najezd_za_rok: "", mesicni_splatka: "", datum_zahajeni_leasingu: "",
   datum_ukonceni_leasingu: "", cislo_smlouvy_leasing: "",

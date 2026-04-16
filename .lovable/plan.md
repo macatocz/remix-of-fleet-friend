@@ -1,45 +1,28 @@
 
 
-# Správce vozidla: UUID reference + select (řidič / POOL)
+# Úprava karty „Dokumenty a kontroly" + přejmenování záložky
 
-## Koncept
+## Změny
 
-Select pro správce nabídne:
-- **„POOL – Název společnosti"** — vozidlo bez přiřazeného správce, `spravce_id = NULL`, textový `spravce = "POOL"`
-- **Jednotliví řidiči** — `spravce_id = driver.id`, `spravce = jméno`
+### 1. Pole „Tankovací karty" → Ano/Ne select (VehicleDetail.tsx)
 
-## 1. DB migrace
+V `DOC_FIELDS` (řádek 87) změnit pole `tankovaci_karty` z textového na select s volbami ANO/NE:
 
-```sql
-ALTER TABLE vehicles ADD COLUMN spravce_id uuid REFERENCES drivers(id);
-
-UPDATE vehicles v SET spravce_id = d.id
-FROM drivers d
-WHERE v.spravce = d.first_name || ' ' || d.last_name;
+```typescript
+{ key: "tankovaci_karty", label: "Tankovací karty", type: "select",
+  options: [{ value: "ANO", label: "ANO" }, { value: "NE", label: "NE" }] },
 ```
 
-## 2. Úprava `DriverSelectField` (VehicleDetail.tsx)
+### 2. Přejmenování záložky „Tankování" → „Tankovací karty" (VehicleDetail.tsx)
 
-- Načíst aktivní řidiče + název společnosti z `company_settings`
-- První volba: `"POOL – {název firmy}"` (hodnota `__pool__` → uloží `spravce_id = null`, `spravce = "POOL"`)
-- Ostatní: řidiči (hodnota = `driver.id` → uloží `spravce_id` i textový `spravce`)
-- Pole `spravce` na vehicles teď ukládá jak `spravce` text tak `spravce_id` UUID
+Na řádku 547 změnit text záložky:
 
-## 3. Úprava formuláře nového vozidla (Vehicles.tsx)
-
-- Pole „Správce" z textového inputu na stejný select (POOL / řidič)
-
-## 4. Filtr „Moje vozidla" v Reservations.tsx
-
-- Z `AuthContext` → `drivers.user_id = auth.uid()` → získat `driver.id`
-- Přepínač „Moje vozidla" filtruje kde `spravce_id === currentDriverId`
-
-## 5. Import (VehicleImport.tsx)
-
-- Při importu hledat řidiče podle jména → `spravce_id`; jinak `null`
+```
+<CreditCard className="mr-2 h-4 w-4" />Tankovací karty
+```
 
 ## Rozsah
-- 1 DB migrace (přidání sloupce + datová migrace)
-- 4 soubory: `VehicleDetail.tsx`, `Vehicles.tsx`, `Reservations.tsx`, `VehicleImport.tsx`
-- Uložit do memory pravidlo o POOLu
+- 1 soubor: `src/pages/VehicleDetail.tsx`
+- 2 řádky k úpravě
+- 0 DB migrací
 

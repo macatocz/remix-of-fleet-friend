@@ -656,6 +656,7 @@ export type Database = {
           datum_zahajeni_leasingu: string | null
           doba_leasingu: string | null
           id: string
+          kategorie: string | null
           leasingova_spolecnost: string | null
           lekarnicka: string | null
           lokalita: string | null
@@ -692,6 +693,7 @@ export type Database = {
           datum_zahajeni_leasingu?: string | null
           doba_leasingu?: string | null
           id?: string
+          kategorie?: string | null
           leasingova_spolecnost?: string | null
           lekarnicka?: string | null
           lokalita?: string | null
@@ -728,6 +730,7 @@ export type Database = {
           datum_zahajeni_leasingu?: string | null
           doba_leasingu?: string | null
           id?: string
+          kategorie?: string | null
           leasingova_spolecnost?: string | null
           lekarnicka?: string | null
           lokalita?: string | null

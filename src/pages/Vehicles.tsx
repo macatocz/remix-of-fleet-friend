@@ -281,7 +281,28 @@ export default function Vehicles() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div><Label>VIN</Label><Input placeholder="VIN kód" value={form.vin} onChange={e => updateForm("vin", e.target.value)} /></div>
-                <div><Label>Správce</Label><Input placeholder="Jméno správce" value={form.spravce} onChange={e => updateForm("spravce", e.target.value)} /></div>
+                <div>
+                  <Label>Správce</Label>
+                  <Select
+                    value={form.spravce_id || (form.spravce === "POOL" ? "__pool__" : "")}
+                    onValueChange={v => {
+                      if (v === "__pool__") {
+                        setForm(p => ({ ...p, spravce: "POOL", spravce_id: null }));
+                      } else {
+                        const driver = driversList.find(d => d.id === v);
+                        setForm(p => ({ ...p, spravce: driver?.name || "", spravce_id: v }));
+                      }
+                    }}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Vyberte správce" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__pool__">🏢 POOL – {companyName}</SelectItem>
+                      {driversList.map(d => (
+                        <SelectItem key={d.id} value={d.id}>👤 {d.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div><Label>Vlastník</Label><Input placeholder="Arval / Majetek" value={form.vlastnik} onChange={e => updateForm("vlastnik", e.target.value)} /></div>

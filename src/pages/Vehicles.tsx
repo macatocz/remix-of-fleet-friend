@@ -141,6 +141,8 @@ export default function Vehicles() {
   const [activeViewId, setActiveViewId] = useState<string | null>(null);
   const [saveViewDialogOpen, setSaveViewDialogOpen] = useState(false);
   const [newViewName, setNewViewName] = useState("");
+  const [driversList, setDriversList] = useState<{ id: string; name: string }[]>([]);
+  const [companyName, setCompanyName] = useState("");
   const { toast } = useToast();
 
   const fetchVehicles = async () => {
@@ -154,7 +156,16 @@ export default function Vehicles() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchVehicles(); }, []);
+  useEffect(() => {
+    fetchVehicles();
+    Promise.all([
+      supabase.from("drivers").select("id, first_name, last_name").eq("status", "aktivní"),
+      supabase.from("company_settings").select("name").limit(1).maybeSingle(),
+    ]).then(([drvRes, compRes]) => {
+      setDriversList((drvRes.data || []).map((d: any) => ({ id: d.id, name: `${d.first_name} ${d.last_name}` })));
+      setCompanyName(compRes.data?.name || "Společnost");
+    });
+  }, []);
 
   const toggleColumn = (key: ColumnKey) => {
     setVisibleColumns(prev => {

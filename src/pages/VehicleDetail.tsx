@@ -224,10 +224,10 @@ function DriverSelectField({ value, onChange, onSpravceIdChange }: { value: stri
   );
 }
 
-function EditableField({ field, value, onChange }: { field: FieldDef; value: string; onChange: (v: string) => void }) {
+function EditableField({ field, value, onChange, onEdit }: { field: FieldDef; value: string; onChange: (v: string) => void; onEdit?: (key: string, val: string) => void }) {
   if (field.type === "date") return <DatePickerField value={value} onChange={onChange} />;
   if (field.type === "currency") return <CurrencyField value={value} onChange={onChange} suffix={field.suffix || "Kč"} />;
-  if (field.type === "driver_select") return <DriverSelectField value={value} onChange={onChange} />;
+  if (field.type === "driver_select") return <DriverSelectField value={value} onChange={onChange} onSpravceIdChange={(id) => onEdit?.("spravce_id", id || "__null__")} />;
   if (field.type === "select" && field.options) {
     return (
       <Select value={value || ""} onValueChange={onChange}>

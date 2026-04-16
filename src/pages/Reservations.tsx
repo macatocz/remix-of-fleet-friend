@@ -387,6 +387,12 @@ export default function Reservations() {
                 <SelectItem value="dokončeno">Dokončeno</SelectItem>
               </SelectContent>
             </Select>
+            {currentDriverId && (
+              <div className="flex items-center gap-2">
+                <Switch checked={myVehiclesOnly} onCheckedChange={setMyVehiclesOnly} id="my-vehicles" />
+                <Label htmlFor="my-vehicles" className="text-sm whitespace-nowrap cursor-pointer">Moje vozidla</Label>
+              </div>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -396,6 +402,7 @@ export default function Reservations() {
             const filtered = reservations.filter(r => {
               if (filterVehicle !== "all" && r.vehicle_id !== filterVehicle) return false;
               if (filterStatus !== "all" && r.status !== filterStatus) return false;
+              if (myVehiclesOnly && currentDriverId && r.vehicles?.spravce_id !== currentDriverId) return false;
               if (searchText) {
                 const s = searchText.toLowerCase();
                 const match = (r.driver_name || "").toLowerCase().includes(s)

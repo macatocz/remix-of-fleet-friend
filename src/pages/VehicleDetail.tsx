@@ -184,20 +184,40 @@ function CurrencyField({ value, onChange, suffix }: { value: string; onChange: (
   );
 }
 
-function DriverSelectField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function DriverSelectField({ value, onChange, onSpravceIdChange }: { value: string; onChange: (v: string) => void; onSpravceIdChange?: (id: string | null) => void }) {
   const [drivers, setDrivers] = useState<{ id: string; name: string }[]>([]);
+  const [companyName, setCompanyName] = useState<string>("");
   useEffect(() => {
-    supabase.from("drivers").select("id, first_name, last_name").eq("status", "aktivní")
-      .then(({ data }) => {
-        setDrivers((data || []).map((d: any) => ({ id: d.id, name: `${d.first_name} ${d.last_name}` })));
-      });
+    Promise.all([
+      supabase.from("drivers").select("id, first_name, last_name").eq("status", "aktivní"),
+      supabase.from("company_settings").select("name").limit(1).maybeSingle(),
+    ]).then(([drvRes, compRes]) => {
+      setDrivers((drvRes.data || []).map((d: any) => ({ id: d.id, name: `${d.first_name} ${d.last_name}` })));
+      setCompanyName(compRes.data?.name || "Společnost");
+    });
   }, []);
+
+  const handleChange = (v: string) => {
+    if (v === "__pool__") {
+      onChange("POOL");
+      onSpravceIdChange?.(null);
+    } else {
+      const driver = drivers.find(d => d.id === v);
+      onChange(driver?.name || v);
+      onSpravceIdChange?.(v);
+    }
+  };
+
+  // Determine current select value from spravce text
+  const selectValue = value === "POOL" ? "__pool__" : drivers.find(d => d.name === value)?.id || "";
+
   return (
-    <Select value={value || ""} onValueChange={onChange}>
-      <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Vyberte řidiče" /></SelectTrigger>
+    <Select value={selectValue} onValueChange={handleChange}>
+      <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Vyberte správce" /></SelectTrigger>
       <SelectContent>
+        <SelectItem value="__pool__">🏢 POOL – {companyName}</SelectItem>
         {drivers.map((d) => (
-          <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>
+          <SelectItem key={d.id} value={d.id}>👤 {d.name}</SelectItem>
         ))}
       </SelectContent>
     </Select>

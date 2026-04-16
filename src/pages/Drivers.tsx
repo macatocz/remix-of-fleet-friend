@@ -68,7 +68,7 @@ export default function Drivers() {
   const fetchData = async () => {
     setLoading(true);
     const [driversRes, vehiclesRes] = await Promise.all([
-      supabase.from("drivers").select("*, vehicles(znacka, rz)").order("last_name"),
+      supabase.from("drivers").select("*, vehicles!drivers_vehicle_id_fkey(znacka, rz)").order("last_name"),
       supabase.from("vehicles").select("id, znacka, rz").eq("status", "aktivní").order("znacka"),
     ]);
     if (driversRes.error) {

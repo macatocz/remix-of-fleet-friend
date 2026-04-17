@@ -21,10 +21,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, Columns3, Loader2, Save, Bookmark, Trash2, Star } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus, Search, Columns3, Loader2, Save, Bookmark, Trash2, Star, Download, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import VehicleImport from "@/components/VehicleImport";
+import * as XLSX from "xlsx";
 
 // All available columns definition
 const ALL_COLUMNS = [
@@ -32,6 +34,7 @@ const ALL_COLUMNS = [
   { key: "spravce", label: "Správce" },
   { key: "rz", label: "RZ" },
   { key: "vin", label: "VIN" },
+  { key: "kategorie", label: "Kategorie" },
   { key: "vlastnik", label: "Vlastník" },
   { key: "typ_vlastnictvi", label: "Typ vlastnictví" },
   { key: "leasingova_spolecnost", label: "Leasingová spol." },
@@ -96,6 +99,7 @@ function getSavedViews(): SavedView[] {
 const statusBadge = (status: string) => {
   switch (status) {
     case "aktivní": return <Badge className="bg-success text-success-foreground">Aktivní</Badge>;
+    case "objednáno": return <Badge className="bg-info text-info-foreground">Objednáno</Badge>;
     case "v_servisu": return <Badge className="bg-warning text-warning-foreground">V servisu</Badge>;
     case "vyřazeno": return <Badge variant="secondary">Vyřazeno</Badge>;
     default: return <Badge>{status}</Badge>;
@@ -143,6 +147,10 @@ export default function Vehicles() {
   const [newViewName, setNewViewName] = useState("");
   const [driversList, setDriversList] = useState<{ id: string; name: string }[]>([]);
   const [companyName, setCompanyName] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDialog, setBulkDialog] = useState<null | "status" | "spravce" | "kategorie">(null);
+  const [bulkValue, setBulkValue] = useState("");
+  const [bulkSpravceId, setBulkSpravceId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchVehicles = async () => {
@@ -259,6 +267,64 @@ export default function Vehicles() {
     }
     return val || "—";
   };
+
+  const toggleSelected = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedIds(prev => {
+      if (prev.size === filtered.length) return new Set();
+      return new Set(filtered.map((v: any) => v.id));
+    });
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const exportSelected = () => {
+    const rows = vehicles.filter(v => selectedIds.has(v.id)).map(v => {
+      const row: Record<string, any> = {};
+      ALL_COLUMNS.forEach(c => { row[c.label] = v[c.key] ?? ""; });
+      return row;
+    });
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Vozidla");
+    XLSX.writeFile(wb, `vozidla_export_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    toast({ title: "Export hotov", description: `Exportováno ${rows.length} vozidel.` });
+  };
+
+  const applyBulk = async () => {
+    if (!bulkDialog) return;
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    let payload: Record<string, any> = {};
+    if (bulkDialog === "status") payload = { status: bulkValue };
+    if (bulkDialog === "kategorie") payload = { kategorie: bulkValue };
+    if (bulkDialog === "spravce") {
+      if (bulkSpravceId === "__pool__") payload = { spravce: "POOL", spravce_id: null };
+      else {
+        const drv = driversList.find(d => d.id === bulkSpravceId);
+        payload = { spravce: drv?.name || "", spravce_id: bulkSpravceId };
+      }
+    }
+    const { error } = await supabase.from("vehicles").update(payload as any).in("id", ids);
+    if (error) {
+      toast({ title: "Chyba", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Hromadná změna provedena", description: `Upraveno ${ids.length} vozidel.` });
+      setBulkDialog(null);
+      setBulkValue("");
+      setBulkSpravceId(null);
+      clearSelection();
+      fetchVehicles();
+    }
+  };
+
 
   return (
     <div className="space-y-6">
@@ -423,6 +489,7 @@ export default function Vehicles() {
               <SelectContent>
                 <SelectItem value="all">Všechny stavy</SelectItem>
                 <SelectItem value="aktivní">Aktivní</SelectItem>
+                <SelectItem value="objednáno">Objednáno</SelectItem>
                 <SelectItem value="v_servisu">V servisu</SelectItem>
                 <SelectItem value="vyřazeno">Vyřazeno</SelectItem>
               </SelectContent>
@@ -491,6 +558,17 @@ export default function Vehicles() {
           </div>
         </CardHeader>
         <CardContent>
+          {selectedIds.size > 0 && (
+            <div className="mb-4 flex flex-wrap items-center gap-2 p-3 rounded-md bg-primary/10 border border-primary/30">
+              <span className="text-sm font-medium">Vybráno: {selectedIds.size}</span>
+              <div className="flex-1" />
+              <Button size="sm" variant="outline" onClick={() => { setBulkDialog("status"); setBulkValue(""); }}>Změnit stav</Button>
+              <Button size="sm" variant="outline" onClick={() => { setBulkDialog("spravce"); setBulkSpravceId(null); }}>Změnit správce</Button>
+              <Button size="sm" variant="outline" onClick={() => { setBulkDialog("kategorie"); setBulkValue(""); }}>Změnit kategorii</Button>
+              <Button size="sm" variant="outline" onClick={exportSelected}><Download className="h-3.5 w-3.5 mr-1" />Export XLSX</Button>
+              <Button size="sm" variant="ghost" onClick={clearSelection}><X className="h-3.5 w-3.5" /></Button>
+            </div>
+          )}
           {loading ? (
             <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
           ) : (
@@ -498,6 +576,13 @@ export default function Vehicles() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={filtered.length > 0 && selectedIds.size === filtered.length}
+                        onCheckedChange={toggleSelectAll}
+                        aria-label="Vybrat vše"
+                      />
+                    </TableHead>
                     {ALL_COLUMNS.filter(c => visibleColumns.includes(c.key)).map(col => (
                       <SortableTableHead key={col.key} sortKey={col.key} currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} className="whitespace-nowrap">{col.label}</SortableTableHead>
                     ))}
@@ -506,13 +591,20 @@ export default function Vehicles() {
                 <TableBody>
                   {filtered.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={visibleColumns.length} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={visibleColumns.length + 1} className="text-center py-8 text-muted-foreground">
                         Žádná vozidla nenalezena
                       </TableCell>
                     </TableRow>
                   ) : (
                      filtered.map((v) => (
-                       <TableRow key={v.id} className="cursor-pointer" onClick={() => navigate(`/vozidla/${v.id}`)}>
+                       <TableRow key={v.id} className="cursor-pointer" data-state={selectedIds.has(v.id) ? "selected" : undefined} onClick={() => navigate(`/vozidla/${v.id}`)}>
+                         <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
+                           <Checkbox
+                             checked={selectedIds.has(v.id)}
+                             onCheckedChange={() => toggleSelected(v.id)}
+                             aria-label={`Vybrat ${v.rz || v.znacka}`}
+                           />
+                         </TableCell>
                          {ALL_COLUMNS.filter(c => visibleColumns.includes(c.key)).map(col => (
                            <TableCell key={col.key} className="whitespace-nowrap">
                              {renderCellValue(v, col.key)}
@@ -553,6 +645,68 @@ export default function Vehicles() {
             <Button variant="outline" onClick={() => setSaveViewDialogOpen(false)}>Zrušit</Button>
             <Button onClick={saveCurrentView} disabled={!newViewName.trim()}>
               <Save className="mr-2 h-4 w-4" />Uložit
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk edit dialog */}
+      <Dialog open={!!bulkDialog} onOpenChange={(o) => !o && setBulkDialog(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {bulkDialog === "status" && "Hromadná změna stavu"}
+              {bulkDialog === "spravce" && "Hromadná změna správce"}
+              {bulkDialog === "kategorie" && "Hromadná změna kategorie"}
+            </DialogTitle>
+            <DialogDescription>Změna se aplikuje na {selectedIds.size} vybraných vozidel.</DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            {bulkDialog === "status" && (
+              <Select value={bulkValue} onValueChange={setBulkValue}>
+                <SelectTrigger><SelectValue placeholder="Vyberte stav" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="aktivní">Aktivní</SelectItem>
+                  <SelectItem value="objednáno">Objednáno</SelectItem>
+                  <SelectItem value="v_servisu">V servisu</SelectItem>
+                  <SelectItem value="vyřazeno">Vyřazeno</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+            {bulkDialog === "kategorie" && (
+              <Select value={bulkValue} onValueChange={setBulkValue}>
+                <SelectTrigger><SelectValue placeholder="Vyberte kategorii" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Ředitel">Ředitel</SelectItem>
+                  <SelectItem value="Projektový manažer">Projektový manažer</SelectItem>
+                  <SelectItem value="Konzultant Senior">Konzultant Senior</SelectItem>
+                  <SelectItem value="Konzultant">Konzultant</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+            {bulkDialog === "spravce" && (
+              <Select value={bulkSpravceId || ""} onValueChange={setBulkSpravceId}>
+                <SelectTrigger><SelectValue placeholder="Vyberte správce" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__pool__">🏢 POOL – {companyName}</SelectItem>
+                  {driversList.map(d => (
+                    <SelectItem key={d.id} value={d.id}>👤 {d.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkDialog(null)}>Zrušit</Button>
+            <Button
+              onClick={applyBulk}
+              disabled={
+                (bulkDialog === "status" && !bulkValue) ||
+                (bulkDialog === "kategorie" && !bulkValue) ||
+                (bulkDialog === "spravce" && !bulkSpravceId)
+              }
+            >
+              Aplikovat
             </Button>
           </DialogFooter>
         </DialogContent>

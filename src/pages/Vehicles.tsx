@@ -268,6 +268,64 @@ export default function Vehicles() {
     return val || "—";
   };
 
+  const toggleSelected = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedIds(prev => {
+      if (prev.size === filtered.length) return new Set();
+      return new Set(filtered.map((v: any) => v.id));
+    });
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const exportSelected = () => {
+    const rows = vehicles.filter(v => selectedIds.has(v.id)).map(v => {
+      const row: Record<string, any> = {};
+      ALL_COLUMNS.forEach(c => { row[c.label] = v[c.key] ?? ""; });
+      return row;
+    });
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Vozidla");
+    XLSX.writeFile(wb, `vozidla_export_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    toast({ title: "Export hotov", description: `Exportováno ${rows.length} vozidel.` });
+  };
+
+  const applyBulk = async () => {
+    if (!bulkDialog) return;
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    let payload: Record<string, any> = {};
+    if (bulkDialog === "status") payload = { status: bulkValue };
+    if (bulkDialog === "kategorie") payload = { kategorie: bulkValue };
+    if (bulkDialog === "spravce") {
+      if (bulkSpravceId === "__pool__") payload = { spravce: "POOL", spravce_id: null };
+      else {
+        const drv = driversList.find(d => d.id === bulkSpravceId);
+        payload = { spravce: drv?.name || "", spravce_id: bulkSpravceId };
+      }
+    }
+    const { error } = await supabase.from("vehicles").update(payload).in("id", ids);
+    if (error) {
+      toast({ title: "Chyba", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Hromadná změna provedena", description: `Upraveno ${ids.length} vozidel.` });
+      setBulkDialog(null);
+      setBulkValue("");
+      setBulkSpravceId(null);
+      clearSelection();
+      fetchVehicles();
+    }
+  };
+
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

@@ -85,10 +85,14 @@ export default function Dashboard() {
       Promise.all([
         supabase.from("service_plans").select("id, vehicle_id, type, next_due_date, next_due_km"),
         supabase.from("vehicle_mileage").select("vehicle_id, km, recorded_at").order("recorded_at", { ascending: false }),
-      ]).then(([planRes, milRes]) => {
+        supabase.from("trip_logs").select("vehicle_id, km_end").not("km_end", "is", null),
+      ]).then(([planRes, milRes, tripRes]) => {
         const lastKm: Record<string, number> = {};
         (milRes.data || []).forEach((m: any) => {
-          if (lastKm[m.vehicle_id] === undefined) lastKm[m.vehicle_id] = m.km;
+          if (lastKm[m.vehicle_id] === undefined || m.km > lastKm[m.vehicle_id]) lastKm[m.vehicle_id] = m.km;
+        });
+        (tripRes.data || []).forEach((t: any) => {
+          if (lastKm[t.vehicle_id] === undefined || t.km_end > lastKm[t.vehicle_id]) lastKm[t.vehicle_id] = t.km_end;
         });
         const items = (planRes.data || []).map((p: any) => {
           const v = vehiclesById[p.vehicle_id];

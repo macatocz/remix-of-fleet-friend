@@ -649,6 +649,68 @@ export default function Vehicles() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Bulk edit dialog */}
+      <Dialog open={!!bulkDialog} onOpenChange={(o) => !o && setBulkDialog(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {bulkDialog === "status" && "Hromadná změna stavu"}
+              {bulkDialog === "spravce" && "Hromadná změna správce"}
+              {bulkDialog === "kategorie" && "Hromadná změna kategorie"}
+            </DialogTitle>
+            <DialogDescription>Změna se aplikuje na {selectedIds.size} vybraných vozidel.</DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            {bulkDialog === "status" && (
+              <Select value={bulkValue} onValueChange={setBulkValue}>
+                <SelectTrigger><SelectValue placeholder="Vyberte stav" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="aktivní">Aktivní</SelectItem>
+                  <SelectItem value="objednáno">Objednáno</SelectItem>
+                  <SelectItem value="v_servisu">V servisu</SelectItem>
+                  <SelectItem value="vyřazeno">Vyřazeno</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+            {bulkDialog === "kategorie" && (
+              <Select value={bulkValue} onValueChange={setBulkValue}>
+                <SelectTrigger><SelectValue placeholder="Vyberte kategorii" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Ředitel">Ředitel</SelectItem>
+                  <SelectItem value="Projektový manažer">Projektový manažer</SelectItem>
+                  <SelectItem value="Konzultant Senior">Konzultant Senior</SelectItem>
+                  <SelectItem value="Konzultant">Konzultant</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+            {bulkDialog === "spravce" && (
+              <Select value={bulkSpravceId || ""} onValueChange={setBulkSpravceId}>
+                <SelectTrigger><SelectValue placeholder="Vyberte správce" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__pool__">🏢 POOL – {companyName}</SelectItem>
+                  {driversList.map(d => (
+                    <SelectItem key={d.id} value={d.id}>👤 {d.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkDialog(null)}>Zrušit</Button>
+            <Button
+              onClick={applyBulk}
+              disabled={
+                (bulkDialog === "status" && !bulkValue) ||
+                (bulkDialog === "kategorie" && !bulkValue) ||
+                (bulkDialog === "spravce" && !bulkSpravceId)
+              }
+            >
+              Aplikovat
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

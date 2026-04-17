@@ -88,12 +88,16 @@ export default function VehicleServicePlan({ vehicleId }: { vehicleId: string })
 
   const fetchData = async () => {
     setLoading(true);
-    const [planRes, mileageRes] = await Promise.all([
+    const [planRes, mileageRes, tripRes] = await Promise.all([
       supabase.from("service_plans").select("*").eq("vehicle_id", vehicleId).order("next_due_date", { ascending: true, nullsFirst: false }),
       supabase.from("vehicle_mileage").select("km").eq("vehicle_id", vehicleId).order("recorded_at", { ascending: false }).limit(1),
+      supabase.from("trip_logs").select("km_end").eq("vehicle_id", vehicleId).not("km_end", "is", null).order("date", { ascending: false }).limit(1),
     ]);
     setPlans((planRes.data as ServicePlan[]) || []);
-    setCurrentKm(mileageRes.data?.[0]?.km ?? null);
+    const mKm = mileageRes.data?.[0]?.km ?? null;
+    const tKm = tripRes.data?.[0]?.km_end ?? null;
+    const candidates = [mKm, tKm].filter((v): v is number => typeof v === "number");
+    setCurrentKm(candidates.length ? Math.max(...candidates) : null);
     setLoading(false);
   };
 

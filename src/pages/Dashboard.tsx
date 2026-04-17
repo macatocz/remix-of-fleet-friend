@@ -9,6 +9,7 @@ import {
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import VehicleNotifications from "@/components/VehicleNotifications";
+import DashboardExtraWidgets from "@/components/DashboardExtraWidgets";
 
 function parseDateString(s: string | null): Date | null {
   if (!s) return null;
@@ -357,6 +358,9 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Extra widgety */}
+      <DashboardExtraWidgets />
 
       {/* Notifications */}
       <VehicleNotifications />

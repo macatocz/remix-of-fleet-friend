@@ -40,6 +40,7 @@ export default function Dashboard() {
   const [monthlyCostTrend, setMonthlyCostTrend] = useState<any[]>([]);
   const [insuranceSoon, setInsuranceSoon] = useState<{ id: string; label: string; days: number; type: string }[]>([]);
   const [leasingSoon, setLeasingSoon] = useState<{ id: string; label: string; days: number }[]>([]);
+  const [serviceSoon, setServiceSoon] = useState<{ id: string; vehicleId: string; label: string; type: string; daysOrKm: string; overdue: boolean }[]>([]);
 
   useEffect(() => {
     // Fetch vehicles
@@ -77,6 +78,46 @@ export default function Dashboard() {
         })
         .filter(Boolean) as any[];
       setLeasingSoon(leasing.sort((a, b) => a.days - b.days));
+
+      // Service plans approaching (across all active vehicles)
+      const vehiclesById: Record<string, any> = {};
+      data.forEach(v => { vehiclesById[v.id] = v; });
+      Promise.all([
+        supabase.from("service_plans").select("id, vehicle_id, type, next_due_date, next_due_km"),
+        supabase.from("vehicle_mileage").select("vehicle_id, km, recorded_at").order("recorded_at", { ascending: false }),
+      ]).then(([planRes, milRes]) => {
+        const lastKm: Record<string, number> = {};
+        (milRes.data || []).forEach((m: any) => {
+          if (lastKm[m.vehicle_id] === undefined) lastKm[m.vehicle_id] = m.km;
+        });
+        const items = (planRes.data || []).map((p: any) => {
+          const v = vehiclesById[p.vehicle_id];
+          if (!v) return null;
+          const daysToDate = p.next_due_date ? daysDiff(new Date(p.next_due_date)) : null;
+          const km = lastKm[p.vehicle_id];
+          const kmToDue = p.next_due_km && km !== undefined ? p.next_due_km - km : null;
+          const overdue = (daysToDate !== null && daysToDate < 0) || (kmToDue !== null && kmToDue < 0);
+          const soon = !overdue && ((daysToDate !== null && daysToDate <= 30) || (kmToDue !== null && kmToDue <= 1000));
+          if (!overdue && !soon) return null;
+          let badge = "";
+          if (overdue) {
+            if (daysToDate !== null && daysToDate < 0) badge = `${Math.abs(daysToDate)}d po`;
+            else if (kmToDue !== null) badge = `${Math.abs(kmToDue).toLocaleString("cs-CZ")} km po`;
+          } else {
+            if (daysToDate !== null && daysToDate <= 30) badge = `${daysToDate}d`;
+            else if (kmToDue !== null) badge = `${kmToDue.toLocaleString("cs-CZ")} km`;
+          }
+          return {
+            id: p.id,
+            vehicleId: p.vehicle_id,
+            label: `${v.rz || "?"} – ${v.znacka || "?"}`,
+            type: p.type,
+            daysOrKm: badge,
+            overdue,
+          };
+        }).filter(Boolean) as any[];
+        setServiceSoon(items);
+      });
     });
 
     // Fetch insurance approaching
@@ -331,7 +372,34 @@ export default function Dashboard() {
           </Card>
         )}
 
-        {/* Reservations by vehicle pie */}
+        {/* Service plans approaching */}
+        {serviceSoon.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Wrench className="h-5 w-5 text-warning" />
+                Blížící se plánovaný servis
+                <Badge variant="secondary">{serviceSoon.length}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 max-h-[220px] overflow-y-auto">
+                {serviceSoon.map(s => (
+                  <div key={s.id} className="flex items-center justify-between p-2.5 rounded-md bg-muted/50 hover:bg-muted cursor-pointer transition-colors" onClick={() => navigate(`/vozidla/${s.vehicleId}`)}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Wrench className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="text-sm font-medium truncate">{s.label}</span>
+                      <Badge variant="outline" className="text-xs shrink-0">{s.type}</Badge>
+                    </div>
+                    <Badge variant={s.overdue ? "destructive" : "secondary"} className="text-xs shrink-0">
+                      {s.daysOrKm}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">

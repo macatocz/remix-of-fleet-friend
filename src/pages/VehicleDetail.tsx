@@ -29,6 +29,7 @@ import VehicleService from "@/components/VehicleService";
 import VehicleTripLogInline from "@/components/VehicleTripLogInline";
 import VehicleFuelCards from "@/components/VehicleFuelCards";
 import VehicleVignettes from "@/components/VehicleVignettes";
+import VehicleServicePlan from "@/components/VehicleServicePlan";
 
 interface FieldDef {
   key: string;
@@ -588,11 +589,26 @@ export default function VehicleDetail() {
 
 
         <TabsContent value="service" className="mt-6">
-          <Card>
-            <CardContent className="pt-6">
-              <VehicleService vehicleId={vehicle.id} />
-            </CardContent>
-          </Card>
+          <Tabs defaultValue="history">
+            <TabsList>
+              <TabsTrigger value="history">Historie servisu</TabsTrigger>
+              <TabsTrigger value="plan">Servisní plán</TabsTrigger>
+            </TabsList>
+            <TabsContent value="history" className="mt-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <VehicleService vehicleId={vehicle.id} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="plan" className="mt-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <VehicleServicePlan vehicleId={vehicle.id} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
         <TabsContent value="triplog" className="mt-6">

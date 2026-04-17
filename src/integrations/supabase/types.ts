@@ -392,6 +392,51 @@ export type Database = {
           },
         ]
       }
+      service_plans: {
+        Row: {
+          created_at: string
+          id: string
+          interval_km: number | null
+          interval_months: number | null
+          last_done_date: string | null
+          last_done_km: number | null
+          next_due_date: string | null
+          next_due_km: number | null
+          notes: string | null
+          type: string
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          interval_km?: number | null
+          interval_months?: number | null
+          last_done_date?: string | null
+          last_done_km?: number | null
+          next_due_date?: string | null
+          next_due_km?: number | null
+          notes?: string | null
+          type: string
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          interval_km?: number | null
+          interval_months?: number | null
+          last_done_date?: string | null
+          last_done_km?: number | null
+          next_due_date?: string | null
+          next_due_km?: number | null
+          notes?: string | null
+          type?: string
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: []
+      }
       service_records: {
         Row: {
           cost: number | null

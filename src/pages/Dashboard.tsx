@@ -372,7 +372,34 @@ export default function Dashboard() {
           </Card>
         )}
 
-        {/* Reservations by vehicle pie */}
+        {/* Service plans approaching */}
+        {serviceSoon.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Wrench className="h-5 w-5 text-warning" />
+                Blížící se plánovaný servis
+                <Badge variant="secondary">{serviceSoon.length}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 max-h-[220px] overflow-y-auto">
+                {serviceSoon.map(s => (
+                  <div key={s.id} className="flex items-center justify-between p-2.5 rounded-md bg-muted/50 hover:bg-muted cursor-pointer transition-colors" onClick={() => navigate(`/vozidla/${s.vehicleId}`)}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Wrench className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="text-sm font-medium truncate">{s.label}</span>
+                      <Badge variant="outline" className="text-xs shrink-0">{s.type}</Badge>
+                    </div>
+                    <Badge variant={s.overdue ? "destructive" : "secondary"} className="text-xs shrink-0">
+                      {s.daysOrKm}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">

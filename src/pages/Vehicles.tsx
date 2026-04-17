@@ -312,7 +312,7 @@ export default function Vehicles() {
         payload = { spravce: drv?.name || "", spravce_id: bulkSpravceId };
       }
     }
-    const { error } = await supabase.from("vehicles").update(payload).in("id", ids);
+    const { error } = await supabase.from("vehicles").update(payload as any).in("id", ids);
     if (error) {
       toast({ title: "Chyba", description: error.message, variant: "destructive" });
     } else {

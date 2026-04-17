@@ -21,10 +21,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, Columns3, Loader2, Save, Bookmark, Trash2, Star } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus, Search, Columns3, Loader2, Save, Bookmark, Trash2, Star, Download, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import VehicleImport from "@/components/VehicleImport";
+import * as XLSX from "xlsx";
 
 // All available columns definition
 const ALL_COLUMNS = [
@@ -145,6 +147,10 @@ export default function Vehicles() {
   const [newViewName, setNewViewName] = useState("");
   const [driversList, setDriversList] = useState<{ id: string; name: string }[]>([]);
   const [companyName, setCompanyName] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDialog, setBulkDialog] = useState<null | "status" | "spravce" | "kategorie">(null);
+  const [bulkValue, setBulkValue] = useState("");
+  const [bulkSpravceId, setBulkSpravceId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchVehicles = async () => {

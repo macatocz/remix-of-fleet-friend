@@ -78,6 +78,46 @@ export default function Dashboard() {
         })
         .filter(Boolean) as any[];
       setLeasingSoon(leasing.sort((a, b) => a.days - b.days));
+
+      // Service plans approaching (across all active vehicles)
+      const vehiclesById: Record<string, any> = {};
+      data.forEach(v => { vehiclesById[v.id] = v; });
+      Promise.all([
+        supabase.from("service_plans").select("id, vehicle_id, type, next_due_date, next_due_km"),
+        supabase.from("vehicle_mileage").select("vehicle_id, km, recorded_at").order("recorded_at", { ascending: false }),
+      ]).then(([planRes, milRes]) => {
+        const lastKm: Record<string, number> = {};
+        (milRes.data || []).forEach((m: any) => {
+          if (lastKm[m.vehicle_id] === undefined) lastKm[m.vehicle_id] = m.km;
+        });
+        const items = (planRes.data || []).map((p: any) => {
+          const v = vehiclesById[p.vehicle_id];
+          if (!v) return null;
+          const daysToDate = p.next_due_date ? daysDiff(new Date(p.next_due_date)) : null;
+          const km = lastKm[p.vehicle_id];
+          const kmToDue = p.next_due_km && km !== undefined ? p.next_due_km - km : null;
+          const overdue = (daysToDate !== null && daysToDate < 0) || (kmToDue !== null && kmToDue < 0);
+          const soon = !overdue && ((daysToDate !== null && daysToDate <= 30) || (kmToDue !== null && kmToDue <= 1000));
+          if (!overdue && !soon) return null;
+          let badge = "";
+          if (overdue) {
+            if (daysToDate !== null && daysToDate < 0) badge = `${Math.abs(daysToDate)}d po`;
+            else if (kmToDue !== null) badge = `${Math.abs(kmToDue).toLocaleString("cs-CZ")} km po`;
+          } else {
+            if (daysToDate !== null && daysToDate <= 30) badge = `${daysToDate}d`;
+            else if (kmToDue !== null) badge = `${kmToDue.toLocaleString("cs-CZ")} km`;
+          }
+          return {
+            id: p.id,
+            vehicleId: p.vehicle_id,
+            label: `${v.rz || "?"} – ${v.znacka || "?"}`,
+            type: p.type,
+            daysOrKm: badge,
+            overdue,
+          };
+        }).filter(Boolean) as any[];
+        setServiceSoon(items);
+      });
     });
 
     // Fetch insurance approaching

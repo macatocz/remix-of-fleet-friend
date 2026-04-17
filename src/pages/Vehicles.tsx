@@ -558,6 +558,17 @@ export default function Vehicles() {
           </div>
         </CardHeader>
         <CardContent>
+          {selectedIds.size > 0 && (
+            <div className="mb-4 flex flex-wrap items-center gap-2 p-3 rounded-md bg-primary/10 border border-primary/30">
+              <span className="text-sm font-medium">Vybráno: {selectedIds.size}</span>
+              <div className="flex-1" />
+              <Button size="sm" variant="outline" onClick={() => { setBulkDialog("status"); setBulkValue(""); }}>Změnit stav</Button>
+              <Button size="sm" variant="outline" onClick={() => { setBulkDialog("spravce"); setBulkSpravceId(null); }}>Změnit správce</Button>
+              <Button size="sm" variant="outline" onClick={() => { setBulkDialog("kategorie"); setBulkValue(""); }}>Změnit kategorii</Button>
+              <Button size="sm" variant="outline" onClick={exportSelected}><Download className="h-3.5 w-3.5 mr-1" />Export XLSX</Button>
+              <Button size="sm" variant="ghost" onClick={clearSelection}><X className="h-3.5 w-3.5" /></Button>
+            </div>
+          )}
           {loading ? (
             <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
           ) : (
@@ -565,6 +576,13 @@ export default function Vehicles() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={filtered.length > 0 && selectedIds.size === filtered.length}
+                        onCheckedChange={toggleSelectAll}
+                        aria-label="Vybrat vše"
+                      />
+                    </TableHead>
                     {ALL_COLUMNS.filter(c => visibleColumns.includes(c.key)).map(col => (
                       <SortableTableHead key={col.key} sortKey={col.key} currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} className="whitespace-nowrap">{col.label}</SortableTableHead>
                     ))}
@@ -573,13 +591,20 @@ export default function Vehicles() {
                 <TableBody>
                   {filtered.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={visibleColumns.length} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={visibleColumns.length + 1} className="text-center py-8 text-muted-foreground">
                         Žádná vozidla nenalezena
                       </TableCell>
                     </TableRow>
                   ) : (
                      filtered.map((v) => (
-                       <TableRow key={v.id} className="cursor-pointer" onClick={() => navigate(`/vozidla/${v.id}`)}>
+                       <TableRow key={v.id} className="cursor-pointer" data-state={selectedIds.has(v.id) ? "selected" : undefined} onClick={() => navigate(`/vozidla/${v.id}`)}>
+                         <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
+                           <Checkbox
+                             checked={selectedIds.has(v.id)}
+                             onCheckedChange={() => toggleSelected(v.id)}
+                             aria-label={`Vybrat ${v.rz || v.znacka}`}
+                           />
+                         </TableCell>
                          {ALL_COLUMNS.filter(c => visibleColumns.includes(c.key)).map(col => (
                            <TableCell key={col.key} className="whitespace-nowrap">
                              {renderCellValue(v, col.key)}

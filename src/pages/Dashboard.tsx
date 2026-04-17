@@ -40,6 +40,7 @@ export default function Dashboard() {
   const [monthlyCostTrend, setMonthlyCostTrend] = useState<any[]>([]);
   const [insuranceSoon, setInsuranceSoon] = useState<{ id: string; label: string; days: number; type: string }[]>([]);
   const [leasingSoon, setLeasingSoon] = useState<{ id: string; label: string; days: number }[]>([]);
+  const [serviceSoon, setServiceSoon] = useState<{ id: string; vehicleId: string; label: string; type: string; daysOrKm: string; overdue: boolean }[]>([]);
 
   useEffect(() => {
     // Fetch vehicles

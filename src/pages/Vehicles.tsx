@@ -97,7 +97,7 @@ function getSavedViews(): SavedView[] {
 const statusBadge = (status: string) => {
   switch (status) {
     case "aktivní": return <Badge className="bg-success text-success-foreground">Aktivní</Badge>;
-    case "objednáno": return <Badge className="bg-blue-500 text-white">Objednáno</Badge>;
+    case "objednáno": return <Badge className="bg-info text-info-foreground">Objednáno</Badge>;
     case "v_servisu": return <Badge className="bg-warning text-warning-foreground">V servisu</Badge>;
     case "vyřazeno": return <Badge variant="secondary">Vyřazeno</Badge>;
     default: return <Badge>{status}</Badge>;

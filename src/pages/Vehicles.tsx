@@ -32,6 +32,7 @@ const ALL_COLUMNS = [
   { key: "spravce", label: "Správce" },
   { key: "rz", label: "RZ" },
   { key: "vin", label: "VIN" },
+  { key: "kategorie", label: "Kategorie" },
   { key: "vlastnik", label: "Vlastník" },
   { key: "typ_vlastnictvi", label: "Typ vlastnictví" },
   { key: "leasingova_spolecnost", label: "Leasingová spol." },

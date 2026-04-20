@@ -25,6 +25,27 @@ export function UserMenu() {
   const { user, roles, signOut } = useAuth();
   const state = useOptionalSidebarState();
   const collapsed = state === "collapsed";
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const isDriverOnly =
+    roles.length > 0 &&
+    roles.includes("ridic") &&
+    !roles.includes("admin") &&
+    !roles.includes("dispatcer");
+
+  const onMobileRoute = location.pathname.startsWith("/m");
+  const showToggle = !isDriverOnly;
+
+  const toggleViewMode = () => {
+    if (onMobileRoute) {
+      window.localStorage.setItem("preferDesktop", "1");
+      navigate("/");
+    } else {
+      window.localStorage.removeItem("preferDesktop");
+      navigate("/m");
+    }
+  };
 
   if (!user) return null;
 
@@ -44,6 +65,20 @@ export function UserMenu() {
                 </Badge>
               ))}
             </div>
+          )}
+          {showToggle && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start text-sidebar-foreground"
+              onClick={toggleViewMode}
+            >
+              {onMobileRoute ? (
+                <><Monitor className="mr-2 h-4 w-4" />Přepnout na desktop</>
+              ) : (
+                <><Smartphone className="mr-2 h-4 w-4" />Přepnout na mobil</>
+              )}
+            </Button>
           )}
           <Button
             variant="ghost"

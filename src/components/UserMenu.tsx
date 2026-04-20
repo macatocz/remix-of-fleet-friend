@@ -1,9 +1,8 @@
 import { LogOut, User } from "lucide-react";
-import { useContext } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { SidebarContext } from "@/components/ui/sidebar";
+import { useSidebar } from "@/components/ui/sidebar";
 
 const roleLabels: Record<string, string> = {
   admin: "Admin",
@@ -11,11 +10,19 @@ const roleLabels: Record<string, string> = {
   ridic: "Řidič",
 };
 
+// Safely use sidebar state when available; fall back gracefully outside SidebarProvider.
+function useOptionalSidebarState(): "expanded" | "collapsed" {
+  try {
+    return useSidebar().state;
+  } catch {
+    return "expanded";
+  }
+}
+
 export function UserMenu() {
   const { user, roles, signOut } = useAuth();
-  // Optional sidebar context – when used outside SidebarProvider (e.g. mobile layout)
-  const sidebarCtx = useContext(SidebarContext);
-  const collapsed = sidebarCtx?.state === "collapsed";
+  const state = useOptionalSidebarState();
+  const collapsed = state === "collapsed";
 
   if (!user) return null;
 

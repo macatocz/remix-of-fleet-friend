@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, Plus, X } from "lucide-react";
+import { CalendarDays, Plus, X, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useDriverContext } from "@/hooks/useDriverContext";
 import NewReservationDialog from "@/components/mobile/NewReservationDialog";
@@ -66,13 +66,18 @@ export default function MyReservations() {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Moje rezervace</h2>
-        <Button size="sm" onClick={() => setDialogOpen(true)} disabled={!driver}>
-          <Plus className="h-4 w-4 mr-1" /> Nová žádost
-        </Button>
+        <h2 className="text-2xl font-semibold">Moje rezervace</h2>
       </div>
+
+      <Button
+        className="w-full h-12 text-base"
+        onClick={() => setDialogOpen(true)}
+        disabled={!driver}
+      >
+        <Plus className="h-5 w-5 mr-2" /> Nová žádost
+      </Button>
 
       {loading && <p className="text-sm text-muted-foreground">Načítání…</p>}
       {!loading && items.length === 0 && (
@@ -80,44 +85,56 @@ export default function MyReservations() {
           Nemáte žádné rezervace. Vytvořte novou žádost tlačítkem nahoře.
         </CardContent></Card>
       )}
+
       {items.map((r) => (
         <Card key={r.id}>
-          <CardContent className="p-4">
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <CalendarDays className="h-4 w-4 text-primary" />
-                <span className="font-medium text-sm">
-                  {r.vehicle?.rz || "?"} – {r.vehicle?.znacka || "?"}
-                </span>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <CalendarDays className="h-5 w-5 text-primary shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-semibold text-base truncate">
+                    {r.vehicle?.rz || "?"}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {r.vehicle?.znacka || "—"}
+                  </p>
+                </div>
               </div>
-              <Badge variant={statusVariant(r.status)}>{r.status}</Badge>
+              <Badge variant={statusVariant(r.status)} className="shrink-0">{r.status}</Badge>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {r.date_from} {r.time_from?.slice(0,5)} → {r.date_to} {r.time_to?.slice(0,5)}
-            </p>
-            {r.purpose && <p className="text-xs mt-1">{r.purpose}</p>}
+
+            <div className="flex items-center gap-2 text-sm bg-accent/30 rounded-lg px-3 py-2">
+              <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+              <span>
+                {r.date_from} {r.time_from?.slice(0,5)} → {r.date_to} {r.time_to?.slice(0,5)}
+              </span>
+            </div>
+
+            {r.purpose && (
+              <p className="text-sm text-muted-foreground">{r.purpose}</p>
+            )}
+
             {r.status === "čeká" && (
-              <div className="mt-3 flex justify-end">
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button size="sm" variant="outline">
-                      <X className="h-3.5 w-3.5 mr-1" /> Zrušit žádost
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Zrušit žádost o rezervaci?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Tato akce je nevratná. Žádost bude odstraněna.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Ne</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => cancel(r.id)}>Ano, zrušit</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" className="w-full h-11">
+                    <X className="h-4 w-4 mr-2" /> Zrušit žádost
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Zrušit žádost o rezervaci?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Tato akce je nevratná. Žádost bude odstraněna.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Ne</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => cancel(r.id)}>Ano, zrušit</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </CardContent>
         </Card>

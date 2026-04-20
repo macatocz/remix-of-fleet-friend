@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from "@/components/ui/dialog";
+  Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter,
+} from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,7 +48,6 @@ export default function NewReservationDialog({ open, onOpenChange, onCreated }: 
 
     setSaving(true);
 
-    // Kontrola kolize: jiná rezervace na stejné vozidlo, překrývající se datumy, status čeká/schváleno
     const { data: conflicts, error: confErr } = await supabase
       .from("reservations")
       .select("id, date_from, date_to, time_from, time_to, driver_name, status")
@@ -63,13 +62,10 @@ export default function NewReservationDialog({ open, onOpenChange, onCreated }: 
       return;
     }
 
-    // Kontrola překryvu i v časech (pokud je rezervace v rámci jednoho dne)
     const overlapping = (conflicts || []).filter((c) => {
-      // Pokud rozsahy datumů se překrývají na více dnech, je to konflikt
       if (c.date_from !== c.date_to || dateFrom !== dateTo || c.date_from !== dateFrom) {
         return true;
       }
-      // Stejný den – porovnej časy
       const cFrom = c.time_from || "00:00:00";
       const cTo = c.time_to || "23:59:59";
       const nFrom = (timeFrom || "00:00") + ":00";
@@ -106,54 +102,60 @@ export default function NewReservationDialog({ open, onOpenChange, onCreated }: 
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle>Nová žádost o vozidlo</DialogTitle></DialogHeader>
-        <div className="space-y-3">
-          <div>
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="max-h-[92vh]">
+        <DrawerHeader>
+          <DrawerTitle>Nová žádost o vozidlo</DrawerTitle>
+        </DrawerHeader>
+        <div className="px-4 space-y-4 overflow-y-auto">
+          <div className="space-y-1.5">
             <Label>Vozidlo *</Label>
             <Select value={vehicleId} onValueChange={setVehicleId}>
-              <SelectTrigger><SelectValue placeholder="Vyberte vozidlo" /></SelectTrigger>
+              <SelectTrigger className="h-12"><SelectValue placeholder="Vyberte vozidlo" /></SelectTrigger>
               <SelectContent>
                 {vehicles.map(v => (
-                  <SelectItem key={v.id} value={v.id}>
+                  <SelectItem key={v.id} value={v.id} className="py-3">
                     {v.rz || "?"} – {v.znacka || "?"}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
               <Label>Datum od *</Label>
-              <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+              <Input className="h-12" type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label>Datum do *</Label>
-              <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+              <Input className="h-12" type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label>Čas od</Label>
-              <Input type="time" value={timeFrom} onChange={e => setTimeFrom(e.target.value)} />
+              <Input className="h-12" type="time" value={timeFrom} onChange={e => setTimeFrom(e.target.value)} />
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label>Čas do</Label>
-              <Input type="time" value={timeTo} onChange={e => setTimeTo(e.target.value)} />
+              <Input className="h-12" type="time" value={timeTo} onChange={e => setTimeTo(e.target.value)} />
             </div>
           </div>
-          <div>
+          <div className="space-y-1.5">
             <Label>Účel cesty</Label>
-            <Textarea value={purpose} onChange={e => setPurpose(e.target.value)} rows={2} placeholder="Služební jednání v Brně" />
+            <Textarea value={purpose} onChange={e => setPurpose(e.target.value)} rows={3} placeholder="Služební jednání v Brně" className="text-base" />
           </div>
           <p className="text-xs text-muted-foreground">
             Žádost bude odeslána ke schválení správci nebo dispečerovi.
           </p>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Zrušit</Button>
-          <Button onClick={submit} disabled={saving}>{saving ? "Odesílám…" : "Odeslat žádost"}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <DrawerFooter className="pb-safe gap-2">
+          <Button className="w-full h-12 text-base" onClick={submit} disabled={saving}>
+            {saving ? "Odesílám…" : "Odeslat žádost"}
+          </Button>
+          <Button variant="outline" className="w-full h-12" onClick={() => onOpenChange(false)}>
+            Zrušit
+          </Button>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
   );
 }

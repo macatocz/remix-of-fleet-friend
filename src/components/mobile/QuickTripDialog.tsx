@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from "@/components/ui/dialog";
+  Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter,
+} from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,6 @@ export default function QuickTripDialog({ open, onOpenChange }: Props) {
   const [purpose, setPurpose] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // Prefer drivers' own vehicles first, fall back to all active
   const vehicles = myVehicles.length ? myVehicles : allVehicles;
 
   const reset = () => {
@@ -65,51 +64,57 @@ export default function QuickTripDialog({ open, onOpenChange }: Props) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle>Zápis jízdy</DialogTitle></DialogHeader>
-        <div className="space-y-3">
-          <div>
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="max-h-[92vh]">
+        <DrawerHeader>
+          <DrawerTitle>Zápis jízdy</DrawerTitle>
+        </DrawerHeader>
+        <div className="px-4 space-y-4 overflow-y-auto">
+          <div className="space-y-1.5">
             <Label>Vozidlo</Label>
             <Select value={vehicleId} onValueChange={setVehicleId}>
-              <SelectTrigger><SelectValue placeholder="Vyberte vozidlo" /></SelectTrigger>
+              <SelectTrigger className="h-12"><SelectValue placeholder="Vyberte vozidlo" /></SelectTrigger>
               <SelectContent>
                 {vehicles.map(v => (
-                  <SelectItem key={v.id} value={v.id}>
+                  <SelectItem key={v.id} value={v.id} className="py-3">
                     {v.rz || "?"} – {v.znacka || "?"}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
               <Label>Km od</Label>
-              <Input type="number" inputMode="numeric" value={kmStart} onChange={e => setKmStart(e.target.value)} />
+              <Input className="h-12" type="number" inputMode="numeric" value={kmStart} onChange={e => setKmStart(e.target.value)} />
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label>Km do</Label>
-              <Input type="number" inputMode="numeric" value={kmEnd} onChange={e => setKmEnd(e.target.value)} />
+              <Input className="h-12" type="number" inputMode="numeric" value={kmEnd} onChange={e => setKmEnd(e.target.value)} />
             </div>
           </div>
-          <div>
+          <div className="space-y-1.5">
             <Label>Odkud</Label>
-            <Input value={routeFrom} onChange={e => setRouteFrom(e.target.value)} placeholder="Praha" />
+            <Input className="h-12" value={routeFrom} onChange={e => setRouteFrom(e.target.value)} placeholder="Praha" />
           </div>
-          <div>
+          <div className="space-y-1.5">
             <Label>Kam</Label>
-            <Input value={routeTo} onChange={e => setRouteTo(e.target.value)} placeholder="Brno" />
+            <Input className="h-12" value={routeTo} onChange={e => setRouteTo(e.target.value)} placeholder="Brno" />
           </div>
-          <div>
+          <div className="space-y-1.5">
             <Label>Účel</Label>
-            <Input value={purpose} onChange={e => setPurpose(e.target.value)} placeholder="Služební jednání" />
+            <Input className="h-12" value={purpose} onChange={e => setPurpose(e.target.value)} placeholder="Služební jednání" />
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Zrušit</Button>
-          <Button onClick={submit} disabled={saving}>{saving ? "Ukládám…" : "Uložit"}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <DrawerFooter className="pb-safe gap-2">
+          <Button className="w-full h-12 text-base" onClick={submit} disabled={saving}>
+            {saving ? "Ukládám…" : "Uložit jízdu"}
+          </Button>
+          <Button variant="outline" className="w-full h-12" onClick={() => onOpenChange(false)}>
+            Zrušit
+          </Button>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
   );
 }

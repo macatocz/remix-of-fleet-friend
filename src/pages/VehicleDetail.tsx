@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { ArrowLeft, FileText, CalendarDays, Info, Loader2, Pencil, Save, X, Trash2, Wrench, BookOpen, CreditCard, CalendarIcon, Gauge } from "lucide-react";
+import { ArrowLeft, FileText, CalendarDays, Info, Loader2, Pencil, Save, X, Trash2, Wrench, BookOpen, CreditCard, CalendarIcon, Gauge, ClipboardCheck, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format, parseISO, differenceInMonths } from "date-fns";
@@ -30,6 +30,8 @@ import VehicleTripLogInline from "@/components/VehicleTripLogInline";
 import VehicleFuelCards from "@/components/VehicleFuelCards";
 import VehicleVignettes from "@/components/VehicleVignettes";
 import VehicleServicePlan from "@/components/VehicleServicePlan";
+import VehicleHandover from "@/components/VehicleHandover";
+import VehicleIncidents from "@/components/VehicleIncidents";
 
 interface FieldDef {
   key: string;
@@ -558,6 +560,12 @@ export default function VehicleDetail() {
           <TabsTrigger value="fuelcards">
             <CreditCard className="mr-2 h-4 w-4" />Tankovací karty
           </TabsTrigger>
+          <TabsTrigger value="handover">
+            <ClipboardCheck className="mr-2 h-4 w-4" />Předání
+          </TabsTrigger>
+          <TabsTrigger value="incidents">
+            <AlertTriangle className="mr-2 h-4 w-4" />Škody
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="info" className="mt-6">
@@ -623,6 +631,22 @@ export default function VehicleDetail() {
           <Card>
             <CardContent className="pt-6">
               <VehicleFuelCards vehicleId={vehicle.id} defaultOwner={vehicle.spravce} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="handover" className="mt-6">
+          <Card>
+            <CardContent className="pt-6">
+              <VehicleHandover vehicleId={vehicle.id} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="incidents" className="mt-6">
+          <Card>
+            <CardContent className="pt-6">
+              <VehicleIncidents vehicleId={vehicle.id} />
             </CardContent>
           </Card>
         </TabsContent>

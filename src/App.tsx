@@ -6,6 +6,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/AppLayout";
+import { MobileLayout } from "@/components/MobileLayout";
+import DriverHome from "@/pages/mobile/DriverHome";
+import MyVehicle from "@/pages/mobile/MyVehicle";
+import MyReservations from "@/pages/mobile/MyReservations";
 import Dashboard from "@/pages/Dashboard";
 import Vehicles from "@/pages/Vehicles";
 import VehicleDetail from "@/pages/VehicleDetail";
@@ -49,6 +53,18 @@ const App = () => (
               <Route path="/naklady" element={<Costs />} />
               <Route path="/tankovaci-karty" element={<FuelCards />} />
               <Route path="/nastaveni" element={<SettingsPage />} />
+            </Route>
+            <Route
+              path="/m"
+              element={
+                <ProtectedRoute>
+                  <MobileLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<DriverHome />} />
+              <Route path="vozidlo" element={<MyVehicle />} />
+              <Route path="rezervace" element={<MyReservations />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

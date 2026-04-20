@@ -100,16 +100,54 @@ export default function MyVehicle() {
             <div className="px-4 pb-2 space-y-1.5 border-t pt-2">
               <p className="text-[11px] uppercase text-muted-foreground font-medium">Nadcházející</p>
               {resByVehicle[v.id].slice(0, 3).map(r => (
-                <div key={r.id} className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1.5 min-w-0">
+                <div key={r.id} className="flex items-center justify-between text-xs gap-2">
+                  <span className="flex items-center gap-1.5 min-w-0 flex-1">
                     <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
                     <span className="truncate">
                       {r.date_from} {r.time_from?.slice(0, 5) || ""} · {r.driver_name}
                     </span>
                   </span>
-                  <Badge variant={r.status === "schváleno" ? "default" : "secondary"} className="shrink-0 text-[10px] py-0">
-                    {r.status}
-                  </Badge>
+                  {r.status === "čeká" ? (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        size="icon" variant="ghost"
+                        className="h-7 w-7 text-primary hover:text-primary"
+                        onClick={() => setStatus(r.id, "schváleno")}
+                        aria-label="Schválit"
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            size="icon" variant="ghost"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
+                            aria-label="Zamítnout"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Zamítnout rezervaci?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {r.driver_name} bude vidět status „zamítnuto".
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Ne</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => setStatus(r.id, "zamítnuto")}>
+                              Ano, zamítnout
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  ) : (
+                    <Badge variant="default" className="shrink-0 text-[10px] py-0">
+                      {r.status}
+                    </Badge>
+                  )}
                 </div>
               ))}
             </div>

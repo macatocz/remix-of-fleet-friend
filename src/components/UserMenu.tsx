@@ -10,9 +10,18 @@ const roleLabels: Record<string, string> = {
   ridic: "Řidič",
 };
 
+// Safely use sidebar state when available; fall back gracefully outside SidebarProvider.
+function useOptionalSidebarState(): "expanded" | "collapsed" {
+  try {
+    return useSidebar().state;
+  } catch {
+    return "expanded";
+  }
+}
+
 export function UserMenu() {
   const { user, roles, signOut } = useAuth();
-  const { state } = useSidebar();
+  const state = useOptionalSidebarState();
   const collapsed = state === "collapsed";
 
   if (!user) return null;

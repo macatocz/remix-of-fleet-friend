@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Home, Car, CalendarDays, Plus, Route, AlertTriangle } from "lucide-react";
+import { Home, Car, CalendarDays, Plus, Route, AlertTriangle, Users, MoreHorizontal, Wrench, CreditCard, Coins, Settings as SettingsIcon, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 import { UserMenu } from "@/components/UserMenu";
 import {
   Drawer, DrawerContent, DrawerHeader, DrawerTitle,
@@ -10,18 +11,44 @@ import { Button } from "@/components/ui/button";
 import QuickTripDialog from "@/components/mobile/QuickTripDialog";
 import QuickIncidentDialog from "@/components/mobile/QuickIncidentDialog";
 
-const navItems = [
+type NavItem = { url: string; label: string; icon: any; end?: boolean };
+
+const driverNav: NavItem[] = [
   { url: "/m", label: "Domů", icon: Home, end: true },
   { url: "/m/vozidlo", label: "Vozidlo", icon: Car },
   { url: "/m/rezervace", label: "Rezervace", icon: CalendarDays },
 ];
 
+const adminNav: NavItem[] = [
+  { url: "/m", label: "Domů", icon: Home, end: true },
+  { url: "/m/vozidla", label: "Vozidla", icon: Car },
+  { url: "/m/rezervace", label: "Rezervace", icon: CalendarDays },
+];
+
+const moreItems = [
+  { url: "/m/ridici", label: "Řidiči", icon: Users },
+  { url: "/m/servis", label: "Servis", icon: Wrench },
+  { url: "/m/kniha-jizd", label: "Kniha jízd", icon: BookOpen },
+  { url: "/m/skody", label: "Škody", icon: AlertTriangle },
+  { url: "/m/naklady", label: "Náklady", icon: Coins },
+  { url: "/m/tankovaci-karty", label: "Karty", icon: CreditCard },
+  { url: "/m/nastaveni", label: "Nastavení", icon: SettingsIcon },
+];
+
 export function MobileLayout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { roles } = useAuth();
   const [fabOpen, setFabOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [tripOpen, setTripOpen] = useState(false);
   const [incidentOpen, setIncidentOpen] = useState(false);
+
+  const isAdminOrDispatcher = roles.includes("admin") || roles.includes("dispatcer");
+  const baseNav = isAdminOrDispatcher ? adminNav : driverNav;
+  const navItems: NavItem[] = isAdminOrDispatcher
+    ? [...baseNav, { url: "__more__", label: "Více", icon: MoreHorizontal }]
+    : baseNav;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -73,18 +100,42 @@ export function MobileLayout() {
         </DrawerContent>
       </Drawer>
 
+      {/* "Více" drawer pro admina/dispečera */}
+      <Drawer open={moreOpen} onOpenChange={setMoreOpen}>
+        <DrawerContent className="pb-safe">
+          <DrawerHeader>
+            <DrawerTitle>Další sekce</DrawerTitle>
+          </DrawerHeader>
+          <div className="grid grid-cols-3 gap-3 px-4 pb-6">
+            {moreItems.map((item) => (
+              <button
+                key={item.url}
+                onClick={() => { setMoreOpen(false); navigate(item.url); }}
+                className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg border bg-card active:bg-accent transition-colors"
+              >
+                <item.icon className="h-6 w-6 text-primary" />
+                <span className="text-xs font-medium text-center">{item.label}</span>
+              </button>
+            ))}
+          </div>
+        </DrawerContent>
+      </Drawer>
+
       {/* Bottom Navigation */}
       <nav
         className="fixed bottom-0 left-0 right-0 bg-card border-t flex items-stretch justify-around z-30 pb-safe"
       >
         {navItems.map((item) => {
-          const active = item.end
-            ? location.pathname === item.url
-            : location.pathname.startsWith(item.url);
+          const isMore = item.url === "__more__";
+          const active = isMore
+            ? false
+            : item.end
+              ? location.pathname === item.url
+              : location.pathname.startsWith(item.url);
           return (
             <button
               key={item.url}
-              onClick={() => navigate(item.url)}
+              onClick={() => isMore ? setMoreOpen(true) : navigate(item.url)}
               className={cn(
                 "flex-1 flex flex-col items-center justify-center gap-1 py-2.5 min-h-[56px] transition-colors active:bg-accent/40",
                 active ? "text-primary" : "text-muted-foreground"

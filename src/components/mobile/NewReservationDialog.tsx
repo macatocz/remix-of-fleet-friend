@@ -47,6 +47,46 @@ export default function NewReservationDialog({ open, onOpenChange, onCreated }: 
     if (!driver) { toast.error("Váš účet není propojen s řidičem"); return; }
 
     setSaving(true);
+
+    // Kontrola kolize: jiná rezervace na stejné vozidlo, překrývající se datumy, status čeká/schváleno
+    const { data: conflicts, error: confErr } = await supabase
+      .from("reservations")
+      .select("id, date_from, date_to, time_from, time_to, driver_name, status")
+      .eq("vehicle_id", vehicleId)
+      .in("status", ["čeká", "schváleno"])
+      .lte("date_from", dateTo)
+      .gte("date_to", dateFrom);
+
+    if (confErr) {
+      setSaving(false);
+      toast.error("Chyba při kontrole dostupnosti: " + confErr.message);
+      return;
+    }
+
+    // Kontrola překryvu i v časech (pokud je rezervace v rámci jednoho dne)
+    const overlapping = (conflicts || []).filter((c) => {
+      // Pokud rozsahy datumů se překrývají na více dnech, je to konflikt
+      if (c.date_from !== c.date_to || dateFrom !== dateTo || c.date_from !== dateFrom) {
+        return true;
+      }
+      // Stejný den – porovnej časy
+      const cFrom = c.time_from || "00:00:00";
+      const cTo = c.time_to || "23:59:59";
+      const nFrom = (timeFrom || "00:00") + ":00";
+      const nTo = (timeTo || "23:59") + ":00";
+      return cFrom < nTo && nFrom < cTo;
+    });
+
+    if (overlapping.length > 0) {
+      setSaving(false);
+      const c = overlapping[0];
+      toast.error(
+        `Vozidlo je v daném termínu obsazené (${c.driver_name}, ${c.date_from} → ${c.date_to}, stav: ${c.status}). Zvolte jiný termín nebo vozidlo.`,
+        { duration: 6000 }
+      );
+      return;
+    }
+
     const { error } = await supabase.from("reservations").insert({
       vehicle_id: vehicleId,
       driver_name: driver.fullName,

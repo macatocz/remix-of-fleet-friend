@@ -1,8 +1,9 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { session, loading } = useAuth();
+  const { session, loading, roles } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -14,6 +15,17 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (!session) {
     return <Navigate to="/prihlaseni" replace />;
+  }
+
+  // Driver-only users go to mobile UI
+  const isDriverOnly = roles.length > 0
+    && roles.includes("ridic")
+    && !roles.includes("admin")
+    && !roles.includes("dispatcer");
+
+  if (isDriverOnly && !location.pathname.startsWith("/m")
+    && !location.pathname.startsWith("/vozidla/")) {
+    return <Navigate to="/m" replace />;
   }
 
   return <>{children}</>;

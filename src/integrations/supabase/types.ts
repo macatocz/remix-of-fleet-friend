@@ -218,6 +218,160 @@ export type Database = {
           },
         ]
       }
+      handover_photos: {
+        Row: {
+          caption: string | null
+          created_at: string
+          file_path: string
+          id: string
+          protocol_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          file_path: string
+          id?: string
+          protocol_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          file_path?: string
+          id?: string
+          protocol_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "handover_photos_protocol_id_fkey"
+            columns: ["protocol_id"]
+            isOneToOne: false
+            referencedRelation: "handover_protocols"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      handover_protocols: {
+        Row: {
+          checklist: Json
+          created_at: string
+          date: string
+          driver_name: string | null
+          fuel_percent: number | null
+          handover_by: string | null
+          id: string
+          km: number | null
+          notes: string | null
+          reservation_id: string | null
+          type: string
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          checklist?: Json
+          created_at?: string
+          date?: string
+          driver_name?: string | null
+          fuel_percent?: number | null
+          handover_by?: string | null
+          id?: string
+          km?: number | null
+          notes?: string | null
+          reservation_id?: string | null
+          type?: string
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          checklist?: Json
+          created_at?: string
+          date?: string
+          driver_name?: string | null
+          fuel_percent?: number | null
+          handover_by?: string | null
+          id?: string
+          km?: number | null
+          notes?: string | null
+          reservation_id?: string | null
+          type?: string
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: []
+      }
+      incident_photos: {
+        Row: {
+          caption: string | null
+          created_at: string
+          file_path: string
+          id: string
+          incident_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          file_path: string
+          id?: string
+          incident_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          file_path?: string
+          id?: string
+          incident_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_photos_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incidents: {
+        Row: {
+          created_at: string
+          date: string
+          description: string | null
+          driver_id: string | null
+          estimated_cost: number | null
+          id: string
+          location: string | null
+          reservation_id: string | null
+          status: string
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          description?: string | null
+          driver_id?: string | null
+          estimated_cost?: number | null
+          id?: string
+          location?: string | null
+          reservation_id?: string | null
+          status?: string
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          description?: string | null
+          driver_id?: string | null
+          estimated_cost?: number | null
+          id?: string
+          location?: string | null
+          reservation_id?: string | null
+          status?: string
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: []
+      }
       inspections: {
         Row: {
           created_at: string

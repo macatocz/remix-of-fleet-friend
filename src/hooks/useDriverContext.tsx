@@ -72,5 +72,6 @@ export function useDriverContext() {
     return () => { cancelled = true; };
   }, [user]);
 
-  return { driver, myVehicles, allVehicles, loading };
+  const isSpravce = myVehicles.length > 0;
+  return { driver, myVehicles, allVehicles, loading, isSpravce };
 }

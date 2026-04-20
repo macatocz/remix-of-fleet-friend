@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Home, Car, CalendarDays, Plus, Route, AlertTriangle, Users, MoreHorizontal, Wrench, CreditCard, Coins, Settings as SettingsIcon, BookOpen } from "lucide-react";
+import { Home, Car, CalendarDays, Plus, Route, AlertTriangle, Users, MoreHorizontal, Wrench, CreditCard, Coins, Settings as SettingsIcon, BookOpen, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDriverContext } from "@/hooks/useDriverContext";
 import { UserMenu } from "@/components/UserMenu";
 import {
   Drawer, DrawerContent, DrawerHeader, DrawerTitle,
@@ -10,12 +11,20 @@ import {
 import { Button } from "@/components/ui/button";
 import QuickTripDialog from "@/components/mobile/QuickTripDialog";
 import QuickIncidentDialog from "@/components/mobile/QuickIncidentDialog";
+import FindVehicleSheet from "@/components/mobile/FindVehicleSheet";
+import NewReservationDialog from "@/components/mobile/NewReservationDialog";
 
-type NavItem = { url: string; label: string; icon: any; end?: boolean };
+type NavItem = { url: string; label: string; icon: any; end?: boolean; action?: "find" };
+
+const spravceNav: NavItem[] = [
+  { url: "/m", label: "Domů", icon: Home, end: true },
+  { url: "/m/vozidlo", label: "Vozidlo", icon: Car },
+  { url: "/m/rezervace", label: "Rezervace", icon: CalendarDays },
+];
 
 const driverNav: NavItem[] = [
   { url: "/m", label: "Domů", icon: Home, end: true },
-  { url: "/m/vozidlo", label: "Vozidlo", icon: Car },
+  { url: "__find__", label: "Najít vůz", icon: Search, action: "find" },
   { url: "/m/rezervace", label: "Rezervace", icon: CalendarDays },
 ];
 
@@ -39,13 +48,19 @@ export function MobileLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { roles } = useAuth();
+  const { isSpravce } = useDriverContext();
   const [fabOpen, setFabOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [tripOpen, setTripOpen] = useState(false);
   const [incidentOpen, setIncidentOpen] = useState(false);
+  const [findOpen, setFindOpen] = useState(false);
+  const [newResOpen, setNewResOpen] = useState(false);
+  const [presetReservation, setPresetReservation] = useState<{
+    vehicleId: string; dateFrom: string; dateTo: string; timeFrom: string; timeTo: string;
+  } | null>(null);
 
   const isAdminOrDispatcher = roles.includes("admin") || roles.includes("dispatcer");
-  const baseNav = isAdminOrDispatcher ? adminNav : driverNav;
+  const baseNav = isAdminOrDispatcher ? adminNav : (isSpravce ? spravceNav : driverNav);
   const navItems: NavItem[] = isAdminOrDispatcher
     ? [...baseNav, { url: "__more__", label: "Více", icon: MoreHorizontal }]
     : baseNav;
@@ -127,15 +142,18 @@ export function MobileLayout() {
       >
         {navItems.map((item) => {
           const isMore = item.url === "__more__";
+          const isFind = item.action === "find";
           const active = isMore
             ? false
-            : item.end
+            : isFind
+              ? false
+              : item.end
               ? location.pathname === item.url
               : location.pathname.startsWith(item.url);
           return (
             <button
               key={item.url}
-              onClick={() => isMore ? setMoreOpen(true) : navigate(item.url)}
+              onClick={() => isMore ? setMoreOpen(true) : isFind ? setFindOpen(true) : navigate(item.url)}
               className={cn(
                 "flex-1 flex flex-col items-center justify-center gap-1 py-2.5 min-h-[56px] transition-colors active:bg-accent/40",
                 active ? "text-primary" : "text-muted-foreground"
@@ -155,6 +173,24 @@ export function MobileLayout() {
 
       <QuickTripDialog open={tripOpen} onOpenChange={setTripOpen} />
       <QuickIncidentDialog open={incidentOpen} onOpenChange={setIncidentOpen} />
+      <FindVehicleSheet
+        open={findOpen}
+        onOpenChange={setFindOpen}
+        onPick={(vehicleId, dateFrom, dateTo, timeFrom, timeTo) => {
+          setPresetReservation({ vehicleId, dateFrom, dateTo, timeFrom, timeTo });
+          setNewResOpen(true);
+        }}
+      />
+      <NewReservationDialog
+        open={newResOpen}
+        onOpenChange={(o) => { setNewResOpen(o); if (!o) setPresetReservation(null); }}
+        initialVehicleId={presetReservation?.vehicleId}
+        initialDateFrom={presetReservation?.dateFrom}
+        initialDateTo={presetReservation?.dateTo}
+        initialTimeFrom={presetReservation?.timeFrom}
+        initialTimeTo={presetReservation?.timeTo}
+        onCreated={() => navigate("/m/rezervace")}
+      />
     </div>
   );
 }

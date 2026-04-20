@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter,
 } from "@/components/ui/drawer";
@@ -17,19 +17,37 @@ interface Props {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   onCreated?: () => void;
+  initialVehicleId?: string;
+  initialDateFrom?: string;
+  initialDateTo?: string;
+  initialTimeFrom?: string;
+  initialTimeTo?: string;
 }
 
-export default function NewReservationDialog({ open, onOpenChange, onCreated }: Props) {
+export default function NewReservationDialog({
+  open, onOpenChange, onCreated,
+  initialVehicleId, initialDateFrom, initialDateTo, initialTimeFrom, initialTimeTo,
+}: Props) {
   const { driver, myVehicles, allVehicles } = useDriverContext();
   const today = new Date().toISOString().split("T")[0];
 
-  const [vehicleId, setVehicleId] = useState("");
-  const [dateFrom, setDateFrom] = useState(today);
-  const [dateTo, setDateTo] = useState(today);
-  const [timeFrom, setTimeFrom] = useState("08:00");
-  const [timeTo, setTimeTo] = useState("17:00");
+  const [vehicleId, setVehicleId] = useState(initialVehicleId || "");
+  const [dateFrom, setDateFrom] = useState(initialDateFrom || today);
+  const [dateTo, setDateTo] = useState(initialDateTo || today);
+  const [timeFrom, setTimeFrom] = useState(initialTimeFrom || "08:00");
+  const [timeTo, setTimeTo] = useState(initialTimeTo || "17:00");
   const [purpose, setPurpose] = useState("");
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      if (initialVehicleId) setVehicleId(initialVehicleId);
+      if (initialDateFrom) setDateFrom(initialDateFrom);
+      if (initialDateTo) setDateTo(initialDateTo);
+      if (initialTimeFrom) setTimeFrom(initialTimeFrom);
+      if (initialTimeTo) setTimeTo(initialTimeTo);
+    }
+  }, [open, initialVehicleId, initialDateFrom, initialDateTo, initialTimeFrom, initialTimeTo]);
 
   const vehicles = myVehicles.length ? [...myVehicles, ...allVehicles.filter(a => !myVehicles.find(m => m.id === a.id))] : allVehicles;
 

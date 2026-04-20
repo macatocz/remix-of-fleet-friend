@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CalendarDays, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useDriverContext } from "@/hooks/useDriverContext";
+import NewReservationDialog from "@/components/mobile/NewReservationDialog";
 
 interface Reservation {
   id: string;
@@ -21,27 +23,29 @@ export default function MyReservations() {
   const { driver } = useDriverContext();
   const [items, setItems] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     if (!driver) { setLoading(false); return; }
-    (async () => {
-      const { data } = await supabase
-        .from("reservations")
-        .select("id, vehicle_id, date_from, date_to, time_from, time_to, purpose, status")
-        .eq("driver_name", driver.fullName)
-        .order("date_from", { ascending: false });
-      const list = (data as Reservation[]) || [];
-      const ids = Array.from(new Set(list.map(r => r.vehicle_id)));
-      if (ids.length) {
-        const { data: vs } = await supabase
-          .from("vehicles").select("id, znacka, rz").in("id", ids);
-        const map = new Map((vs || []).map((v: any) => [v.id, v]));
-        list.forEach(r => { r.vehicle = map.get(r.vehicle_id); });
-      }
-      setItems(list);
-      setLoading(false);
-    })();
+    setLoading(true);
+    const { data } = await supabase
+      .from("reservations")
+      .select("id, vehicle_id, date_from, date_to, time_from, time_to, purpose, status")
+      .eq("driver_name", driver.fullName)
+      .order("date_from", { ascending: false });
+    const list = (data as Reservation[]) || [];
+    const ids = Array.from(new Set(list.map(r => r.vehicle_id)));
+    if (ids.length) {
+      const { data: vs } = await supabase
+        .from("vehicles").select("id, znacka, rz").in("id", ids);
+      const map = new Map((vs || []).map((v: any) => [v.id, v]));
+      list.forEach(r => { r.vehicle = map.get(r.vehicle_id); });
+    }
+    setItems(list);
+    setLoading(false);
   }, [driver]);
+
+  useEffect(() => { load(); }, [load]);
 
   const statusVariant = (s: string): "default" | "secondary" | "outline" | "destructive" => {
     if (s === "schváleno") return "default";
@@ -51,11 +55,17 @@ export default function MyReservations() {
 
   return (
     <div className="space-y-3">
-      <h2 className="text-lg font-semibold">Moje rezervace</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Moje rezervace</h2>
+        <Button size="sm" onClick={() => setDialogOpen(true)} disabled={!driver}>
+          <Plus className="h-4 w-4 mr-1" /> Nová žádost
+        </Button>
+      </div>
+
       {loading && <p className="text-sm text-muted-foreground">Načítání…</p>}
       {!loading && items.length === 0 && (
         <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">
-          Nemáte žádné rezervace.
+          Nemáte žádné rezervace. Vytvořte novou žádost tlačítkem nahoře.
         </CardContent></Card>
       )}
       {items.map((r) => (
@@ -77,6 +87,12 @@ export default function MyReservations() {
           </CardContent>
         </Card>
       ))}
+
+      <NewReservationDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onCreated={load}
+      />
     </div>
   );
 }

@@ -34,6 +34,7 @@ export default function MyVehicle() {
   const [incidentOpen, setIncidentOpen] = useState(false);
   const [calendarFor, setCalendarFor] = useState<string | null>(null);
   const [resByVehicle, setResByVehicle] = useState<Record<string, MiniRes[]>>({});
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (myVehicles.length === 0) return;
@@ -53,7 +54,14 @@ export default function MyVehicle() {
       });
       setResByVehicle(grouped);
     })();
-  }, [myVehicles.map(v => v.id).join(",")]);
+  }, [myVehicles.map(v => v.id).join(","), reloadKey]);
+
+  const setStatus = async (id: string, status: "schváleno" | "zamítnuto") => {
+    const { error } = await supabase.from("reservations").update({ status }).eq("id", id);
+    if (error) { toast.error("Chyba: " + error.message); return; }
+    toast.success(status === "schváleno" ? "Rezervace schválena" : "Rezervace zamítnuta");
+    setReloadKey(k => k + 1);
+  };
 
   return (
     <div className="space-y-4">

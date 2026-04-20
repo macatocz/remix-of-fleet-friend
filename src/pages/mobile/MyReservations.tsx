@@ -9,7 +9,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import NewReservationDialog from "@/components/mobile/NewReservationDialog";
 import PendingApprovalCard, { PendingReservation } from "@/components/mobile/PendingApprovalCard";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,

@@ -58,6 +58,13 @@ export default function MyReservations() {
     return "secondary";
   };
 
+  const cancel = async (id: string) => {
+    const { error } = await supabase.from("reservations").delete().eq("id", id);
+    if (error) { toast.error("Chyba: " + error.message); return; }
+    toast.success("Žádost zrušena");
+    load();
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -89,6 +96,29 @@ export default function MyReservations() {
               {r.date_from} {r.time_from?.slice(0,5)} → {r.date_to} {r.time_to?.slice(0,5)}
             </p>
             {r.purpose && <p className="text-xs mt-1">{r.purpose}</p>}
+            {r.status === "čeká" && (
+              <div className="mt-3 flex justify-end">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button size="sm" variant="outline">
+                      <X className="h-3.5 w-3.5 mr-1" /> Zrušit žádost
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Zrušit žádost o rezervaci?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Tato akce je nevratná. Žádost bude odstraněna.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Ne</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => cancel(r.id)}>Ano, zrušit</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            )}
           </CardContent>
         </Card>
       ))}

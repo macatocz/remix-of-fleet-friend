@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import SpravceCalendarStrip from "@/components/mobile/SpravceCalendarStrip";
 import FindVehicleSheet from "@/components/mobile/FindVehicleSheet";
 import NewReservationDialog from "@/components/mobile/NewReservationDialog";
+import PendingApprovalCard, { PendingReservation } from "@/components/mobile/PendingApprovalCard";
 
 interface UpcomingReservation {
   id: string;
@@ -35,9 +36,10 @@ function daysUntil(date?: string | null): number | null {
 export default function DriverHome() {
   const navigate = useNavigate();
   const { driver, myVehicles, isSpravce, loading } = useDriverContext();
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
 
   const greeting = driver?.fullName || user?.email || "Řidič";
+  const isPrivileged = roles.includes("admin") || roles.includes("dispatcer");
 
   if (loading) {
     return <p className="text-center text-sm text-muted-foreground py-8">Načítání…</p>;
@@ -50,6 +52,7 @@ export default function DriverHome() {
           <p className="text-sm text-muted-foreground">Vítejte zpět</p>
           <h2 className="text-2xl font-semibold">{greeting}</h2>
         </div>
+        {isPrivileged && <PendingApprovalsSection scope="all" greetingHidden />}
         <Card>
           <CardContent className="p-4 text-sm text-muted-foreground text-center">
             Váš účet zatím není propojen s žádným řidičem. Kontaktujte správce.
@@ -59,12 +62,79 @@ export default function DriverHome() {
     );
   }
 
-  return isSpravce ? <SpravceHome greeting={greeting} /> : <DriverOnlyHome greeting={greeting} />;
+  return isSpravce
+    ? <SpravceHome greeting={greeting} isPrivileged={isPrivileged} />
+    : <DriverOnlyHome greeting={greeting} isPrivileged={isPrivileged} />;
+}
+
+/* ---------------- PENDING APPROVALS SECTION ---------------- */
+
+function PendingApprovalsSection({
+  scope,
+  vehicleIds,
+  greetingHidden,
+}: {
+  scope: "all" | "vehicles";
+  vehicleIds?: string[];
+  greetingHidden?: boolean;
+}) {
+  const navigate = useNavigate();
+  const [items, setItems] = useState<PendingReservation[]>([]);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    if (scope === "vehicles" && (!vehicleIds || vehicleIds.length === 0)) {
+      setItems([]);
+      return;
+    }
+    (async () => {
+      let q = supabase
+        .from("reservations")
+        .select("id, vehicle_id, driver_name, date_from, date_to, time_from, time_to, purpose")
+        .eq("status", "čeká")
+        .order("date_from", { ascending: true })
+        .limit(10);
+      if (scope === "vehicles" && vehicleIds) q = q.in("vehicle_id", vehicleIds);
+      const { data } = await q;
+      const list = (data as PendingReservation[]) || [];
+      const ids = Array.from(new Set(list.map(r => r.vehicle_id)));
+      if (ids.length) {
+        const { data: vs } = await supabase.from("vehicles").select("id, rz, znacka").in("id", ids);
+        const map = new Map((vs || []).map((v: any) => [v.id, v]));
+        list.forEach(r => { r.vehicle = map.get(r.vehicle_id); });
+      }
+      setItems(list);
+    })();
+  }, [scope, vehicleIds?.join(","), reloadKey]);
+
+  if (items.length === 0) return null;
+
+  return (
+    <Card>
+      <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
+        <CardTitle className="text-sm flex items-center gap-2">
+          Žádosti ke schválení
+          <Badge variant="secondary" className="text-[10px] py-0">{items.length}</Badge>
+        </CardTitle>
+        <button
+          onClick={() => navigate("/m/rezervace")}
+          className="text-xs text-primary flex items-center gap-0.5"
+        >
+          Vše <ChevronRight className="h-3 w-3" />
+        </button>
+      </CardHeader>
+      <CardContent className="pt-0 space-y-2">
+        {items.map(r => (
+          <PendingApprovalCard key={r.id} reservation={r} onChanged={() => setReloadKey(k => k + 1)} />
+        ))}
+      </CardContent>
+    </Card>
+  );
 }
 
 /* ---------------- SPRÁVCE ---------------- */
 
-function SpravceHome({ greeting }: { greeting: string }) {
+function SpravceHome({ greeting, isPrivileged }: { greeting: string; isPrivileged: boolean }) {
   const navigate = useNavigate();
   const { driver, myVehicles } = useDriverContext();
   const [upcoming, setUpcoming] = useState<UpcomingReservation[]>([]);
@@ -162,6 +232,11 @@ function SpravceHome({ greeting }: { greeting: string }) {
         </Card>
       )}
 
+      <PendingApprovalsSection
+        scope={isPrivileged ? "all" : "vehicles"}
+        vehicleIds={myVehicles.map(v => v.id)}
+      />
+
       <Card>
         <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
           <CardTitle className="text-sm">Nadcházející rezervace mého vozu</CardTitle>
@@ -215,7 +290,7 @@ function SpravceHome({ greeting }: { greeting: string }) {
 
 /* ---------------- ŘIDIČ BEZ SPRÁVY ---------------- */
 
-function DriverOnlyHome({ greeting }: { greeting: string }) {
+function DriverOnlyHome({ greeting, isPrivileged }: { greeting: string; isPrivileged: boolean }) {
   const navigate = useNavigate();
   const { driver } = useDriverContext();
   const [findOpen, setFindOpen] = useState(false);
@@ -313,6 +388,8 @@ function DriverOnlyHome({ greeting }: { greeting: string }) {
           ))}
         </CardContent>
       </Card>
+
+      {isPrivileged && <PendingApprovalsSection scope="all" />}
 
       {pendingCount > 0 && (
         <p className="text-xs text-muted-foreground text-center">

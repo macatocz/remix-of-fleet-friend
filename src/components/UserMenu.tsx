@@ -1,8 +1,9 @@
 import { LogOut, User } from "lucide-react";
+import { useContext } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useSidebar } from "@/components/ui/sidebar";
+import { SidebarContext } from "@/components/ui/sidebar";
 
 const roleLabels: Record<string, string> = {
   admin: "Admin",
@@ -12,8 +13,9 @@ const roleLabels: Record<string, string> = {
 
 export function UserMenu() {
   const { user, roles, signOut } = useAuth();
-  const { state } = useSidebar();
-  const collapsed = state === "collapsed";
+  // Optional sidebar context – when used outside SidebarProvider (e.g. mobile layout)
+  const sidebarCtx = useContext(SidebarContext);
+  const collapsed = sidebarCtx?.state === "collapsed";
 
   if (!user) return null;
 

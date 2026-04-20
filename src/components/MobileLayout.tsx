@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Home, Car, CalendarDays, Plus, Route, AlertTriangle, Users, MoreHorizontal, Wrench, CreditCard, Coins, Settings as SettingsIcon, BookOpen, Search } from "lucide-react";
+import { Home, Car, CalendarDays, Plus, Route, AlertTriangle, MoreHorizontal, Wrench, CreditCard, Coins, Settings as SettingsIcon, BookOpen, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDriverContext } from "@/hooks/useDriverContext";
@@ -35,7 +35,6 @@ const adminNav: NavItem[] = [
 ];
 
 const moreItems = [
-  { url: "/m/ridici", label: "Řidiči", icon: Users },
   { url: "/m/servis", label: "Servis", icon: Wrench },
   { url: "/m/kniha-jizd", label: "Kniha jízd", icon: BookOpen },
   { url: "/m/skody", label: "Škody", icon: AlertTriangle },

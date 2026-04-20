@@ -290,7 +290,7 @@ function SpravceHome({ greeting, isPrivileged }: { greeting: string; isPrivilege
 
 /* ---------------- ŘIDIČ BEZ SPRÁVY ---------------- */
 
-function DriverOnlyHome({ greeting }: { greeting: string }) {
+function DriverOnlyHome({ greeting, isPrivileged }: { greeting: string; isPrivileged: boolean }) {
   const navigate = useNavigate();
   const { driver } = useDriverContext();
   const [findOpen, setFindOpen] = useState(false);
@@ -388,6 +388,8 @@ function DriverOnlyHome({ greeting }: { greeting: string }) {
           ))}
         </CardContent>
       </Card>
+
+      {isPrivileged && <PendingApprovalsSection scope="all" />}
 
       {pendingCount > 0 && (
         <p className="text-xs text-muted-foreground text-center">

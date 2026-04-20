@@ -1,70 +1,49 @@
 
 
 ## Cíl
-Rozlišit mobilní zážitek pro řidiče podle toho, **zda je správcem vozidla, nebo "jen" řidičem** (uživatel bez přiřazené správy vozu).
+V mobilním formuláři rezervace (a ve "Najít volný vůz") nahradit `<input type="date">` plnohodnotným **vizuálním kalendářem** (Shadcn Calendar v Popoveru), aby si uživatel datum vždy vybral klikáním v kalendáři – nezávisle na tom, jaký prohlížeč/webview používá.
 
-- **Správce** (má vozidlo, kde `vehicles.spravce_id = drivers.id`) → primárně chce vědět **vytížení svého vozu**: kdo a kdy ho má rezervovaný, kalendář na týden/2 týdny dopředu, a vlastní rezervace.
-- **Řidič bez správy** → primárně chce **najít volný vůz a spravovat své rezervace**. Vozový park ho nezajímá detailně, chce jen "mám rezervaci / chci novou / co je volné".
+## Proč to teď nejde
+`<input type="date">` se na mobilu spoléhá na nativní datepicker prohlížeče. V Lovable preview iframe (a v některých in-app webview) se nativní picker neotevře a uživatel vidí jen prázdné textové pole.
 
 ## Co se mění
 
-### 1. `src/pages/mobile/DriverHome.tsx` – rozdělit obsah podle role
-Rozhodující signál: `myVehicles.length > 0` z `useDriverContext()`.
+### 1. Nová pomocná komponenta `src/components/ui/mobile-date-picker.tsx`
+Tlačítko (h-12, full-width) zobrazující vybrané datum v českém formátu (např. „20. 4. 2026"). Po tapu se otevře `Popover` s `Calendar` (mode="single", `pointer-events-auto`, lokalizace `cs`). Po výběru se popover zavře a zavolá `onChange(YYYY-MM-DD)`. API:
+```text
+<MobileDatePicker
+  value={dateFrom}          // "YYYY-MM-DD" nebo ""
+  onChange={setDateFrom}
+  placeholder="Vyberte datum"
+  min="YYYY-MM-DD"          // volitelně, např. dnes
+/>
+```
+Komponenta interně převádí mezi `string` (DB formát) a `Date`.
 
-**Varianta A – Správce (má alespoň 1 vozidlo):**
-- Header: "Vítejte, {jméno}"
-- Sekce **Moje vozidlo** – velká karta s RZ, značkou, statusem, KM, varováními (STK / zelená karta brzy končí). Klik → `/vozidla/:id`.
-- Sekce **Vytížení mého vozu** – horizontálně scrollovatelný pruh **dnes + 13 dnů**: každý den jako pilulka s počtem rezervací (zelená = volno, modrá = obsazeno, žlutá = částečně). Klik na den → rozbalí seznam rezervací toho dne (kdo, čas, účel).
-- Sekce **Nadcházející rezervace mého vozu** – seznam max 5 položek (kdokoli, ne jen já), s jménem řidiče a časem.
-- Sekce **Moje rezervace** – pokud správce má i vlastní žádosti, krátký seznam (max 3) + odkaz "Vše".
-- FAB → zápis jízdy / hlášení škody / nová rezervace.
+### 2. `src/components/mobile/NewReservationDialog.tsx`
+- Nahradit oba `<Input type="date">` (Datum od / Datum do) komponentou `MobileDatePicker`.
+- `Datum do` dostane `min={dateFrom}`, aby nešlo zvolit dřívější den.
+- `<Input type="time">` pro Čas od/do **necháme** – nativní time picker funguje spolehlivě i v iframe (a uživatel si nestěžoval na čas, jen na datum). Pokud vyjde najevo i problém s časem, vyřešíme samostatně.
 
-**Varianta B – Řidič bez správy:**
-- Header: "Vítejte, {jméno}"
-- Velké tlačítko **"Najít volný vůz"** (primary, full-width, h-14) → otevře nový bottom-sheet `FindVehicleSheet` (viz dále).
-- Velké tlačítko **"Nová rezervace"** → existující `NewReservationDialog`.
-- Sekce **Moje aktivní rezervace** – seznam (3 nejbližší): vůz, datum, status, akce "Detail".
-- Pod tím počet čekajících rezervací s odkazem na `/m/rezervace`.
-- Žádná sekce "Moje vozidlo" (nemá smysl, nemá žádné).
+### 3. `src/components/mobile/FindVehicleSheet.tsx`
+- Stejná náhrada datových polí na `MobileDatePicker` (Datum od / Datum do, `Datum do` má `min={dateFrom}`).
 
-### 2. Nová komponenta `src/components/mobile/FindVehicleSheet.tsx`
-Bottom-sheet (Drawer) pro řidiče bez správy:
-- Vstupy: **Datum od / do**, **čas od / do** (default dnes 08:00–17:00), volitelně kategorie.
-- Tlačítko "Najít volné" → query přes `vehicles` + `reservations` (stejná logika overlap jako v `NewReservationDialog`), vrací seznam volných vozů.
-- Výsledek: karty volných vozů (RZ, značka, kategorie). Klik → předvyplněný `NewReservationDialog` s daným vozem a termínem.
-
-### 3. Nová komponenta `src/components/mobile/SpravceCalendarStrip.tsx`
-Horizontální pruh dnů pro správce:
-- Načte rezervace pro `myVehicles[0].id` (případně přepínač pokud je víc vozů) na 14 dnů dopředu.
-- Každý den = chip s datem + indikátorem obsazenosti.
-- Tap na chip → expanduje seznam rezervací toho dne (řidič, čas od–do, status, účel).
-- Pokud má správce více vozidel → segmentovaný přepínač nahoře (RZ jednotlivých vozidel).
-
-### 4. `src/pages/mobile/MyVehicle.tsx` – obohatit pro správce
-- U každého vlastního vozidla přidat pod akce **mini-pruh nadcházejících rezervací** (3 nejbližší): kdo, kdy, status.
-- Tlačítko "Kalendář vytížení" → otevře full-screen drawer s `SpravceCalendarStrip` rozšířeným na 30 dnů.
-- Pokud řidič není správcem žádného vozu, tato stránka zůstane jako dnes (prázdný stav s návodem) – ale v bottom-navu ji pro tuto roli skryjeme (viz dále).
-
-### 5. `src/components/MobileLayout.tsx` – nav podle role
-- **Správce řidič**: Domů, Moje vozidlo, Rezervace.
-- **Řidič bez správy**: Domů, Najít vůz, Rezervace (místo "Moje vozidlo" se zobrazí "Najít vůz" – otevře `FindVehicleSheet`).
-- Detekce přes `useDriverContext().myVehicles.length`.
-
-### 6. `useDriverContext` – drobné rozšíření
-- Přidat odvozený flag `isSpravce: boolean` (= `myVehicles.length > 0`), aby komponenty nemusely opakovat tu logiku.
+### 4. Lokalizace
+Použít `date-fns/locale/cs` (knihovna už v projektu je) pro `Calendar` a pro formátování zobrazeného data.
 
 ## Co se NEmění
-- Routing, schvalovací workflow, datový model, RLS.
-- Admin/dispečer mobilní UX (ten řešíme jinde).
-- Desktop verze.
+- Datový model, formát ukládání (`YYYY-MM-DD`), validační logika, overlap kontrola.
+- Desktopové formuláře.
+- Pole pro čas.
 
 ## Soubory
-**Upravit:** `src/hooks/useDriverContext.tsx`, `src/pages/mobile/DriverHome.tsx`, `src/pages/mobile/MyVehicle.tsx`, `src/components/MobileLayout.tsx`.
-**Vytvořit:** `src/components/mobile/SpravceCalendarStrip.tsx`, `src/components/mobile/FindVehicleSheet.tsx`.
+**Vytvořit:** `src/components/ui/mobile-date-picker.tsx`
+**Upravit:** `src/components/mobile/NewReservationDialog.tsx`, `src/components/mobile/FindVehicleSheet.tsx`
 
 ## Jak to otestovat
-1. Přihlásit se jako řidič, který je správcem (má v `vehicles.spravce_id` záznam) → na `/m` vidět kartu "Moje vozidlo" + pruh vytížení na 14 dní.
-2. Tap na den s rezervací → vidět kdo a kdy si vůz vzal.
-3. Přihlásit se jako řidič bez správy → na `/m` vidět velká tlačítka "Najít volný vůz" a "Nová rezervace", v navu místo "Moje vozidlo" položku "Najít vůz".
-4. Kliknout "Najít volný vůz", zadat termín → dostat seznam volných vozů → výběr → otevře se předvyplněný formulář rezervace.
+1. Otevřít `/m/rezervace` → tap „Nová žádost".
+2. Tap na pole „Datum od" → musí se vysunout vizuální kalendář s českými názvy měsíců/dnů.
+3. Vybrat den → kalendář se zavře, datum se zobrazí jako „20. 4. 2026".
+4. Pole „Datum do" nesmí dovolit dřívější datum než „Datum od".
+5. Stejná kontrola pro „Najít volný vůz" na domovské obrazovce řidiče.
 

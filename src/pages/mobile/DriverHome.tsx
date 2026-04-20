@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import SpravceCalendarStrip from "@/components/mobile/SpravceCalendarStrip";
 import FindVehicleSheet from "@/components/mobile/FindVehicleSheet";
 import NewReservationDialog from "@/components/mobile/NewReservationDialog";
+import PendingApprovalCard, { PendingReservation } from "@/components/mobile/PendingApprovalCard";
 
 interface UpcomingReservation {
   id: string;
@@ -35,9 +36,10 @@ function daysUntil(date?: string | null): number | null {
 export default function DriverHome() {
   const navigate = useNavigate();
   const { driver, myVehicles, isSpravce, loading } = useDriverContext();
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
 
   const greeting = driver?.fullName || user?.email || "Řidič";
+  const isPrivileged = roles.includes("admin") || roles.includes("dispatcer");
 
   if (loading) {
     return <p className="text-center text-sm text-muted-foreground py-8">Načítání…</p>;
@@ -50,6 +52,7 @@ export default function DriverHome() {
           <p className="text-sm text-muted-foreground">Vítejte zpět</p>
           <h2 className="text-2xl font-semibold">{greeting}</h2>
         </div>
+        {isPrivileged && <PendingApprovalsSection scope="all" greetingHidden />}
         <Card>
           <CardContent className="p-4 text-sm text-muted-foreground text-center">
             Váš účet zatím není propojen s žádným řidičem. Kontaktujte správce.
@@ -59,7 +62,9 @@ export default function DriverHome() {
     );
   }
 
-  return isSpravce ? <SpravceHome greeting={greeting} /> : <DriverOnlyHome greeting={greeting} />;
+  return isSpravce
+    ? <SpravceHome greeting={greeting} isPrivileged={isPrivileged} />
+    : <DriverOnlyHome greeting={greeting} isPrivileged={isPrivileged} />;
 }
 
 /* ---------------- SPRÁVCE ---------------- */

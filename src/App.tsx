@@ -68,7 +68,6 @@ const App = () => (
               {/* Admin/dispečer mobilní routy – znovupoužívají desktop stránky */}
               <Route path="vozidla" element={<Vehicles />} />
               <Route path="vozidla/:id" element={<VehicleDetail />} />
-              <Route path="ridici" element={<Drivers />} />
               <Route path="servis" element={<Service />} />
               <Route path="kniha-jizd" element={<TripLog />} />
               <Route path="skody" element={<Incidents />} />

@@ -5,7 +5,11 @@ import { Button } from "@/components/ui/button";
 import { CalendarDays, Plus, X, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useDriverContext } from "@/hooks/useDriverContext";
+import { useAuth } from "@/contexts/AuthContext";
 import NewReservationDialog from "@/components/mobile/NewReservationDialog";
+import PendingApprovalCard, { PendingReservation } from "@/components/mobile/PendingApprovalCard";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -25,10 +29,15 @@ interface Reservation {
 }
 
 export default function MyReservations() {
-  const { driver } = useDriverContext();
+  const { driver, myVehicles, isSpravce } = useDriverContext();
+  const { roles } = useAuth();
+  const isPrivileged = roles.includes("admin") || roles.includes("dispatcer");
+  const showApprovalsTab = isSpravce || isPrivileged;
+
   const [items, setItems] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [pending, setPending] = useState<PendingReservation[]>([]);
 
   const load = useCallback(async () => {
     if (!driver) { setLoading(false); return; }
@@ -51,6 +60,31 @@ export default function MyReservations() {
   }, [driver]);
 
   useEffect(() => { load(); }, [load]);
+
+  const loadPending = useCallback(async () => {
+    if (!showApprovalsTab) return;
+    let q = supabase
+      .from("reservations")
+      .select("id, vehicle_id, driver_name, date_from, date_to, time_from, time_to, purpose")
+      .eq("status", "čeká")
+      .order("date_from", { ascending: true });
+    if (!isPrivileged) {
+      const ids = myVehicles.map(v => v.id);
+      if (ids.length === 0) { setPending([]); return; }
+      q = q.in("vehicle_id", ids);
+    }
+    const { data } = await q;
+    const list = (data as PendingReservation[]) || [];
+    const ids = Array.from(new Set(list.map(r => r.vehicle_id)));
+    if (ids.length) {
+      const { data: vs } = await supabase.from("vehicles").select("id, rz, znacka").in("id", ids);
+      const map = new Map((vs || []).map((v: any) => [v.id, v]));
+      list.forEach(r => { r.vehicle = map.get(r.vehicle_id); });
+    }
+    setPending(list);
+  }, [showApprovalsTab, isPrivileged, myVehicles.map(v => v.id).join(",")]);
+
+  useEffect(() => { loadPending(); }, [loadPending]);
 
   const statusVariant = (s: string): "default" | "secondary" | "outline" | "destructive" => {
     if (s === "schváleno") return "default";

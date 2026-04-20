@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Car, ChevronRight, Route, AlertTriangle, CalendarDays, Clock } from "lucide-react";
+import { Car, ChevronRight, Route, AlertTriangle, CalendarDays, Clock, Check, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDriverContext } from "@/hooks/useDriverContext";
 import { useEffect, useState } from "react";
@@ -9,6 +9,11 @@ import { supabase } from "@/integrations/supabase/client";
 import QuickTripDialog from "@/components/mobile/QuickTripDialog";
 import QuickIncidentDialog from "@/components/mobile/QuickIncidentDialog";
 import SpravceCalendarStrip from "@/components/mobile/SpravceCalendarStrip";
+import { toast } from "sonner";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Drawer, DrawerContent, DrawerHeader, DrawerTitle,
 } from "@/components/ui/drawer";

@@ -1,35 +1,59 @@
 
-Uživatel se ptá, jak si zobrazit mobilní verzi aplikace na svém skutečném telefonu. Toto je otázka typu "jak na to" – nepotřebuje úpravu kódu, jen návod. Aplikace už mobilní rozhraní má (`/m` route), jen ji potřebuje zpřístupnit z telefonu.
+## Cíl
+Zlepšit mobilní rozložení (`/m`) tak, aby bylo skutečně optimalizované pro telefony – nejen zúžená desktop verze. Aktuální mobilní UI funguje, ale má drobné neduhy: malé klikací plochy, nečitelné texty, dialogy přes celou výšku, formuláře s desktopovými inputy.
 
-## Možnosti, jak zobrazit mobilní verzi na telefonu
+## Co je potřeba zlepšit
 
-### 1. Sdílený náhled (nejrychlejší, doporučeno pro test)
-V Lovable editoru klikněte na **Share → Share preview**. Vygeneruje se veřejný odkaz platný 7 dní, který otevřete v prohlížeči telefonu. Nepotřebuje Lovable účet.
+### 1. Hlavička a navigace
+- Větší výška headeru (56 → 64 px), bezpečné okraje pro notch (`env(safe-area-inset-top)`).
+- Bottom nav s vyšší klikací plochou (min. 48 px), safe-area pro spodní lištu (iPhone home indicator).
+- Aktivní stav s jemným pozadím, ne jen barvou ikony.
 
-Po otevření na telefonu se přihlaste účtem řidiče (`cernoch@cmanagement.cz`). Protože má roli Řidič, `ProtectedRoute` vás automaticky přesměruje na `/m` (mobilní rozhraní).
+### 2. FAB (plovoucí tlačítko)
+- Posunout výš nad bottom nav, respektovat safe-area-inset-bottom.
+- Zvětšit na 56 px (Material guideline) a přidat výraznější stín.
 
-### 2. Publikování aplikace (trvalé)
-Klikněte na **Publish** vpravo nahoře. Získáte trvalou URL `*.lovable.app`, kterou otevřete na telefonu kdykoliv. Vhodné pro reálné používání.
+### 3. Dialogy → Drawery (bottom sheet)
+- `NewReservationDialog`, `QuickTripDialog`, `QuickIncidentDialog` aktuálně používají `Dialog` – na mobilu vypadá jako desktopové okno.
+- Přepnout na **Drawer** (vaul, už máme `src/components/ui/drawer.tsx`) – vysouvá se zespodu, přirozené pro mobil, swipe-to-close.
 
-### 3. Přímá URL náhledu
-Otevřete v telefonu přímo: `https://id-preview--f097475a-34ff-4fec-a957-6deaf6176cb8.lovable.app/m` – ale vyžaduje přihlášení do Lovable, takže funguje jen pokud máte na telefonu Lovable účet s přístupem k projektu.
+### 4. Formulářové prvky
+- Inputy výška 44 px (iOS doporučení) místo 40.
+- `font-size: 16px` na inputech (zabrání auto-zoomu v Safari při focusu).
+- Date/time pickery: použít nativní `<input type="date">` / `type="time"` na mobilu místo custom – uživatel dostane systémový picker.
+- Selecty: větší ikona šipky, větší padding položek.
 
-### 4. Test bez telefonu (v prohlížeči na PC)
-- V Lovable nad náhledem je ikona telefonu/tabletu – přepne náhled na mobilní rozměry.
-- Nebo v Chrome DevTools (F12) zapněte device toolbar (Ctrl+Shift+M).
-- Otevřete `/m` přímo, nebo se přihlaste jako řidič a budete přesměrováni automaticky.
+### 5. Karty a typografie
+- Větší mezery mezi kartami (gap-4), větší klikací plochy.
+- Nadpisy mírně větší (text-xl → text-2xl pro hlavní), popisky čitelnější (text-sm minimum).
+- Všechny tlačítka „Zrušit / Schválit / Odeslat" plně přes šířku obrazovky (`w-full h-12`).
 
-## Drobná překážka, kterou je dobré vědět
-Účet `cernoch@cmanagement.cz` má pravděpodobně roli Admin/Dispečer (proto vidíte desktop). Mobilní rozhraní se aktivuje automaticky **jen pro účty, které mají pouze roli Řidič**. Pro test na telefonu máte dvě možnosti:
+### 6. Stránky `/m`
+- **DriverHome**: dvě statistické karty zvětšit, přidat sekci „Nadcházející rezervace" (3 nejbližší) jako quick preview.
+- **MyVehicle**: kompaktní karta vozidla s velkým tlačítkem „Zápis km" / „Hlásit škodu".
+- **MyReservations**: každá rezervace jako velká karta s jasnou hierarchií (vozidlo, datum, status badge), akční tlačítka přes celou šířku.
 
-- **A)** Použít existující účet čistého řidiče (nebo si jeden založit přes Nastavení → Uživatelé).
-- **B)** Otevřít na telefonu přímo URL `/m` – mobilní rozhraní funguje pro všechny přihlášené uživatele, jen se na něj automaticky nepřesměrovávají admini.
+### 7. Globální mobilní vylepšení
+- Přidat do `index.html` meta `viewport-fit=cover` (kvůli safe-area).
+- V `index.css` definovat utility třídy pro safe-area paddingy.
+- Zakázat tap highlight (`-webkit-tap-highlight-color: transparent`).
+- Plynulé scrollování (`-webkit-overflow-scrolling: touch`).
 
-## Doporučený postup
-1. Klikněte **Share → Share preview** v Lovable.
-2. Odkaz otevřete v prohlížeči telefonu (můžete si ho poslat e-mailem nebo přes QR kód).
-3. Přihlaste se účtem řidiče → zobrazí se `/m` automaticky.
-4. (Volitelně) V Safari/Chrome na telefonu zvolte „Přidat na plochu" – aplikace bude vypadat jako nainstalovaná.
+## Soubory ke změně
+- `index.html` – viewport meta
+- `src/index.css` – safe-area utility, tap highlight
+- `src/components/MobileLayout.tsx` – hlavička, bottom nav, FAB se safe-area
+- `src/components/mobile/NewReservationDialog.tsx` – Dialog → Drawer, nativní date/time inputy
+- `src/components/mobile/QuickTripDialog.tsx` – Dialog → Drawer
+- `src/components/mobile/QuickIncidentDialog.tsx` – Dialog → Drawer
+- `src/pages/mobile/DriverHome.tsx` – větší karty, sekce nadcházejících rezervací
+- `src/pages/mobile/MyVehicle.tsx` – mobilní karta vozidla
+- `src/pages/mobile/MyReservations.tsx` – velké karty, full-width akce
 
-## Poznámka k nativní aplikaci
-Pokud chcete mobilní verzi jako **opravdovou nainstalovanou aplikaci** (z App Store / Google Play, s push notifikacemi, kamerou apod.), je možné projekt rozšířit o **Capacitor** (nativní wrapper) nebo nastavit **PWA** (instalovatelná webová aplikace s offline režimem a ikonou na ploše). To je už ale samostatná úloha – řekněte, jestli o to máte zájem a kterou variantu preferujete.
+## Co se NEmění
+- Logika (queries, validace kolizí, auth, role-based routing).
+- Desktop rozhraní (`AppLayout` a stránky mimo `/m`).
+- Datový model.
+
+## Jak to otestovat
+Po nasazení otevřít sdílený náhled na telefonu (Share → Share preview) a projít: vytvořit rezervaci přes nový bottom-sheet, zápis jízdy, hlášení škody. Ověřit, že nic nezakrývá home indicator a že se Safari nezoomuje při focusu inputu.

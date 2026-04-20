@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { MobileDatePicker } from "@/components/ui/mobile-date-picker";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -142,11 +143,11 @@ export default function NewReservationDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Datum od *</Label>
-              <Input className="h-12" type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+              <MobileDatePicker value={dateFrom} onChange={setDateFrom} />
             </div>
             <div className="space-y-1.5">
               <Label>Datum do *</Label>
-              <Input className="h-12" type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+              <MobileDatePicker value={dateTo} onChange={setDateTo} min={dateFrom} />
             </div>
             <div className="space-y-1.5">
               <Label>Čas od</Label>

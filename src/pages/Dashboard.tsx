@@ -10,6 +10,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import VehicleNotifications from "@/components/VehicleNotifications";
 import DashboardExtraWidgets from "@/components/DashboardExtraWidgets";
+import PendingReservationsWidget from "@/components/PendingReservationsWidget";
 
 function parseDateString(s: string | null): Date | null {
   if (!s) return null;
@@ -288,6 +289,8 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       )}
+
+      <PendingReservationsWidget />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* STK soon */}

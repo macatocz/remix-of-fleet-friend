@@ -112,6 +112,57 @@ export default function MyReservations() {
         <Plus className="h-5 w-5 mr-2" /> Nová žádost
       </Button>
 
+      {showApprovalsTab ? (
+        <Tabs defaultValue="mine" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="mine">Moje žádosti</TabsTrigger>
+            <TabsTrigger value="approvals" className="gap-1.5">
+              Ke schválení
+              {pending.length > 0 && (
+                <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold">
+                  {pending.length}
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="mine" className="space-y-4 mt-4">
+            <MyList
+              loading={loading} items={items} statusVariant={statusVariant} cancel={cancel}
+            />
+          </TabsContent>
+          <TabsContent value="approvals" className="space-y-3 mt-4">
+            {pending.length === 0 ? (
+              <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">
+                Žádné čekající žádosti ke schválení.
+              </CardContent></Card>
+            ) : pending.map(p => (
+              <PendingApprovalCard key={p.id} reservation={p} onChanged={loadPending} />
+            ))}
+          </TabsContent>
+        </Tabs>
+      ) : (
+        <MyList loading={loading} items={items} statusVariant={statusVariant} cancel={cancel} />
+      )}
+
+      <NewReservationDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onCreated={() => { load(); loadPending(); }}
+      />
+    </div>
+  );
+}
+
+function MyList({
+  loading, items, statusVariant, cancel,
+}: {
+  loading: boolean;
+  items: Reservation[];
+  statusVariant: (s: string) => "default" | "secondary" | "outline" | "destructive";
+  cancel: (id: string) => void;
+}) {
+  return (
+    <>
       {loading && <p className="text-sm text-muted-foreground">Načítání…</p>}
       {!loading && items.length === 0 && (
         <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">
@@ -172,12 +223,6 @@ export default function MyReservations() {
           </CardContent>
         </Card>
       ))}
-
-      <NewReservationDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onCreated={load}
-      />
-    </div>
+    </>
   );
 }

@@ -1,49 +1,53 @@
 
 
 ## Cíl
-V mobilním formuláři rezervace (a ve "Najít volný vůz") nahradit `<input type="date">` plnohodnotným **vizuálním kalendářem** (Shadcn Calendar v Popoveru), aby si uživatel datum vždy vybral klikáním v kalendáři – nezávisle na tom, jaký prohlížeč/webview používá.
+Umožnit **správci vozidla** (a admin/dispečerovi) **schvalovat a zamítat čekající rezervace přímo v mobilní verzi**. Dnes lze rezervace v mobilu jen vytvořit a zrušit svou vlastní – schvalovat lze pouze na desktopu.
 
-## Proč to teď nejde
-`<input type="date">` se na mobilu spoléhá na nativní datepicker prohlížeče. V Lovable preview iframe (a v některých in-app webview) se nativní picker neotevře a uživatel vidí jen prázdné textové pole.
+## Kdo co vidí
+- **Správce vozidla**: u každé čekající rezervace **na svůj vůz** vidí tlačítka **Schválit** / **Zamítnout**.
+- **Admin / Dispečer**: stejná tlačítka u **všech** čekajících rezervací.
+- **Řidič bez správy**: žádná akce navíc, jen vlastní rezervace lze zrušit (jak je dnes).
 
 ## Co se mění
 
-### 1. Nová pomocná komponenta `src/components/ui/mobile-date-picker.tsx`
-Tlačítko (h-12, full-width) zobrazující vybrané datum v českém formátu (např. „20. 4. 2026"). Po tapu se otevře `Popover` s `Calendar` (mode="single", `pointer-events-auto`, lokalizace `cs`). Po výběru se popover zavře a zavolá `onChange(YYYY-MM-DD)`. API:
-```text
-<MobileDatePicker
-  value={dateFrom}          // "YYYY-MM-DD" nebo ""
-  onChange={setDateFrom}
-  placeholder="Vyberte datum"
-  min="YYYY-MM-DD"          // volitelně, např. dnes
-/>
-```
-Komponenta interně převádí mezi `string` (DB formát) a `Date`.
+### 1. Nová komponenta `src/components/mobile/PendingApprovalCard.tsx`
+Karta zobrazující jednu čekající rezervaci s informacemi (řidič, vozidlo RZ, datum/čas od–do, účel) a dvěma velkými tlačítky **Schválit** (default, h-11) a **Zamítnout** (outline destructive, h-11). Po kliku UPDATE `reservations.status` na `schváleno` / `zamítnuto`, toast a callback pro reload. Zamítnutí potvrdit `AlertDialog`em (aby nedošlo k překliku).
 
-### 2. `src/components/mobile/NewReservationDialog.tsx`
-- Nahradit oba `<Input type="date">` (Datum od / Datum do) komponentou `MobileDatePicker`.
-- `Datum do` dostane `min={dateFrom}`, aby nešlo zvolit dřívější den.
-- `<Input type="time">` pro Čas od/do **necháme** – nativní time picker funguje spolehlivě i v iframe (a uživatel si nestěžoval na čas, jen na datum). Pokud vyjde najevo i problém s časem, vyřešíme samostatně.
+### 2. `src/pages/mobile/DriverHome.tsx` – sekce „Ke schválení"
 
-### 3. `src/components/mobile/FindVehicleSheet.tsx`
-- Stejná náhrada datových polí na `MobileDatePicker` (Datum od / Datum do, `Datum do` má `min={dateFrom}`).
+**Pro správce** (`isSpravce`): pod existující sekci „Vytížení mého vozu" přidat sekci **„Žádosti ke schválení"** – načte rezervace se `status='čeká'` a `vehicle_id IN myVehicles.map(id)`, seřazené `date_from ASC`, max 10. Pokud nejsou žádné, sekce se skryje. V titulku badge s počtem.
 
-### 4. Lokalizace
-Použít `date-fns/locale/cs` (knihovna už v projektu je) pro `Calendar` a pro formátování zobrazeného data.
+**Pro admina/dispečera** (přihlášený admin/dispečer používající mobilní redirect): stejná sekce, ale dotaz bez filtru na vozidlo (všechny `status='čeká'`). Detekce role přes `useAuth().roles`.
+
+V hlavičce sekce odkaz „Vše →" na `/m/rezervace`.
+
+### 3. `src/pages/mobile/MyVehicle.tsx` – inline akce u nadcházejících rezervací správce
+U každé čekající rezervace v mini-pruhu (dnes jen text + badge) přidat dvě malé ikonové akce **✓** a **✕** (h-8, ghost). Klik = stejná akce jako v `PendingApprovalCard`. Schválené/zamítnuté jen badge.
+
+### 4. `src/pages/mobile/MyReservations.tsx` – pohled „K vyřízení" pro správce
+Pro správce a admina přidat nahoře tabovou přepínku **„Moje žádosti" / „Ke schválení"**. Záložka „Ke schválení" zobrazí seznam čekajících rezervací (na vlastní vozidla u správce, na všechna u admina) s `PendingApprovalCard`. Pro řidiče bez správy se přepínka neukazuje – stránka funguje jako dnes.
+
+### 5. Toasty a stavy
+- Schválení: `toast.success("Rezervace schválena")`
+- Zamítnutí: `toast.success("Rezervace zamítnuta")`
+- Chyba: zobrazit message ze Supabase odpovědi.
+- Po akci automaticky znovu načíst seznamy.
 
 ## Co se NEmění
-- Datový model, formát ukládání (`YYYY-MM-DD`), validační logika, overlap kontrola.
-- Desktopové formuláře.
-- Pole pro čas.
+- Datový model, RLS, status hodnoty (`čeká` / `schváleno` / `zamítnuto`).
+- Desktop widget `PendingReservationsWidget`.
+- Logika overlap kontroly při vytváření.
+- Workflow notifikací (žádné e-maily/push se zatím nepřidávají).
 
 ## Soubory
-**Vytvořit:** `src/components/ui/mobile-date-picker.tsx`
-**Upravit:** `src/components/mobile/NewReservationDialog.tsx`, `src/components/mobile/FindVehicleSheet.tsx`
+**Vytvořit:** `src/components/mobile/PendingApprovalCard.tsx`
+**Upravit:** `src/pages/mobile/DriverHome.tsx`, `src/pages/mobile/MyVehicle.tsx`, `src/pages/mobile/MyReservations.tsx`
 
 ## Jak to otestovat
-1. Otevřít `/m/rezervace` → tap „Nová žádost".
-2. Tap na pole „Datum od" → musí se vysunout vizuální kalendář s českými názvy měsíců/dnů.
-3. Vybrat den → kalendář se zavře, datum se zobrazí jako „20. 4. 2026".
-4. Pole „Datum do" nesmí dovolit dřívější datum než „Datum od".
-5. Stejná kontrola pro „Najít volný vůz" na domovské obrazovce řidiče.
+1. Přihlásit se jako správce vozidla v mobilu → na `/m` vidět novou sekci „Žádosti ke schválení" se seznamem čekajících rezervací na můj vůz.
+2. Tap **Schválit** → karta zmizí, badge se sníží, vozidlo v sekci „Vytížení" se obarví správně, ten řidič v `MyReservations` uvidí status `schváleno`.
+3. Tap **Zamítnout** → potvrzovací dialog → po potvrzení karta zmizí, status `zamítnuto`.
+4. V `MyVehicle` u nadcházejících rezervací vidět ikony ✓/✕ – fungují stejně.
+5. Přihlásit se jako řidič bez správy → žádné akce schválit/zamítnout nikde nevidět, vlastní žádosti lze pouze zrušit.
+6. Přihlásit se jako admin v mobilu → vidí ke schválení **všechny** čekající rezervace napříč vozovým parkem.
 

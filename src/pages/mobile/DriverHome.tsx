@@ -232,6 +232,11 @@ function SpravceHome({ greeting, isPrivileged }: { greeting: string; isPrivilege
         </Card>
       )}
 
+      <PendingApprovalsSection
+        scope={isPrivileged ? "all" : "vehicles"}
+        vehicleIds={myVehicles.map(v => v.id)}
+      />
+
       <Card>
         <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
           <CardTitle className="text-sm">Nadcházející rezervace mého vozu</CardTitle>

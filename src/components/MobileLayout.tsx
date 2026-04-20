@@ -4,7 +4,7 @@ import { Home, Car, CalendarDays, Plus, Route, AlertTriangle, Users, MoreHorizon
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDriverContext } from "@/hooks/useDriverContext";
-import { UserMenu } from "@/components/UserMenu";
+import { MobileUserMenu } from "@/components/mobile/MobileUserMenu";
 import {
   Drawer, DrawerContent, DrawerHeader, DrawerTitle,
 } from "@/components/ui/drawer";
@@ -71,7 +71,7 @@ export function MobileLayout() {
         <div className="h-safe-top" />
         <div className="h-16 flex items-center justify-between px-4">
           <h1 className="font-semibold text-base">🚗 Vozový park</h1>
-          <UserMenu />
+          <MobileUserMenu />
         </div>
       </header>
 

@@ -67,9 +67,74 @@ export default function DriverHome() {
     : <DriverOnlyHome greeting={greeting} isPrivileged={isPrivileged} />;
 }
 
+/* ---------------- PENDING APPROVALS SECTION ---------------- */
+
+function PendingApprovalsSection({
+  scope,
+  vehicleIds,
+  greetingHidden,
+}: {
+  scope: "all" | "vehicles";
+  vehicleIds?: string[];
+  greetingHidden?: boolean;
+}) {
+  const navigate = useNavigate();
+  const [items, setItems] = useState<PendingReservation[]>([]);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    if (scope === "vehicles" && (!vehicleIds || vehicleIds.length === 0)) {
+      setItems([]);
+      return;
+    }
+    (async () => {
+      let q = supabase
+        .from("reservations")
+        .select("id, vehicle_id, driver_name, date_from, date_to, time_from, time_to, purpose")
+        .eq("status", "čeká")
+        .order("date_from", { ascending: true })
+        .limit(10);
+      if (scope === "vehicles" && vehicleIds) q = q.in("vehicle_id", vehicleIds);
+      const { data } = await q;
+      const list = (data as PendingReservation[]) || [];
+      const ids = Array.from(new Set(list.map(r => r.vehicle_id)));
+      if (ids.length) {
+        const { data: vs } = await supabase.from("vehicles").select("id, rz, znacka").in("id", ids);
+        const map = new Map((vs || []).map((v: any) => [v.id, v]));
+        list.forEach(r => { r.vehicle = map.get(r.vehicle_id); });
+      }
+      setItems(list);
+    })();
+  }, [scope, vehicleIds?.join(","), reloadKey]);
+
+  if (items.length === 0) return null;
+
+  return (
+    <Card>
+      <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
+        <CardTitle className="text-sm flex items-center gap-2">
+          Žádosti ke schválení
+          <Badge variant="secondary" className="text-[10px] py-0">{items.length}</Badge>
+        </CardTitle>
+        <button
+          onClick={() => navigate("/m/rezervace")}
+          className="text-xs text-primary flex items-center gap-0.5"
+        >
+          Vše <ChevronRight className="h-3 w-3" />
+        </button>
+      </CardHeader>
+      <CardContent className="pt-0 space-y-2">
+        {items.map(r => (
+          <PendingApprovalCard key={r.id} reservation={r} onChanged={() => setReloadKey(k => k + 1)} />
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
 /* ---------------- SPRÁVCE ---------------- */
 
-function SpravceHome({ greeting }: { greeting: string }) {
+function SpravceHome({ greeting, isPrivileged }: { greeting: string; isPrivileged: boolean }) {
   const navigate = useNavigate();
   const { driver, myVehicles } = useDriverContext();
   const [upcoming, setUpcoming] = useState<UpcomingReservation[]>([]);

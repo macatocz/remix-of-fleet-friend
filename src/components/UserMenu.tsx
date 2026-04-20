@@ -1,8 +1,10 @@
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, Monitor, Smartphone } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useSidebar } from "@/components/ui/sidebar";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const roleLabels: Record<string, string> = {
   admin: "Admin",

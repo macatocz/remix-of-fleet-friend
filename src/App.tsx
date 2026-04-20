@@ -65,6 +65,16 @@ const App = () => (
               <Route index element={<DriverHome />} />
               <Route path="vozidlo" element={<MyVehicle />} />
               <Route path="rezervace" element={<MyReservations />} />
+              {/* Admin/dispečer mobilní routy – znovupoužívají desktop stránky */}
+              <Route path="vozidla" element={<Vehicles />} />
+              <Route path="vozidla/:id" element={<VehicleDetail />} />
+              <Route path="ridici" element={<Drivers />} />
+              <Route path="servis" element={<Service />} />
+              <Route path="kniha-jizd" element={<TripLog />} />
+              <Route path="skody" element={<Incidents />} />
+              <Route path="naklady" element={<Costs />} />
+              <Route path="tankovaci-karty" element={<FuelCards />} />
+              <Route path="nastaveni" element={<SettingsPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

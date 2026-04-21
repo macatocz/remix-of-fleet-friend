@@ -20,6 +20,7 @@ import Costs from "@/pages/Costs";
 import TripLog from "@/pages/TripLog";
 import FuelCards from "@/pages/FuelCards";
 import MobileFuelCards from "@/pages/mobile/MobileFuelCards";
+import MobileVehicles from "@/pages/mobile/MobileVehicles";
 import Incidents from "@/pages/Incidents";
 import SettingsPage from "@/pages/SettingsPage";
 import Login from "@/pages/Login";
@@ -67,7 +68,7 @@ const App = () => (
               <Route path="vozidlo" element={<MyVehicle />} />
               <Route path="rezervace" element={<MyReservations />} />
               {/* Admin/dispečer mobilní routy – znovupoužívají desktop stránky */}
-              <Route path="vozidla" element={<Vehicles />} />
+              <Route path="vozidla" element={<MobileVehicles />} />
               <Route path="vozidla/:id" element={<VehicleDetail />} />
               <Route path="servis" element={<Service />} />
               <Route path="kniha-jizd" element={<TripLog />} />

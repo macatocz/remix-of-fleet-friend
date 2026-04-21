@@ -1,31 +1,59 @@
 
-## Cíl
-Odstranit položku **Řidiči** z mobilního zobrazení. Pokud admin potřebuje řidiče spravovat, přepne se na desktop.
+## Mobilní přehled tankovacích karet
 
-## Co se mění
+Aktuální stránka `/m/tankovaci-karty` zobrazuje desktopovou tabulku `FuelCards.tsx`, která se na 390 px vodorovně přetéká a špatně se ovládá. Vytvořím dedikovanou mobilní stránku s kartovým layoutem.
 
-### 1. `src/components/MobileLayout.tsx`
-Z pole `moreItems` (drawer „Více") odebrat položku:
-```ts
-{ url: "/m/ridici", label: "Řidiči", icon: Users },
+### Co uvidí uživatel
+
+- **Header**: ikona 💳 + název „Tankovací karty" + počet
+- **Vyhledávání**: jedno vstupní pole (RZ, číslo karty, vlastník)
+- **Filtry**: dva chipy (Provider, Stav) — tap otevře bottom sheet s výběrem
+- **Seznam karet** jako vertikální karty (`Card` komponenta), každá obsahuje:
+  - Horní řádek: **RZ vozidla** (tučně) + značka (malé, šedé) + barevný badge stavu vpravo
+  - Logo/název providera (MOL/Shell/Bonett) + číslo karty monospace
+  - Řádek PIN: `••••` + tlačítko 👁 pro odhalení (toggle per karta)
+  - Vlastník (malé, ikona 👤)
+  - Platnost do (ikona 📅) — oranžově ⚠️ pokud expiruje do 30 dnů
+  - Tap na celou kartu → naviguje na `/vozidla/:id` (detail vozu)
+- **Empty state**: ikona + „Žádné tankovací karty"
+- **Loading**: skeleton karty (3×)
+
+### Layout
+
+```text
+┌─────────────────────────┐
+│ 💳 Tankovací karty (12) │
+├─────────────────────────┤
+│ 🔍 Hledat…              │
+│ [Provider ▾] [Stav ▾]   │
+├─────────────────────────┤
+│ ┌─────────────────────┐ │
+│ │ 1AB 2345  Škoda  ●  │ │
+│ │ MOL · 7012 3456 78  │ │
+│ │ PIN: ••••       👁   │ │
+│ │ 👤 Jan Novák        │ │
+│ │ 📅 31.12.2025       │ │
+│ └─────────────────────┘ │
+│ ┌─────────────────────┐ │
+│ │ ...                 │ │
+└─────────────────────────┘
 ```
-Import `Users` z `lucide-react` ponechat jen pokud se používá jinde, jinak odebrat.
 
-### 2. `src/App.tsx`
-V mobilní routě `/m` odebrat řádek:
-```tsx
-<Route path="ridici" element={<Drivers />} />
-```
-Import `Drivers` ponechat (používá ho desktop route `/ridici`).
+### Technická realizace
 
-## Co se NEmění
-- Desktopová stránka `/ridici` – beze změny
-- Spodní hlavní nav (Domů · Vozidlo/Vozidla · Rezervace · Více) – beze změny
-- Ostatní položky v „Více" drawer (Servis, Kniha jízd, Škody, Náklady, Karty, Nastavení) – beze změny
-- Přepnutí na desktop přes menu v záhlaví funguje dál
+1. **Nový soubor** `src/pages/mobile/MobileFuelCards.tsx` — kartový seznam s filtry, search, toggle PIN, tap → navigate.
+2. **Routing** v `src/App.tsx`: cesta `/m/tankovaci-karty` (nebo aktuální mobilní routa) namapovat na `MobileFuelCards` místo desktopového `FuelCards`. Pokud se routa řeší přes `MobileLayout`/`use-mobile`, upravit tam.
+3. **Data**: stejný query jako desktop — `fuel_cards` join `vehicles(rz, znacka)`, řazeno podle `created_at desc`.
+4. **Filtry/search**: client-side přes `useMemo`. Bottom sheet pomocí `Sheet` z shadcn (nebo `Select` s velkým triggerem — vyberu Sheet pro lepší mobilní UX).
+5. **Komponenty**: `Card`, `Badge`, `Input`, `Button`, `Sheet`, `Skeleton` — vše už v projektu.
+6. **Drawer „Více"**: položka „Tankovací karty" zůstává a vede na `/m/tankovaci-karty`.
 
-## Jak to otestovat
-1. Otevřít mobilní zobrazení jako admin → tap **Více** → v gridu **není** žádná dlaždice „Řidiči".
-2. Manuálně zadat URL `/m/ridici` → zobrazí se 404 (NotFound).
-3. Přepnout se na desktop → `/ridici` funguje dál normálně.
-4. Jako řidič / správce → mobilní nav beze změny.
+### Co se NEMĚNÍ
+
+- Desktopová stránka `FuelCards.tsx` — beze změny
+- Tabulky karet uvnitř detailu vozu (`VehicleFuelCards.tsx`) — beze změny
+- Datový model, RLS — beze změny
+
+### Dotazy mimo scope
+
+Pokud chceš na mobilu i **přidávat/upravovat/mazat** karty (zatím jen prohlížení), řekni — přidám tlačítko „+" v headeru a bottom-sheet formulář.

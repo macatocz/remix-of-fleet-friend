@@ -19,6 +19,7 @@ import Service from "@/pages/Service";
 import Costs from "@/pages/Costs";
 import TripLog from "@/pages/TripLog";
 import FuelCards from "@/pages/FuelCards";
+import MobileFuelCards from "@/pages/mobile/MobileFuelCards";
 import Incidents from "@/pages/Incidents";
 import SettingsPage from "@/pages/SettingsPage";
 import Login from "@/pages/Login";
@@ -72,7 +73,7 @@ const App = () => (
               <Route path="kniha-jizd" element={<TripLog />} />
               <Route path="skody" element={<Incidents />} />
               <Route path="naklady" element={<Costs />} />
-              <Route path="tankovaci-karty" element={<FuelCards />} />
+              <Route path="tankovaci-karty" element={<MobileFuelCards />} />
               <Route path="nastaveni" element={<SettingsPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />

@@ -1,59 +1,62 @@
 
-## Mobilní přehled tankovacích karet
 
-Aktuální stránka `/m/tankovaci-karty` zobrazuje desktopovou tabulku `FuelCards.tsx`, která se na 390 px vodorovně přetéká a špatně se ovládá. Vytvořím dedikovanou mobilní stránku s kartovým layoutem.
+## Mobilní přehled vozidel
+
+Aktuálně `/m/vozidla` zobrazuje desktopovou stránku `Vehicles.tsx` s širokou tabulkou — na 390 px se hůř ovládá. Vytvořím dedikovanou mobilní stránku s kartovým layoutem podobně jako u tankovacích karet.
 
 ### Co uvidí uživatel
 
-- **Header**: ikona 💳 + název „Tankovací karty" + počet
-- **Vyhledávání**: jedno vstupní pole (RZ, číslo karty, vlastník)
-- **Filtry**: dva chipy (Provider, Stav) — tap otevře bottom sheet s výběrem
-- **Seznam karet** jako vertikální karty (`Card` komponenta), každá obsahuje:
-  - Horní řádek: **RZ vozidla** (tučně) + značka (malé, šedé) + barevný badge stavu vpravo
-  - Logo/název providera (MOL/Shell/Bonett) + číslo karty monospace
-  - Řádek PIN: `••••` + tlačítko 👁 pro odhalení (toggle per karta)
-  - Vlastník (malé, ikona 👤)
-  - Platnost do (ikona 📅) — oranžově ⚠️ pokud expiruje do 30 dnů
-  - Tap na celou kartu → naviguje na `/vozidla/:id` (detail vozu)
-- **Empty state**: ikona + „Žádné tankovací karty"
-- **Loading**: skeleton karty (3×)
+- **Header**: ikona 🚗 + „Vozidla" + počet (např. „24")
+- **Vyhledávání**: jedno pole (RZ, značka, VIN, správce)
+- **Filtry** (chipy → bottom sheet):
+  - Stav (aktivní / vyřazené / servis)
+  - Kategorie (osobní / užitkové / …)
+  - Lokalita
+- **Seznam karet** — každá karta:
+  - Horní řádek: **RZ** (tučně, monospace) + značka (šedé) + barevný badge stavu vpravo
+  - 🏷️ Kategorie · 📍 Lokalita
+  - 👤 Správce (jméno) — nebo „POOL" badge pokud bez správce
+  - Mini řádek upozornění (pokud aktivní): ⚠️ STK / pojištění expiruje do 30 dnů
+  - Tap na celou kartu → `/vozidla/:id`
+- **Empty state**: ikona + „Žádná vozidla"
+- **Loading**: 3× skeleton karta
 
 ### Layout
 
 ```text
 ┌─────────────────────────┐
-│ 💳 Tankovací karty (12) │
+│ 🚗 Vozidla (24)         │
 ├─────────────────────────┤
 │ 🔍 Hledat…              │
-│ [Provider ▾] [Stav ▾]   │
+│ [Stav▾][Kategorie▾][📍▾]│
 ├─────────────────────────┤
 │ ┌─────────────────────┐ │
 │ │ 1AB 2345  Škoda  ●  │ │
-│ │ MOL · 7012 3456 78  │ │
-│ │ PIN: ••••       👁   │ │
-│ │ 👤 Jan Novák        │ │
-│ │ 📅 31.12.2025       │ │
+│ │ 🏷️ Osobní · 📍 Praha│ │
+│ │ 👤 Jan Novák         │ │
+│ │ ⚠️ STK do 12 dnů    │ │
 │ └─────────────────────┘ │
-│ ┌─────────────────────┐ │
-│ │ ...                 │ │
 └─────────────────────────┘
 ```
 
 ### Technická realizace
 
-1. **Nový soubor** `src/pages/mobile/MobileFuelCards.tsx` — kartový seznam s filtry, search, toggle PIN, tap → navigate.
-2. **Routing** v `src/App.tsx`: cesta `/m/tankovaci-karty` (nebo aktuální mobilní routa) namapovat na `MobileFuelCards` místo desktopového `FuelCards`. Pokud se routa řeší přes `MobileLayout`/`use-mobile`, upravit tam.
-3. **Data**: stejný query jako desktop — `fuel_cards` join `vehicles(rz, znacka)`, řazeno podle `created_at desc`.
-4. **Filtry/search**: client-side přes `useMemo`. Bottom sheet pomocí `Sheet` z shadcn (nebo `Select` s velkým triggerem — vyberu Sheet pro lepší mobilní UX).
+1. **Nový soubor** `src/pages/mobile/MobileVehicles.tsx` — kartový seznam, search + bottom-sheet filtry, navigace na detail.
+2. **Routing** v `src/App.tsx`: `/m/vozidla` → `MobileVehicles` (místo desktopového `Vehicles`).
+3. **Data**: `vehicles` select všech sloupců + count expirujících `inspections` (STK) a `insurance` join podle `vehicle_id` pro badge upozornění (jeden dotaz každé tabulky, agregace v `useMemo`).
+4. **Filtry/search**: client-side `useMemo`. Bottom sheet přes shadcn `Sheet`.
 5. **Komponenty**: `Card`, `Badge`, `Input`, `Button`, `Sheet`, `Skeleton` — vše už v projektu.
-6. **Drawer „Více"**: položka „Tankovací karty" zůstává a vede na `/m/tankovaci-karty`.
+6. **Konzistence**: stejný vizuální vzor jako `MobileFuelCards.tsx`.
 
 ### Co se NEMĚNÍ
 
-- Desktopová stránka `FuelCards.tsx` — beze změny
-- Tabulky karet uvnitř detailu vozu (`VehicleFuelCards.tsx`) — beze změny
+- Desktopová `Vehicles.tsx` — beze změny
+- Detail vozidla `/vozidla/:id` — beze změny (sdílí se s desktopem)
 - Datový model, RLS — beze změny
 
-### Dotazy mimo scope
+### Mimo scope (řekni, jestli přidat)
 
-Pokud chceš na mobilu i **přidávat/upravovat/mazat** karty (zatím jen prohlížení), řekni — přidám tlačítko „+" v headeru a bottom-sheet formulář.
+- Tlačítko „+" pro přidání vozidla z mobilu
+- Řazení (podle RZ / značky / nejbližší expirace)
+- Quick actions přímo na kartě (zápis km, přidat servis)
+

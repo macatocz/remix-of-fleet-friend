@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Home, Car, CalendarDays, Plus, Route, AlertTriangle, MoreHorizontal, Wrench, CreditCard, Coins, Settings as SettingsIcon, BookOpen, Search } from "lucide-react";
+import { Home, Car, CalendarDays, Plus, Route, AlertTriangle, MoreHorizontal, Wrench, CreditCard, Coins, Settings as SettingsIcon, BookOpen, Search, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDriverContext } from "@/hooks/useDriverContext";
@@ -40,6 +40,7 @@ const moreItems = [
   { url: "/m/skody", label: "Škody", icon: AlertTriangle },
   { url: "/m/naklady", label: "Náklady", icon: Coins },
   { url: "/m/tankovaci-karty", label: "Karty", icon: CreditCard },
+  { url: "/m/cestovni-prikazy", label: "Cestovní příkazy", icon: FileText },
   { url: "/m/nastaveni", label: "Nastavení", icon: SettingsIcon },
 ];
 

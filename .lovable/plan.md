@@ -1,99 +1,110 @@
 
 
-## Modul „Cestovní příkaz"
+## Doplnění cestovního příkazu na úroveň dat ze vzoru
 
-Přidám nový modul, který z dat aplikace (vozidlo, řidič, jízdy z knihy jízd) vygeneruje vyplněný **cestovní příkaz** ve stylu cestak.com — k tisku/PDF a k uložení historie.
+Cíl: cesťák musí obsahovat **všechna data**, která se objevují ve vzoru z Cestak.com (zahraniční stravné, časová pásma, země u úseků, kurzy ČNB, kapesné, spolucestující, podpisový workflow). Vzhled exportu zůstává **náš vlastní** — čistý firemní layout.
 
-### Co uvidí uživatel
+### Co bude cesťák nově obsahovat
 
-**Nová stránka `/cestovni-prikazy`** (v menu „Cestovní příkazy" 📋):
+**Hlavička**
+- Cestující (máme) + **spolucestující** (nové, volný text / multi-select řidičů)
+- Hlavička firmy z `company_settings` (máme)
+- Číslo cesťáku (máme `CP-2026-0001`)
 
-- Seznam vystavených příkazů: číslo, řidič, vozidlo, datum od–do, účel, stav (koncept / schválený / vyúčtovaný), částka náhrad
-- Tlačítko **„+ Nový cestovní příkaz"**
-- Filtry: řidič, vozidlo, období, stav
+**Průběh cesty (legs) — rozšíření**
+- `country` (CZ/SK/DE/AT/…) — povinné
+- `timezone` (Europe/Prague, Europe/Bratislava…) — auto podle země
+- `crossing_border` (boolean) — pro detekci přechodu hranic
 
-**Formulář (dialog / stránka detailu)** — sekce dle běžného CP:
+**Stravné (meals) — rozšíření**
+- `currency` (CZK/EUR/USD…) — vedle částky
+- `pocket_money` (kapesné, % ze stravného, default 0)
+- `pocket_money_amount` (vypočtené)
+- Automatický výpočet **podle vyhlášky MF ČR**:
+  - tuzemské: stávající sazby
+  - zahraniční: tabulka denních sazeb podle země (EUR/USD/CHF…)
+  - rozdělení dne podle hodin v každé zemi (jako ve vzoru: 18 h v SK + 0 h v CZ)
 
-1. **Hlavička**: číslo (auto), datum vystavení, účel cesty, schvaluje (jméno)
-2. **Cestující**: řidič (z `drivers`) → auto-doplnění bydliště, oddělení
-3. **Vozidlo**: výběr z `vehicles` → RZ, značka, typ paliva, prům. spotřeba
-4. **Trasa & čas**:
-   - Místo nástupu / cíl, datum + čas odjezdu / příjezdu
-   - Tlačítko **„Načíst z knihy jízd"** — předvyplní řádky tras z `trip_logs` za zvolené období + vůz
-5. **Dopravní prostředek**: vlastní vůz / služební / MHD / vlak (volitelné kombinace)
-6. **Stravné** (tuzemsko / zahraničí)**:
-   - Automatický výpočet podle délky pobytu a sazeb (vyhláška MPSV — sazby uložené v `app_settings`)
-7. **Náhrada za vozidlo** (jen u vlastního/služebního s nárokem):
-   - Km × sazba za km + spotřeba × cena PHM (z trip_logs / z nastavení)
-8. **Další výdaje**: parkovné, dálnice, ubytování (řádky s částkou + popis)
-9. **Souhrn**: stravné + km náhrady + výdaje − záloha = **k vyplacení / vrácení**
-10. **Akce**: Uložit koncept · Schválit · **Tisk / Stáhnout PDF** · Duplikovat
+**Kurzy ČNB**
+- Nová tabulka `currency_rates` (datum, měna, kurz, zdroj)
+- K cesťáku se uloží **fixní kurz ke dni cesty** (snapshot, aby se nepřepočítával zpětně)
+- Tlačítko „Načíst kurz ČNB" v detailu (volá veřejné API ČNB přes edge function)
 
-### Výstup PDF
+**Více měn v souhrnu**
+- Souhrn rozdělen podle měn (EUR řádek, CZK řádek) jako ve vzoru
+- Celkem v CZK přepočtené přes uložený kurz
 
-- Layout 1:1 podle ČR standardu (jako cestak.com): hlavička firmy z `company_settings`, tabulka tras, výpočty, podpisové pole
-- Generováno klientsky pomocí `jspdf` + `jspdf-autotable` (žádný server navíc)
-- Soubor: `CP-{cislo}-{prijmeni}.pdf`
+**Workflow podpisů (4 stavy místo 2)**
+- `requested_by` + `requested_at` (žádost vystavil)
+- `request_approved_by` + `request_approved_at` (žádost schválil)
+- `report_submitted_by` + `report_submitted_at` (výkaz vystavil)
+- `report_approved_by` + `report_approved_at` (výkaz schválil)
+- Status: `koncept` → `zadost_schvalena` → `vyuctovano` → `schvaleno`
 
-### Datový model (nové tabulky)
+**Nové pole na hlavičce**
+- `co_travelers` (text, volitelné)
+- `currency_rate_date` (datum kurzu)
+- `currency_rate_eur_czk` (snapshot kurzu EUR→CZK)
 
-```text
-travel_orders
-  id, number (auto), status, created_at, updated_at
-  driver_id, vehicle_id, purpose
-  date_from, time_from, date_to, time_to
-  place_from, place_to
-  transport_mode (jsonb: ['vlastni','sluzebni','mhd','vlak'])
-  advance_payment, approved_by, approved_at, notes
+### Náš vlastní export (PDF)
 
-travel_order_legs       (jednotlivé úseky trasy)
-  id, travel_order_id, date, time_from, time_to,
-  place_from, place_to, km, transport, note
+Přepíšu `src/lib/travel/pdf.ts` tak, aby obsahoval **všechna výše uvedená data**, ale ve **vlastním firemním layoutu** (žádná kopie vzhledu Cestak.com):
 
-travel_order_expenses   (parkovné, dálnice, ubytování…)
-  id, travel_order_id, type, description, amount, currency, receipt_path
+1. **Hlavička**: logo + `company_settings`, vpravo číslo cesťáku + status
+2. **Cestující + spolucestující + účel + vozidlo**
+3. **Průběh cesty**: tabulka s sloupci `Datum | Čas | Země | Místo od | Místo do | km | Doprava`
+4. **Stravné**: oddíl pro **tuzemsko** (CZK) a oddíl pro **zahraničí** (po měnách) s mezisoučty
+5. **Výdaje**: tabulka s měnou
+6. **Souhrn náhrad**: tabulka per měna (Náhr. stravné | Náhr. vozidlo | Vlastní výdaje | Celkem | Záloha | K vyplacení)
+7. **Přepočet**: použitý kurz ČNB ke dni X, výsledný součet v CZK
+8. **Podpisové bloky** (4): vystavil žádost / schválil žádost / vystavil výkaz / schválil výkaz — se jmény a časovými razítky
 
-travel_order_meals      (stravné — řádek za den/úsek)
-  id, travel_order_id, date, hours, country, rate, amount
+Stejný layout pro tisk i pro stažené PDF.
 
-app_settings keys:
-  travel.km_rate_personal     (Kč/km — sazba základní)
-  travel.km_rate_average_fuel (Kč/l — průměr PHM ČR aktuální)
-  travel.meal_rates_cz        (jsonb: pásma 5–12h, 12–18h, >18h)
-```
+### Technické provedení
 
-RLS: `authenticated` může CRUD (stejný vzor jako `service_records`).
+**1. Migrace DB** (jedna)
+- `ALTER travel_orders` ADD `co_travelers text`, `currency_rate_date date`, `currency_rate_eur_czk numeric`, `requested_by/requested_at`, `request_approved_by/request_approved_at`, `report_submitted_by/report_submitted_at`, `report_approved_by/report_approved_at`
+- `ALTER travel_order_legs` ADD `country text default 'CZ'`, `timezone text default 'Europe/Prague'`
+- `ALTER travel_order_meals` ADD `currency text default 'CZK'`, `pocket_money_pct numeric default 0`, `pocket_money_amount numeric default 0`
+- `ALTER travel_order_expenses` — `currency` už je
+- Nová tabulka `currency_rates` (`date`, `currency`, `rate_to_czk`, `source default 'CNB'`) + RLS
 
-### Mobilní verze `/m/cestovni-prikazy`
+**2. Edge function `cnb-rates`**
+- GET `https://www.cnb.cz/cs/financni-trhy/devizovy-trh/kurzy-devizoveho-trhu/kurzy-devizoveho-trhu/denni_kurz.txt`
+- Parsuje text, vrací JSON `{date, rates: {EUR: 24.535, USD: ...}}`
+- Ukládá do `currency_rates` (upsert na unique `(date, currency)`)
 
-- Kartový seznam + tlačítko „+"
-- Zjednodušený formulář — krokový (Wizard: Cesta → Trasa → Stravné → Výdaje → Souhrn)
+**3. Sazby zahraničního stravného**
+- Statická konstanta `FOREIGN_MEAL_RATES` v `src/lib/travel/calc.ts` podle aktuální vyhlášky MF (SK 40 EUR, AT 45 EUR, DE 45 EUR, …)
+- Funkce `mealAmountForeign(country, hours, rates)` — pásma 1–12 / 12–18 / 18+ stejně jako u tuzemska, ale v měně dané země
 
-### Technická realizace
+**4. UI úpravy `TravelOrderDetail.tsx`**
+- Pole spolucestující v hlavičce
+- U každého úseku: `select Země` + auto timezone
+- U každého řádku stravného: `select Měna` + `% kapesné`
+- Sekce „Kurzy ČNB" s tlačítkem „Načíst kurz ke dni X" → uloží snapshot
+- Sekce „Workflow" — 4 podpisové stavy s tlačítky „Vystavit žádost / Schválit žádost / Vyúčtovat / Schválit výkaz"
 
-1. **Migrace**: 4 nové tabulky + RLS + default sazby do `app_settings`
-2. **Soubory**:
-   - `src/pages/TravelOrders.tsx` — seznam + filtry (desktop)
-   - `src/pages/TravelOrderDetail.tsx` — formulář + výpočty + PDF
-   - `src/pages/mobile/MobileTravelOrders.tsx` — mobilní seznam
-   - `src/components/travel/TravelOrderForm.tsx` — sdílený formulář
-   - `src/components/travel/TravelOrderPDF.ts` — generátor PDF (jspdf)
-   - `src/lib/travel/calc.ts` — výpočty stravného, km náhrad, sumarizace
-3. **Routing** v `App.tsx`: `/cestovni-prikazy`, `/cestovni-prikazy/:id`, `/m/cestovni-prikazy`
-4. **Sidebar** + mobilní „Více" → položka 📋 Cestovní příkazy
-5. **Závislosti**: `jspdf`, `jspdf-autotable` (klient-side, žádný API key)
-6. **Integrace s knihou jízd**: tlačítko „Načíst z knihy jízd" agreguje `trip_logs` podle vozidla + období do řádků trasy
+**5. Přepis `src/lib/travel/pdf.ts`**
+- Náš firemní layout (modré akcenty, nikoliv kopie Cestak.com)
+- Per-currency souhrny
+- Bloky podpisů s časovými razítky
+- Řádek „Kurz ČNB ze dne …, 1 EUR = X CZK"
+
+**6. Mobil** — bez změn, jen souhrn navíc ukáže měny
 
 ### Co se NEMĚNÍ
 
-- Existující moduly (kniha jízd, vozidla, řidiči, náklady) — beze změny
-- Datový model existujících tabulek — beze změny
+- Číslování `CP-2026-0001` (pokud nechceš jinak)
+- Logika načítání z knihy jízd
+- RLS, autentizace
+- Mobilní stránka cesťáků (jen lehké přidání zobrazení měn)
 
 ### Mimo scope (řekni, jestli přidat)
 
-- **Zahraniční stravné** s měnami a kurzy ČNB (zatím jen tuzemsko)
-- **Schvalovací workflow** (více schvalovatelů, e-mail notifikace)
-- **Export do účetnictví** (Pohoda / Money / ABRA — XML/CSV)
-- **Foto účtenek** přes mobil ke každému výdaji (storage bucket)
-- **Automatické propojení s náklady** (`/naklady`) — přepsat schválený CP do nákladů vozidla
+- Foto účtenek ke každému výdaji (storage)
+- Email notifikace u schvalovacího workflow
+- Export do účetnictví (Pohoda/Money XML)
+- Automatický přenos schváleného CP do `/naklady`
 

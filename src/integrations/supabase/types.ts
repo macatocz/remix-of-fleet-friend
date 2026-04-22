@@ -635,6 +635,225 @@ export type Database = {
           },
         ]
       }
+      travel_order_expenses: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          receipt_path: string | null
+          travel_order_id: string
+          type: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          receipt_path?: string | null
+          travel_order_id: string
+          type: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          receipt_path?: string | null
+          travel_order_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "travel_order_expenses_travel_order_id_fkey"
+            columns: ["travel_order_id"]
+            isOneToOne: false
+            referencedRelation: "travel_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      travel_order_legs: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          km: number | null
+          note: string | null
+          place_from: string | null
+          place_to: string | null
+          sort_order: number
+          time_from: string | null
+          time_to: string | null
+          transport: string | null
+          travel_order_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          km?: number | null
+          note?: string | null
+          place_from?: string | null
+          place_to?: string | null
+          sort_order?: number
+          time_from?: string | null
+          time_to?: string | null
+          transport?: string | null
+          travel_order_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          km?: number | null
+          note?: string | null
+          place_from?: string | null
+          place_to?: string | null
+          sort_order?: number
+          time_from?: string | null
+          time_to?: string | null
+          transport?: string | null
+          travel_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "travel_order_legs_travel_order_id_fkey"
+            columns: ["travel_order_id"]
+            isOneToOne: false
+            referencedRelation: "travel_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      travel_order_meals: {
+        Row: {
+          amount: number
+          country: string
+          created_at: string
+          date: string
+          hours: number
+          id: string
+          rate: number
+          travel_order_id: string
+        }
+        Insert: {
+          amount?: number
+          country?: string
+          created_at?: string
+          date: string
+          hours?: number
+          id?: string
+          rate?: number
+          travel_order_id: string
+        }
+        Update: {
+          amount?: number
+          country?: string
+          created_at?: string
+          date?: string
+          hours?: number
+          id?: string
+          rate?: number
+          travel_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "travel_order_meals_travel_order_id_fkey"
+            columns: ["travel_order_id"]
+            isOneToOne: false
+            referencedRelation: "travel_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      travel_orders: {
+        Row: {
+          advance_payment: number | null
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          date_from: string
+          date_to: string
+          driver_id: string | null
+          id: string
+          notes: string | null
+          number: string
+          place_from: string | null
+          place_to: string | null
+          purpose: string | null
+          status: string
+          time_from: string | null
+          time_to: string | null
+          total_amount: number | null
+          transport_mode: Json
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          advance_payment?: number | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          date_from: string
+          date_to: string
+          driver_id?: string | null
+          id?: string
+          notes?: string | null
+          number: string
+          place_from?: string | null
+          place_to?: string | null
+          purpose?: string | null
+          status?: string
+          time_from?: string | null
+          time_to?: string | null
+          total_amount?: number | null
+          transport_mode?: Json
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          advance_payment?: number | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          date_from?: string
+          date_to?: string
+          driver_id?: string | null
+          id?: string
+          notes?: string | null
+          number?: string
+          place_from?: string | null
+          place_to?: string | null
+          purpose?: string | null
+          status?: string
+          time_from?: string | null
+          time_to?: string | null
+          total_amount?: number | null
+          transport_mode?: Json
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "travel_orders_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "travel_orders_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trip_logs: {
         Row: {
           break_minutes: number | null

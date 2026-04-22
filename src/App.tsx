@@ -21,6 +21,9 @@ import TripLog from "@/pages/TripLog";
 import FuelCards from "@/pages/FuelCards";
 import MobileFuelCards from "@/pages/mobile/MobileFuelCards";
 import MobileVehicles from "@/pages/mobile/MobileVehicles";
+import TravelOrders from "@/pages/TravelOrders";
+import TravelOrderDetail from "@/pages/TravelOrderDetail";
+import MobileTravelOrders from "@/pages/mobile/MobileTravelOrders";
 import Incidents from "@/pages/Incidents";
 import SettingsPage from "@/pages/SettingsPage";
 import Login from "@/pages/Login";
@@ -54,6 +57,8 @@ const App = () => (
               <Route path="/kniha-jizd" element={<TripLog />} />
               <Route path="/naklady" element={<Costs />} />
               <Route path="/tankovaci-karty" element={<FuelCards />} />
+              <Route path="/cestovni-prikazy" element={<TravelOrders />} />
+              <Route path="/cestovni-prikazy/:id" element={<TravelOrderDetail />} />
               <Route path="/nastaveni" element={<SettingsPage />} />
             </Route>
             <Route
@@ -75,6 +80,8 @@ const App = () => (
               <Route path="skody" element={<Incidents />} />
               <Route path="naklady" element={<Costs />} />
               <Route path="tankovaci-karty" element={<MobileFuelCards />} />
+              <Route path="cestovni-prikazy" element={<MobileTravelOrders />} />
+              <Route path="cestovni-prikazy/:id" element={<TravelOrderDetail />} />
               <Route path="nastaveni" element={<SettingsPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />

@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Car, Users, CalendarDays, Wrench, DollarSign, Settings, BookOpen, CreditCard, AlertTriangle
+  LayoutDashboard, Car, Users, CalendarDays, Wrench, DollarSign, Settings, BookOpen, CreditCard, AlertTriangle, FileText
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -19,6 +19,7 @@ const mainItems = [
   { title: "Kniha jízd", url: "/kniha-jizd", icon: BookOpen },
   { title: "Náklady", url: "/naklady", icon: DollarSign },
   { title: "Tankovací karty", url: "/tankovaci-karty", icon: CreditCard },
+  { title: "Cestovní příkazy", url: "/cestovni-prikazy", icon: FileText },
 ];
 
 const settingsItems = [

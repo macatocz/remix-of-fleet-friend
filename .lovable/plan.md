@@ -1,62 +1,99 @@
 
 
-## Mobilní přehled vozidel
+## Modul „Cestovní příkaz"
 
-Aktuálně `/m/vozidla` zobrazuje desktopovou stránku `Vehicles.tsx` s širokou tabulkou — na 390 px se hůř ovládá. Vytvořím dedikovanou mobilní stránku s kartovým layoutem podobně jako u tankovacích karet.
+Přidám nový modul, který z dat aplikace (vozidlo, řidič, jízdy z knihy jízd) vygeneruje vyplněný **cestovní příkaz** ve stylu cestak.com — k tisku/PDF a k uložení historie.
 
 ### Co uvidí uživatel
 
-- **Header**: ikona 🚗 + „Vozidla" + počet (např. „24")
-- **Vyhledávání**: jedno pole (RZ, značka, VIN, správce)
-- **Filtry** (chipy → bottom sheet):
-  - Stav (aktivní / vyřazené / servis)
-  - Kategorie (osobní / užitkové / …)
-  - Lokalita
-- **Seznam karet** — každá karta:
-  - Horní řádek: **RZ** (tučně, monospace) + značka (šedé) + barevný badge stavu vpravo
-  - 🏷️ Kategorie · 📍 Lokalita
-  - 👤 Správce (jméno) — nebo „POOL" badge pokud bez správce
-  - Mini řádek upozornění (pokud aktivní): ⚠️ STK / pojištění expiruje do 30 dnů
-  - Tap na celou kartu → `/vozidla/:id`
-- **Empty state**: ikona + „Žádná vozidla"
-- **Loading**: 3× skeleton karta
+**Nová stránka `/cestovni-prikazy`** (v menu „Cestovní příkazy" 📋):
 
-### Layout
+- Seznam vystavených příkazů: číslo, řidič, vozidlo, datum od–do, účel, stav (koncept / schválený / vyúčtovaný), částka náhrad
+- Tlačítko **„+ Nový cestovní příkaz"**
+- Filtry: řidič, vozidlo, období, stav
+
+**Formulář (dialog / stránka detailu)** — sekce dle běžného CP:
+
+1. **Hlavička**: číslo (auto), datum vystavení, účel cesty, schvaluje (jméno)
+2. **Cestující**: řidič (z `drivers`) → auto-doplnění bydliště, oddělení
+3. **Vozidlo**: výběr z `vehicles` → RZ, značka, typ paliva, prům. spotřeba
+4. **Trasa & čas**:
+   - Místo nástupu / cíl, datum + čas odjezdu / příjezdu
+   - Tlačítko **„Načíst z knihy jízd"** — předvyplní řádky tras z `trip_logs` za zvolené období + vůz
+5. **Dopravní prostředek**: vlastní vůz / služební / MHD / vlak (volitelné kombinace)
+6. **Stravné** (tuzemsko / zahraničí)**:
+   - Automatický výpočet podle délky pobytu a sazeb (vyhláška MPSV — sazby uložené v `app_settings`)
+7. **Náhrada za vozidlo** (jen u vlastního/služebního s nárokem):
+   - Km × sazba za km + spotřeba × cena PHM (z trip_logs / z nastavení)
+8. **Další výdaje**: parkovné, dálnice, ubytování (řádky s částkou + popis)
+9. **Souhrn**: stravné + km náhrady + výdaje − záloha = **k vyplacení / vrácení**
+10. **Akce**: Uložit koncept · Schválit · **Tisk / Stáhnout PDF** · Duplikovat
+
+### Výstup PDF
+
+- Layout 1:1 podle ČR standardu (jako cestak.com): hlavička firmy z `company_settings`, tabulka tras, výpočty, podpisové pole
+- Generováno klientsky pomocí `jspdf` + `jspdf-autotable` (žádný server navíc)
+- Soubor: `CP-{cislo}-{prijmeni}.pdf`
+
+### Datový model (nové tabulky)
 
 ```text
-┌─────────────────────────┐
-│ 🚗 Vozidla (24)         │
-├─────────────────────────┤
-│ 🔍 Hledat…              │
-│ [Stav▾][Kategorie▾][📍▾]│
-├─────────────────────────┤
-│ ┌─────────────────────┐ │
-│ │ 1AB 2345  Škoda  ●  │ │
-│ │ 🏷️ Osobní · 📍 Praha│ │
-│ │ 👤 Jan Novák         │ │
-│ │ ⚠️ STK do 12 dnů    │ │
-│ └─────────────────────┘ │
-└─────────────────────────┘
+travel_orders
+  id, number (auto), status, created_at, updated_at
+  driver_id, vehicle_id, purpose
+  date_from, time_from, date_to, time_to
+  place_from, place_to
+  transport_mode (jsonb: ['vlastni','sluzebni','mhd','vlak'])
+  advance_payment, approved_by, approved_at, notes
+
+travel_order_legs       (jednotlivé úseky trasy)
+  id, travel_order_id, date, time_from, time_to,
+  place_from, place_to, km, transport, note
+
+travel_order_expenses   (parkovné, dálnice, ubytování…)
+  id, travel_order_id, type, description, amount, currency, receipt_path
+
+travel_order_meals      (stravné — řádek za den/úsek)
+  id, travel_order_id, date, hours, country, rate, amount
+
+app_settings keys:
+  travel.km_rate_personal     (Kč/km — sazba základní)
+  travel.km_rate_average_fuel (Kč/l — průměr PHM ČR aktuální)
+  travel.meal_rates_cz        (jsonb: pásma 5–12h, 12–18h, >18h)
 ```
+
+RLS: `authenticated` může CRUD (stejný vzor jako `service_records`).
+
+### Mobilní verze `/m/cestovni-prikazy`
+
+- Kartový seznam + tlačítko „+"
+- Zjednodušený formulář — krokový (Wizard: Cesta → Trasa → Stravné → Výdaje → Souhrn)
 
 ### Technická realizace
 
-1. **Nový soubor** `src/pages/mobile/MobileVehicles.tsx` — kartový seznam, search + bottom-sheet filtry, navigace na detail.
-2. **Routing** v `src/App.tsx`: `/m/vozidla` → `MobileVehicles` (místo desktopového `Vehicles`).
-3. **Data**: `vehicles` select všech sloupců + count expirujících `inspections` (STK) a `insurance` join podle `vehicle_id` pro badge upozornění (jeden dotaz každé tabulky, agregace v `useMemo`).
-4. **Filtry/search**: client-side `useMemo`. Bottom sheet přes shadcn `Sheet`.
-5. **Komponenty**: `Card`, `Badge`, `Input`, `Button`, `Sheet`, `Skeleton` — vše už v projektu.
-6. **Konzistence**: stejný vizuální vzor jako `MobileFuelCards.tsx`.
+1. **Migrace**: 4 nové tabulky + RLS + default sazby do `app_settings`
+2. **Soubory**:
+   - `src/pages/TravelOrders.tsx` — seznam + filtry (desktop)
+   - `src/pages/TravelOrderDetail.tsx` — formulář + výpočty + PDF
+   - `src/pages/mobile/MobileTravelOrders.tsx` — mobilní seznam
+   - `src/components/travel/TravelOrderForm.tsx` — sdílený formulář
+   - `src/components/travel/TravelOrderPDF.ts` — generátor PDF (jspdf)
+   - `src/lib/travel/calc.ts` — výpočty stravného, km náhrad, sumarizace
+3. **Routing** v `App.tsx`: `/cestovni-prikazy`, `/cestovni-prikazy/:id`, `/m/cestovni-prikazy`
+4. **Sidebar** + mobilní „Více" → položka 📋 Cestovní příkazy
+5. **Závislosti**: `jspdf`, `jspdf-autotable` (klient-side, žádný API key)
+6. **Integrace s knihou jízd**: tlačítko „Načíst z knihy jízd" agreguje `trip_logs` podle vozidla + období do řádků trasy
 
 ### Co se NEMĚNÍ
 
-- Desktopová `Vehicles.tsx` — beze změny
-- Detail vozidla `/vozidla/:id` — beze změny (sdílí se s desktopem)
-- Datový model, RLS — beze změny
+- Existující moduly (kniha jízd, vozidla, řidiči, náklady) — beze změny
+- Datový model existujících tabulek — beze změny
 
 ### Mimo scope (řekni, jestli přidat)
 
-- Tlačítko „+" pro přidání vozidla z mobilu
-- Řazení (podle RZ / značky / nejbližší expirace)
-- Quick actions přímo na kartě (zápis km, přidat servis)
+- **Zahraniční stravné** s měnami a kurzy ČNB (zatím jen tuzemsko)
+- **Schvalovací workflow** (více schvalovatelů, e-mail notifikace)
+- **Export do účetnictví** (Pohoda / Money / ABRA — XML/CSV)
+- **Foto účtenek** přes mobil ke každému výdaji (storage bucket)
+- **Automatické propojení s náklady** (`/naklady`) — přepsat schválený CP do nákladů vozidla
 

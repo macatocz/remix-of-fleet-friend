@@ -83,6 +83,33 @@ export type Database = {
         }
         Relationships: []
       }
+      currency_rates: {
+        Row: {
+          created_at: string
+          currency: string
+          date: string
+          id: string
+          rate_to_czk: number
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          currency: string
+          date: string
+          id?: string
+          rate_to_czk: number
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          date?: string
+          id?: string
+          rate_to_czk?: number
+          source?: string
+        }
+        Relationships: []
+      }
       document_folders: {
         Row: {
           created_at: string
@@ -678,6 +705,7 @@ export type Database = {
       }
       travel_order_legs: {
         Row: {
+          country: string
           created_at: string
           date: string
           id: string
@@ -688,10 +716,12 @@ export type Database = {
           sort_order: number
           time_from: string | null
           time_to: string | null
+          timezone: string
           transport: string | null
           travel_order_id: string
         }
         Insert: {
+          country?: string
           created_at?: string
           date: string
           id?: string
@@ -702,10 +732,12 @@ export type Database = {
           sort_order?: number
           time_from?: string | null
           time_to?: string | null
+          timezone?: string
           transport?: string | null
           travel_order_id: string
         }
         Update: {
+          country?: string
           created_at?: string
           date?: string
           id?: string
@@ -716,6 +748,7 @@ export type Database = {
           sort_order?: number
           time_from?: string | null
           time_to?: string | null
+          timezone?: string
           transport?: string | null
           travel_order_id?: string
         }
@@ -734,9 +767,12 @@ export type Database = {
           amount: number
           country: string
           created_at: string
+          currency: string
           date: string
           hours: number
           id: string
+          pocket_money_amount: number
+          pocket_money_pct: number
           rate: number
           travel_order_id: string
         }
@@ -744,9 +780,12 @@ export type Database = {
           amount?: number
           country?: string
           created_at?: string
+          currency?: string
           date: string
           hours?: number
           id?: string
+          pocket_money_amount?: number
+          pocket_money_pct?: number
           rate?: number
           travel_order_id: string
         }
@@ -754,9 +793,12 @@ export type Database = {
           amount?: number
           country?: string
           created_at?: string
+          currency?: string
           date?: string
           hours?: number
           id?: string
+          pocket_money_amount?: number
+          pocket_money_pct?: number
           rate?: number
           travel_order_id?: string
         }
@@ -775,7 +817,10 @@ export type Database = {
           advance_payment: number | null
           approved_at: string | null
           approved_by: string | null
+          co_travelers: string | null
           created_at: string
+          currency_rate_date: string | null
+          currency_rate_eur_czk: number | null
           date_from: string
           date_to: string
           driver_id: string | null
@@ -785,6 +830,14 @@ export type Database = {
           place_from: string | null
           place_to: string | null
           purpose: string | null
+          report_approved_at: string | null
+          report_approved_by: string | null
+          report_submitted_at: string | null
+          report_submitted_by: string | null
+          request_approved_at: string | null
+          request_approved_by: string | null
+          requested_at: string | null
+          requested_by: string | null
           status: string
           time_from: string | null
           time_to: string | null
@@ -797,7 +850,10 @@ export type Database = {
           advance_payment?: number | null
           approved_at?: string | null
           approved_by?: string | null
+          co_travelers?: string | null
           created_at?: string
+          currency_rate_date?: string | null
+          currency_rate_eur_czk?: number | null
           date_from: string
           date_to: string
           driver_id?: string | null
@@ -807,6 +863,14 @@ export type Database = {
           place_from?: string | null
           place_to?: string | null
           purpose?: string | null
+          report_approved_at?: string | null
+          report_approved_by?: string | null
+          report_submitted_at?: string | null
+          report_submitted_by?: string | null
+          request_approved_at?: string | null
+          request_approved_by?: string | null
+          requested_at?: string | null
+          requested_by?: string | null
           status?: string
           time_from?: string | null
           time_to?: string | null
@@ -819,7 +883,10 @@ export type Database = {
           advance_payment?: number | null
           approved_at?: string | null
           approved_by?: string | null
+          co_travelers?: string | null
           created_at?: string
+          currency_rate_date?: string | null
+          currency_rate_eur_czk?: number | null
           date_from?: string
           date_to?: string
           driver_id?: string | null
@@ -829,6 +896,14 @@ export type Database = {
           place_from?: string | null
           place_to?: string | null
           purpose?: string | null
+          report_approved_at?: string | null
+          report_approved_by?: string | null
+          report_submitted_at?: string | null
+          report_submitted_by?: string | null
+          request_approved_at?: string | null
+          request_approved_by?: string | null
+          requested_at?: string | null
+          requested_by?: string | null
           status?: string
           time_from?: string | null
           time_to?: string | null

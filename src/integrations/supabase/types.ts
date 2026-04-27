@@ -1010,6 +1010,51 @@ export type Database = {
           },
         ]
       }
+      trip_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          driver_id: string | null
+          id: string
+          km_total: number | null
+          label: string
+          purpose: string | null
+          route_from: string | null
+          route_to: string | null
+          updated_at: string
+          use_count: number
+          vehicle_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          driver_id?: string | null
+          id?: string
+          km_total?: number | null
+          label: string
+          purpose?: string | null
+          route_from?: string | null
+          route_to?: string | null
+          updated_at?: string
+          use_count?: number
+          vehicle_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          driver_id?: string | null
+          id?: string
+          km_total?: number | null
+          label?: string
+          purpose?: string | null
+          route_from?: string | null
+          route_to?: string | null
+          updated_at?: string
+          use_count?: number
+          vehicle_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

@@ -7,13 +7,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
-import { Plus, Loader2, Trash2, Save, TrendingUp, Fuel, Route, DollarSign, Filter, CalendarDays, List, Download } from "lucide-react";
+import { Plus, Loader2, Trash2, Save, TrendingUp, Fuel, Route, DollarSign, Filter, CalendarDays, List, Download, Copy, ArrowDownToLine, MoreVertical, Bookmark } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend
 } from "recharts";
 import TripLogExport from "@/components/TripLogExport";
+import TripTemplatesPopover, { TripTemplate } from "@/components/TripTemplatesPopover";
+import { useRouteHistory } from "@/hooks/useRouteHistory";
+import { parseTSV, coerceForColumn } from "@/lib/tripParse";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 interface TripRow {
   id?: string;
@@ -92,6 +98,9 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
   const { toast } = useToast();
   const tableRef = useRef<HTMLDivElement>(null);
   const calTableRef = useRef<HTMLDivElement>(null);
+  const { places, suggestKm } = useRouteHistory(vehicleId);
+  const placesListId = `places-${vehicleId}`;
+  const [pasteFocus, setPasteFocus] = useState<{ rowIdx: number; colIdx: number; isCal: boolean } | null>(null);
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -275,6 +284,13 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
       if (key === "km_start" || key === "km_end") {
         row.km_total = (row.km_start != null && row.km_end != null) ? row.km_end - row.km_start : null;
       }
+      // Auto-suggest km_total when both route_from and route_to are filled and known.
+      if ((key === "route_from" || key === "route_to") && row.route_from && row.route_to && row.km_start == null && row.km_end == null) {
+        const km = suggestKm(row.route_from, row.route_to);
+        if (km != null && row.km_total == null) {
+          row.km_total = km;
+        }
+      }
       updated[rowIdx] = row;
 
       // Chain km_start for calendar view
@@ -291,6 +307,182 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
         }
       }
 
+      return updated;
+    });
+  };
+
+  // ---- Apply a template to a row ----
+  const applyTemplate = (rowIdx: number, tpl: TripTemplate, isCal: boolean) => {
+    const setter = isCal ? setCalRows : setRows;
+    setter(prev => {
+      const updated = [...prev];
+      const row = { ...updated[rowIdx], _dirty: true };
+      if (tpl.route_from) row.route_from = tpl.route_from;
+      if (tpl.route_to) row.route_to = tpl.route_to;
+      if (tpl.purpose) row.purpose = tpl.purpose;
+      if (tpl.description) row.description = tpl.description;
+      if (tpl.km_total != null) {
+        if (row.km_start != null) {
+          row.km_end = row.km_start + tpl.km_total;
+          row.km_total = tpl.km_total;
+        } else {
+          row.km_total = tpl.km_total;
+        }
+      }
+      updated[rowIdx] = row;
+      return updated;
+    });
+    toast({ title: `Šablona „${tpl.label}" vložena` });
+  };
+
+  // ---- Quick action: copy from previous row (same as yesterday) ----
+  const copyFromPrevious = (rowIdx: number, isCal: boolean) => {
+    const list = isCal ? calRows : rows;
+    if (rowIdx <= 0) { toast({ title: "Není předchozí řádek" }); return; }
+    const prev = list[rowIdx - 1];
+    const setter = isCal ? setCalRows : setRows;
+    setter(p => {
+      const updated = [...p];
+      const cur = { ...updated[rowIdx], _dirty: true };
+      cur.driver_id = prev.driver_id ?? cur.driver_id;
+      cur.purpose = prev.purpose ?? cur.purpose;
+      cur.description = prev.description ?? cur.description;
+      cur.route_from = prev.route_from ?? cur.route_from;
+      cur.route_to = prev.route_to ?? cur.route_to;
+      if (prev.km_total != null && cur.km_start != null) {
+        cur.km_end = cur.km_start + prev.km_total;
+        cur.km_total = prev.km_total;
+      } else if (prev.km_total != null) {
+        cur.km_total = prev.km_total;
+      }
+      updated[rowIdx] = cur;
+      return updated;
+    });
+  };
+
+  // ---- Quick action: fill Mon–Fri of the same week with this row's data ----
+  const fillWorkWeek = (rowIdx: number) => {
+    if (viewMode !== "calendar") return;
+    const src = calRows[rowIdx];
+    if (!src.route_from && !src.route_to && !src.km_total) {
+      toast({ title: "Nejprve vyplňte aktuální řádek", variant: "destructive" });
+      return;
+    }
+    const srcDate = new Date(src.date + "T00:00:00");
+    const srcDow = srcDate.getDay(); // 0=Sun..6=Sat
+    const monOffset = srcDow === 0 ? -6 : 1 - srcDow;
+    const monday = new Date(srcDate);
+    monday.setDate(srcDate.getDate() + monOffset);
+    const weekDates = new Set<string>();
+    for (let i = 0; i < 5; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      weekDates.add(d.toISOString().split("T")[0]);
+    }
+    setCalRows(prev => {
+      const updated = [...prev];
+      let prevKmEnd: number | null = null;
+      for (let i = 0; i < updated.length; i++) {
+        const r = updated[i];
+        if (!weekDates.has(r.date)) {
+          if (r.km_end != null) prevKmEnd = r.km_end;
+          continue;
+        }
+        if (r.id || r._dirty) { // don't overwrite existing/edited rows
+          if (r.km_end != null) prevKmEnd = r.km_end;
+          continue;
+        }
+        const start = prevKmEnd ?? r.km_start ?? null;
+        const end = start != null && src.km_total != null ? start + src.km_total : null;
+        updated[i] = {
+          ...r,
+          driver_id: src.driver_id ?? r.driver_id,
+          purpose: src.purpose ?? r.purpose,
+          description: src.description ?? r.description,
+          route_from: src.route_from ?? r.route_from,
+          route_to: src.route_to ?? r.route_to,
+          km_start: start,
+          km_end: end,
+          km_total: src.km_total ?? r.km_total,
+          _dirty: true,
+        };
+        if (end != null) prevKmEnd = end;
+      }
+      return updated;
+    });
+    toast({ title: "Pracovní týden (Po–Pá) vyplněn" });
+  };
+
+  // ---- Fill-down: copy value from focused cell down through the column ----
+  const fillDown = (rowIdx: number, colKey: string, isCal: boolean) => {
+    const list = isCal ? calRows : rows;
+    const setter = isCal ? setCalRows : setRows;
+    const value = (list[rowIdx] as any)[colKey];
+    if (value == null || value === "") { toast({ title: "Buňka je prázdná" }); return; }
+    setter(prev => {
+      const updated = [...prev];
+      let count = 0;
+      for (let i = rowIdx + 1; i < updated.length; i++) {
+        updated[i] = { ...updated[i], [colKey]: value, _dirty: true };
+        if (colKey === "km_start" || colKey === "km_end") {
+          const r = updated[i];
+          r.km_total = (r.km_start != null && r.km_end != null) ? r.km_end - r.km_start : null;
+        }
+        count++;
+      }
+      toast({ title: `Vyplněno dolů (${count} řádků)` });
+      return updated;
+    });
+  };
+
+  // ---- Paste handler: parse TSV from clipboard into the grid ----
+  const handlePaste = (e: React.ClipboardEvent, rowIdx: number, colIdx: number, isCal: boolean) => {
+    const text = e.clipboardData.getData("text");
+    if (!text || (!text.includes("\t") && !text.includes("\n"))) {
+      // single value paste — let the input handle it natively
+      return;
+    }
+    e.preventDefault();
+    const grid = parseTSV(text);
+    if (!grid.length) return;
+    const cols = isCal ? CAL_COLUMNS : COLUMNS;
+    const setter = isCal ? setCalRows : setRows;
+    const list = isCal ? calRows : rows;
+
+    setter(prev => {
+      const updated = [...prev];
+      let appliedRows = 0;
+      for (let r = 0; r < grid.length; r++) {
+        const targetIdx = rowIdx + r;
+        // Free view: append rows if needed
+        if (targetIdx >= updated.length) {
+          if (isCal) break; // calendar is fixed-length
+          const last = updated[updated.length - 1];
+          updated.push({
+            vehicle_id: vehicleId,
+            driver_id: null,
+            date: new Date().toISOString().split("T")[0],
+            time: null, break_minutes: null, description: null, purpose: null,
+            route_from: null, route_to: null,
+            km_start: last?.km_end ?? null, km_end: null, km_total: null,
+            fuel_quantity: null, fuel_price: null, other_quantity: null, other_price: null,
+            _dirty: true, _new: true,
+          });
+        }
+        const row = { ...updated[targetIdx], _dirty: true };
+        for (let c = 0; c < grid[r].length; c++) {
+          const col = cols[colIdx + c];
+          if (!col || col.type === "computed") continue;
+          const val = coerceForColumn(col.key, grid[r][c]);
+          (row as any)[col.key] = val;
+        }
+        if (row.km_start != null && row.km_end != null) {
+          row.km_total = row.km_end - row.km_start;
+        }
+        updated[targetIdx] = row;
+        appliedRows++;
+      }
+      toast({ title: `Vloženo ${appliedRows} řádků` });
       return updated;
     });
   };
@@ -386,6 +578,13 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
   const handleKeyDown = (e: React.KeyboardEvent, rowIdx: number, colIdx: number, isCal = false) => {
     const totalRows = isCal ? calRows.length : rows.length;
     const cols = isCal ? CAL_COLUMNS : COLUMNS;
+    // Ctrl+D — fill down
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "d") {
+      e.preventDefault();
+      const col = cols[colIdx];
+      if (col && col.type !== "computed") fillDown(rowIdx, col.key, isCal);
+      return;
+    }
     if (e.key === "Tab" && !e.shiftKey && !isCal && rowIdx === totalRows - 1 && colIdx === cols.length - 1) {
       e.preventDefault();
       addRow();
@@ -458,16 +657,24 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
         data-col={colIdx}
         type={col.type === "number" ? "number" : col.type === "date" ? "date" : col.type === "time" ? "time" : "text"}
         step={["fuel_quantity", "fuel_price", "other_quantity", "other_price"].includes(col.key) ? "0.01" : undefined}
+        list={col.key === "route_from" || col.key === "route_to" ? placesListId : undefined}
         className="w-full h-7 px-1 text-xs bg-transparent border-0 outline-none focus:ring-1 focus:ring-primary rounded-sm"
         value={(row as any)[col.key] ?? ""}
         onChange={e => updateCell(rowIdx, col.key, e.target.value, isCal)}
         onKeyDown={e => handleKeyDown(e, rowIdx, colIdx, isCal)}
+        onPaste={e => handlePaste(e, rowIdx, colIdx, isCal)}
+        onFocus={() => setPasteFocus({ rowIdx, colIdx, isCal })}
       />
     );
   };
 
   return (
     <div className="space-y-4">
+      {/* Datalist for place autocomplete */}
+      <datalist id={placesListId}>
+        {places.map(p => <option key={p} value={p} />)}
+      </datalist>
+
       {/* Controls */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
@@ -494,6 +701,14 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
               <CalendarDays className="h-3.5 w-3.5" />Měsíc
             </button>
           </div>
+          <TripTemplatesPopover
+            vehicleId={vehicleId}
+            onPick={(tpl) => {
+              const idx = pasteFocus?.rowIdx ?? 0;
+              const isCal = pasteFocus?.isCal ?? (viewMode === "calendar");
+              applyTemplate(idx, tpl, isCal);
+            }}
+          />
           <TripLogExport vehicleId={vehicleId} selectedMonth={selectedMonth} vehicleLabel={vehicleLabel} />
           {dirtyCount > 0 && <span className="text-xs text-muted-foreground">{dirtyCount} neuložených</span>}
           {viewMode === "free" && (
@@ -595,9 +810,23 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
                       <td key={col.key} className="px-0.5 py-0.5">{renderCell(row, col, realIdx, colIdx, false)}</td>
                     ))}
                     <td className="px-0.5 py-0.5">
-                      <button className="h-7 w-7 flex items-center justify-center text-destructive/60 hover:text-destructive rounded-sm hover:bg-destructive/10" onClick={() => deleteRow(realIdx)} title="Smazat">
-                        <Trash2 className="h-3 w-3" />
-                      </button>
+                      <RowMenu
+                        onCopyPrev={() => copyFromPrevious(realIdx, false)}
+                        onSaveTemplate={async () => {
+                          const r = rows[realIdx];
+                          if (!r.route_from || !r.route_to) { toast({ title: "Vyplňte trasu Z/Do", variant: "destructive" }); return; }
+                          const { error } = await supabase.from("trip_templates").insert({
+                            vehicle_id: vehicleId,
+                            label: `${r.route_from} → ${r.route_to}`,
+                            route_from: r.route_from, route_to: r.route_to,
+                            km_total: r.km_total ?? null,
+                            purpose: r.purpose, description: r.description,
+                          });
+                          if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
+                          else toast({ title: "Šablona uložena" });
+                        }}
+                        onDelete={() => deleteRow(realIdx)}
+                      />
                     </td>
                   </tr>
                 );
@@ -654,15 +883,24 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
                       </td>
                     ))}
                     <td className="px-0.5 py-0.5">
-                      {hasData && (
-                        <button
-                          className="h-7 w-7 flex items-center justify-center text-destructive/60 hover:text-destructive rounded-sm hover:bg-destructive/10"
-                          onClick={() => clearCalRow(rowIdx)}
-                          title="Vymazat řádek"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
-                      )}
+                      <RowMenu
+                        onCopyPrev={() => copyFromPrevious(rowIdx, true)}
+                        onFillWeek={() => fillWorkWeek(rowIdx)}
+                        onSaveTemplate={async () => {
+                          const r = calRows[rowIdx];
+                          if (!r.route_from || !r.route_to) { toast({ title: "Vyplňte trasu Z/Do", variant: "destructive" }); return; }
+                          const { error } = await supabase.from("trip_templates").insert({
+                            vehicle_id: vehicleId,
+                            label: `${r.route_from} → ${r.route_to}`,
+                            route_from: r.route_from, route_to: r.route_to,
+                            km_total: r.km_total ?? null,
+                            purpose: r.purpose, description: r.description,
+                          });
+                          if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
+                          else toast({ title: "Šablona uložena" });
+                        }}
+                        onDelete={hasData ? () => clearCalRow(rowIdx) : undefined}
+                      />
                     </td>
                   </tr>
                 );
@@ -716,7 +954,49 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
         </Card>
       )}
 
-      <p className="text-[10px] text-muted-foreground">Tip: Ctrl+S uložit • Tab další buňka • Enter další řádek</p>
+      <p className="text-[10px] text-muted-foreground">
+        Tip: <b>Ctrl+V</b> vložit z Excelu (TSV) • <b>Ctrl+D</b> vyplnit dolů • <b>Ctrl+S</b> uložit • Tab/Enter další buňka • šablony tras pro opakované jízdy
+      </p>
     </div>
+  );
+}
+
+// ---------- Row action menu ----------
+interface RowMenuProps {
+  onCopyPrev: () => void;
+  onFillWeek?: () => void;
+  onSaveTemplate: () => void;
+  onDelete?: () => void;
+}
+function RowMenu({ onCopyPrev, onFillWeek, onSaveTemplate, onDelete }: RowMenuProps) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="h-7 w-7 flex items-center justify-center text-muted-foreground hover:text-foreground rounded-sm hover:bg-muted" title="Akce řádku">
+          <MoreVertical className="h-3.5 w-3.5" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuItem onClick={onCopyPrev} className="text-xs">
+          <Copy className="mr-2 h-3.5 w-3.5" />Stejné jako předchozí
+        </DropdownMenuItem>
+        {onFillWeek && (
+          <DropdownMenuItem onClick={onFillWeek} className="text-xs">
+            <ArrowDownToLine className="mr-2 h-3.5 w-3.5" />Pracovní týden (Po–Pá)
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem onClick={onSaveTemplate} className="text-xs">
+          <Bookmark className="mr-2 h-3.5 w-3.5" />Uložit jako šablonu
+        </DropdownMenuItem>
+        {onDelete && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onDelete} className="text-xs text-destructive focus:text-destructive">
+              <Trash2 className="mr-2 h-3.5 w-3.5" />Smazat / vymazat
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

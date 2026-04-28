@@ -84,6 +84,42 @@ const LEASING_FIELDS: FieldDef[] = [
     }
   },
   { key: "najezd_za_rok", label: "Nájezd/rok" },
+  { key: "vychozi_stav_tachometru", label: "Výchozí stav tachometru", suffix: "km" },
+  {
+    key: "celkovy_najezd", label: "Celkový nájezd", type: "computed",
+    computeFn: (vehicle, editData) => {
+      const najezdRaw = editData.najezd_za_rok ?? vehicle.najezd_za_rok;
+      const from = editData.datum_zahajeni_leasingu ?? vehicle.datum_zahajeni_leasingu;
+      const to = editData.datum_ukonceni_leasingu ?? vehicle.datum_ukonceni_leasingu;
+      const najezd = parseFloat(String(najezdRaw ?? "").replace(/[^\d.,-]/g, "").replace(",", "."));
+      if (!najezd || !from || !to) return "—";
+      try {
+        const months = differenceInMonths(parseISO(to), parseISO(from));
+        if (months <= 0) return "—";
+        const total = Math.round(najezd * months / 12);
+        return `${total.toLocaleString("cs-CZ")} km`;
+      } catch { return "—"; }
+    }
+  },
+  {
+    key: "konecny_stav_tachometru", label: "Konečný stav tachometru", type: "computed",
+    computeFn: (vehicle, editData) => {
+      const vychoziRaw = editData.vychozi_stav_tachometru ?? vehicle.vychozi_stav_tachometru;
+      const najezdRaw = editData.najezd_za_rok ?? vehicle.najezd_za_rok;
+      const from = editData.datum_zahajeni_leasingu ?? vehicle.datum_zahajeni_leasingu;
+      const to = editData.datum_ukonceni_leasingu ?? vehicle.datum_ukonceni_leasingu;
+      const vychozi = parseFloat(String(vychoziRaw ?? "").replace(/[^\d.,-]/g, "").replace(",", "."));
+      const najezd = parseFloat(String(najezdRaw ?? "").replace(/[^\d.,-]/g, "").replace(",", "."));
+      if (!najezd || !from || !to) return "—";
+      try {
+        const months = differenceInMonths(parseISO(to), parseISO(from));
+        if (months <= 0) return "—";
+        const total = Math.round(najezd * months / 12);
+        const konecny = (isNaN(vychozi) ? 0 : vychozi) + total;
+        return `${konecny.toLocaleString("cs-CZ")} km`;
+      } catch { return "—"; }
+    }
+  },
   { key: "mesicni_splatka", label: "Měsíční splátka", type: "currency", suffix: "Kč" },
   { key: "datum_zahajeni_leasingu", label: "Leasing od", type: "date" },
   { key: "datum_ukonceni_leasingu", label: "Leasing do", type: "date" },
@@ -417,6 +453,8 @@ export default function VehicleDetail() {
     // Remove computed fields from save payload
     const payload: Record<string, any> = { ...editData };
     delete payload.doba_leasingu;
+    delete payload.celkovy_najezd;
+    delete payload.konecny_stav_tachometru;
     delete payload.dalnicni_znamka;
 
     // Convert spravce_id null marker

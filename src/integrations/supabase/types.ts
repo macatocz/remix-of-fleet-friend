@@ -1219,6 +1219,7 @@ export type Database = {
           velky_tp: string | null
           vin: string | null
           vlastnik: string | null
+          vychozi_stav_tachometru: string | null
           zelena_karta: string | null
           znacka: string | null
         }
@@ -1256,6 +1257,7 @@ export type Database = {
           velky_tp?: string | null
           vin?: string | null
           vlastnik?: string | null
+          vychozi_stav_tachometru?: string | null
           zelena_karta?: string | null
           znacka?: string | null
         }
@@ -1293,6 +1295,7 @@ export type Database = {
           velky_tp?: string | null
           vin?: string | null
           vlastnik?: string | null
+          vychozi_stav_tachometru?: string | null
           zelena_karta?: string | null
           znacka?: string | null
         }

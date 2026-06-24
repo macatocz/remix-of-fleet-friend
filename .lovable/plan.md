@@ -1,43 +1,35 @@
-## Doplnění polí tachometru do sekce Leasing
+## Cíl
+Vytvořit přehledné vizuální schéma celé aplikace správy vozového parku, aby bylo jasné, jak jsou jednotlivé části propojené.
 
-V detailu vozidla (`/vozidla/:id`) v sekci **Leasing** přibudou tři nová pole vázaná na leasingový kontrakt:
+## Co schéma bude obsahovat
 
-1. **Výchozí stav tachometru** — ručně zadané (km na začátku leasingu)
-2. **Celkový nájezd** — počítáno automaticky: `najezd_za_rok × (doba_leasingu / 12)`
-3. **Konečný stav tachometru** — počítáno automaticky: `výchozí stav + celkový nájezd`
+Vytvořím **3 Mermaid diagramy** jako stahovatelné artefakty:
 
-### Pořadí v kartě Leasing (po úpravě)
-```text
-Leasingová spol.
-Doba leasingu (měsíce)        [computed]
-Nájezd/rok
-Výchozí stav tachometru        [nové, editovatelné]
-Celkový nájezd                 [nové, computed]
-Konečný stav tachometru        [nové, computed]
-Měsíční splátka
-Leasing od
-Leasing do
-Č. smlouvy leasing
-```
+### 1. Architektura aplikace (vysoká úroveň)
+- Frontend (React + Vite) ↔ Lovable Cloud (DB, Auth, Storage, Edge Functions)
+- Rozdělení na desktop (`AppLayout`) a mobil (`MobileLayout`)
+- Autentizace + role (Admin / Dispečer / Řidič) → `ProtectedRoute`
+- Edge function `cnb-rates` (kurzy ČNB pro cestovní příkazy)
 
-### Změny v databázi
-Přidat do tabulky `vehicles` jeden nový sloupec (zbytek se počítá za běhu, neukládá se):
-- `vychozi_stav_tachometru` — `text` (kvůli konzistenci s ostatními číselnými poli leasingu jako `najezd_za_rok`, `mesicni_splatka`, která jsou také `text`)
+### 2. Mapa stránek a navigace
+- Desktop sidebar: Dashboard, Vozidla, Řidiči, Rezervace, Servis, Škody, Kniha jízd, Náklady, Tankovací karty, Cestovní příkazy, Nastavení
+- Mobil bottom nav podle role (správce / řidič / admin) + drawer „Více" + FAB (Zápis jízdy, Hlásit škodu)
+- Detail vozidla a jeho taby (Info, Leasing, Dokumenty, Servis, Pojištění, Dálniční známky, Tankovací karty, Předání, Škody, Kniha jízd, Kalendář)
 
-### Změny v kódu
-**`src/pages/VehicleDetail.tsx`** — rozšířit `LEASING_FIELDS`:
-- Nový field `vychozi_stav_tachometru` (typ jako běžný text/number input)
-- Nový computed field `celkovy_najezd`:
-  - vstup: `najezd_za_rok` (z editData/vehicle) a `doba_leasingu` (už počítaný z dat)
-  - vzorec: `Math.round(najezd_za_rok * mesice / 12)`
-- Nový computed field `konecny_stav_tachometru`:
-  - vzorec: `vychozi_stav_tachometru + celkovy_najezd`
-- Hodnoty se zobrazí s formátováním tisíců (`1 234 567 km`), prázdné = `—` když chybí vstupy
-- V `handleSave` (řádek 419) ošetřit, aby se computed pole neposílala do DB (`delete payload.celkovy_najezd; delete payload.konecny_stav_tachometru;`)
+### 3. Datový model (vztahy mezi tabulkami)
+- `vehicles` jako centrum, napojené na:
+  - `drivers` (přes `spravce_id`, koncept POOL když je NULL)
+  - `reservations`, `service_records`, `service_plans`, `insurance`, `inspections`
+  - `vehicle_documents`, `vehicle_vignettes`, `vehicle_mileage`, `fuel_cards`
+  - `trip_logs`, `trip_templates`, `incidents` (+ `incident_photos`)
+  - `handover_protocols` (+ `handover_photos`)
+- `travel_orders` → `travel_order_legs`, `travel_order_meals`, `travel_order_expenses`
+- `auth.users` → `profiles`, `user_roles` (role-based access přes `has_role()`)
+- Globální: `company_settings`, `app_settings`, `currency_rates`, `document_folders`
 
-### Co to uživateli dá
-Při zadání `Nájezd/rok = 30000`, `Leasing od/do = 36 měsíců`, `Výchozí stav = 12 500 km` se automaticky dopočítá:
-- Celkový nájezd: **90 000 km**
-- Konečný stav tachometru: **102 500 km**
+## Forma výstupu
+- 3 `.mmd` soubory v `/mnt/documents/` jako stahovatelné artefakty
+- Krátký textový komentář k orientaci v každém diagramu
 
-Hodí se pro hlídání překročení smluvního nájezdu u operativního leasingu.
+## Co schéma NEbude
+- Nezasahuji do žádného kódu aplikace — jde čistě o dokumentaci.

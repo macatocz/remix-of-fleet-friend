@@ -111,11 +111,17 @@ export default function DashboardExtraWidgets() {
           {utilization.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-6">Žádná data za posledních 30 dní</p>
           ) : (
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={utilization} layout="vertical" margin={{ left: 20 }}>
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={utilization} layout="vertical" margin={{ left: 10, right: 20, top: 5, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" allowDecimals={false} />
-                <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11 }} />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  width={200}
+                  tick={{ fontSize: 10 }}
+                  tickFormatter={(value: string) => value.length > 30 ? value.slice(0, 27) + "…" : value}
+                />
                 <Tooltip />
                 <Bar dataKey="value" name="Rezervace" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
               </BarChart>

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Home, Car, CalendarDays, Plus, Route, AlertTriangle, MoreHorizontal, Wrench, CreditCard, Coins, Settings as SettingsIcon, BookOpen, Search, FileText } from "lucide-react";
+import { Home, Car, CalendarDays, Plus, Route, AlertTriangle, MoreHorizontal, Wrench, CreditCard, Coins, Settings as SettingsIcon, BookOpen, Search, FileText, Zap, ClipboardCheck, Key } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDriverContext } from "@/hooks/useDriverContext";
@@ -14,6 +14,10 @@ import QuickTripDialog from "@/components/mobile/QuickTripDialog";
 import QuickIncidentDialog from "@/components/mobile/QuickIncidentDialog";
 import FindVehicleSheet from "@/components/mobile/FindVehicleSheet";
 import NewReservationDialog from "@/components/mobile/NewReservationDialog";
+import QuickNowReservation from "@/components/mobile/QuickNowReservation";
+import ChecklistDialog from "@/components/mobile/ChecklistDialog";
+import KeyHandoverDialog from "@/components/mobile/KeyHandoverDialog";
+import { startOfflineSync } from "@/lib/offline/tripQueue";
 
 type NavItem = { url: string; label: string; icon: any; end?: boolean; action?: "find" };
 
@@ -49,16 +53,23 @@ export function MobileLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { roles } = useAuth();
-  const { isSpravce } = useDriverContext();
+  const { isSpravce, myVehicles, allVehicles } = useDriverContext();
   const [fabOpen, setFabOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [tripOpen, setTripOpen] = useState(false);
   const [incidentOpen, setIncidentOpen] = useState(false);
   const [findOpen, setFindOpen] = useState(false);
   const [newResOpen, setNewResOpen] = useState(false);
+  const [nowResOpen, setNowResOpen] = useState(false);
+  const [checklistOpen, setChecklistOpen] = useState(false);
+  const [keysOpen, setKeysOpen] = useState(false);
   const [presetReservation, setPresetReservation] = useState<{
     vehicleId: string; dateFrom: string; dateTo: string; timeFrom: string; timeTo: string;
   } | null>(null);
+
+  useEffect(() => { startOfflineSync(); }, []);
+
+  const primaryVehicle = (myVehicles[0] || allVehicles[0]) as any | undefined;
 
   const isAdminOrDispatcher = roles.includes("admin") || roles.includes("dispatcer");
   const baseNav = isAdminOrDispatcher ? adminNav : (isSpravce ? spravceNav : driverNav);

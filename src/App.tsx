@@ -26,6 +26,7 @@ import TravelOrderDetail from "@/pages/TravelOrderDetail";
 import MobileTravelOrders from "@/pages/mobile/MobileTravelOrders";
 import Incidents from "@/pages/Incidents";
 import SettingsPage from "@/pages/SettingsPage";
+import NotificationsPage from "@/pages/NotificationsPage";
 import Login from "@/pages/Login";
 import NotFound from "@/pages/NotFound";
 
@@ -60,6 +61,7 @@ const App = () => (
               <Route path="/cestovni-prikazy" element={<TravelOrders />} />
               <Route path="/cestovni-prikazy/:id" element={<TravelOrderDetail />} />
               <Route path="/nastaveni" element={<SettingsPage />} />
+              <Route path="/notifikace" element={<NotificationsPage />} />
             </Route>
             <Route
               path="/m"
@@ -83,6 +85,7 @@ const App = () => (
               <Route path="cestovni-prikazy" element={<MobileTravelOrders />} />
               <Route path="cestovni-prikazy/:id" element={<TravelOrderDetail />} />
               <Route path="nastaveni" element={<SettingsPage />} />
+              <Route path="notifikace" element={<NotificationsPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

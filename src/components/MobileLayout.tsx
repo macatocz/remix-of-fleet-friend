@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDriverContext } from "@/hooks/useDriverContext";
 import { MobileUserMenu } from "@/components/mobile/MobileUserMenu";
+import { NotificationBell } from "@/components/NotificationBell";
 import {
   Drawer, DrawerContent, DrawerHeader, DrawerTitle,
 } from "@/components/ui/drawer";
@@ -71,7 +72,10 @@ export function MobileLayout() {
         <div className="h-safe-top" />
         <div className="h-16 flex items-center justify-between px-4">
           <h1 className="font-semibold text-base">🚗 Vozový park</h1>
-          <MobileUserMenu />
+          <div className="flex items-center gap-1">
+            <NotificationBell />
+            <MobileUserMenu />
+          </div>
         </div>
       </header>
 

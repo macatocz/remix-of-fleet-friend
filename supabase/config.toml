@@ -1,1 +1,7 @@
 project_id = "rrrsrjzbdfqwctkquwhk"
+
+[functions.notify-send]
+verify_jwt = true
+
+[functions.notify-expirations]
+verify_jwt = false

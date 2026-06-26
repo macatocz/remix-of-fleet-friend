@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { CalendarDays, Loader2 } from "lucide-react";
+import { notify } from "@/lib/notify";
 
 interface Row {
   id: string;
@@ -39,11 +40,40 @@ export default function PendingReservationsWidget() {
   useEffect(() => { load(); }, []);
 
   const update = async (id: string, status: string) => {
+    const row = rows.find((r) => r.id === id);
     const { error } = await supabase.from("reservations").update({ status }).eq("id", id);
     if (error) {
       toast({ title: "Chyba", description: error.message, variant: "destructive" });
     } else {
       toast({ title: status === "schváleno" ? "Schváleno" : "Zamítnuto" });
+      // Best-effort notify the requesting driver
+      try {
+        if (row?.driver_name) {
+          // Split "Jméno Příjmení" and search both orders
+          const parts = row.driver_name.trim().split(/\s+/);
+          const first = parts[0] || "";
+          const last = parts.slice(1).join(" ") || first;
+          const { data: drv } = await supabase
+            .from("drivers")
+            .select("user_id, first_name, last_name")
+            .or(`and(first_name.ilike.${first},last_name.ilike.${last}),and(first_name.ilike.${last},last_name.ilike.${first})`)
+            .not("user_id", "is", null)
+            .limit(1)
+            .maybeSingle();
+          if (drv?.user_id) {
+            const vlabel = `${row.vehicles?.znacka || ""} ${row.vehicles?.rz || ""}`.trim();
+            await notify({
+              user_ids: [drv.user_id],
+              type: status === "schváleno" ? "reservation_approved" : "reservation_rejected",
+              title: status === "schváleno" ? "Rezervace schválena" : "Rezervace zamítnuta",
+              body: `${vlabel} · ${new Date(row.date_from).toLocaleDateString("cs-CZ")} – ${new Date(row.date_to).toLocaleDateString("cs-CZ")}`,
+              link: "/m/rezervace",
+              vehicle_id: row.vehicle_id,
+              reservation_id: row.id,
+            });
+          }
+        }
+      } catch (_) { /* ignore */ }
       load();
     }
   };

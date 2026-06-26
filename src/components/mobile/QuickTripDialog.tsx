@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter,
 } from "@/components/ui/drawer";
@@ -11,6 +11,8 @@ import {
 import { useDriverContext } from "@/hooks/useDriverContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { predictKm, type KmPrediction } from "@/lib/mileage/predict";
+import { Sparkles } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -26,6 +28,21 @@ export default function QuickTripDialog({ open, onOpenChange }: Props) {
   const [routeTo, setRouteTo] = useState("");
   const [purpose, setPurpose] = useState("");
   const [saving, setSaving] = useState(false);
+  const [pred, setPred] = useState<KmPrediction | null>(null);
+
+  useEffect(() => {
+    setPred(null);
+    if (!vehicleId) return;
+    let alive = true;
+    predictKm(vehicleId).then((p) => { if (alive) setPred(p); });
+    return () => { alive = false; };
+  }, [vehicleId]);
+
+  useEffect(() => {
+    if (open && vehicleId && !kmStart && pred?.projected != null) {
+      setKmStart(String(pred.projected));
+    }
+  }, [pred, open]);
 
   const vehicles = myVehicles.length ? myVehicles : allVehicles;
 
@@ -93,6 +110,17 @@ export default function QuickTripDialog({ open, onOpenChange }: Props) {
               <Input className="h-12" type="number" inputMode="numeric" value={kmEnd} onChange={e => setKmEnd(e.target.value)} />
             </div>
           </div>
+          {pred?.projected != null && (
+            <button
+              type="button"
+              onClick={() => setKmStart(String(pred.projected))}
+              className="flex items-center gap-2 text-xs text-primary hover:underline"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Návrh: {pred.projected.toLocaleString("cs-CZ")} km
+              {pred.avgDailyKm > 0 && <span className="text-muted-foreground">(průměr {pred.avgDailyKm} km/den)</span>}
+            </button>
+          )}
           <div className="space-y-1.5">
             <Label>Odkud</Label>
             <Input className="h-12" value={routeFrom} onChange={e => setRouteFrom(e.target.value)} placeholder="Praha" />

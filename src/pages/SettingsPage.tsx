@@ -1,8 +1,9 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Settings, Users } from "lucide-react";
+import { Building2, Settings, Users, Bell } from "lucide-react";
 import { CompanySettings } from "@/components/settings/CompanySettings";
 import { GeneralSettings } from "@/components/settings/GeneralSettings";
 import { UsersRolesSettings } from "@/components/settings/UsersRolesSettings";
+import { NotificationSettings } from "@/components/settings/NotificationSettings";
 
 export default function SettingsPage() {
   return (
@@ -23,6 +24,10 @@ export default function SettingsPage() {
             <Users className="h-4 w-4" />
             Uživatelé
           </TabsTrigger>
+          <TabsTrigger value="notifications" className="gap-2">
+            <Bell className="h-4 w-4" />
+            Notifikace
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="company">
@@ -33,6 +38,9 @@ export default function SettingsPage() {
         </TabsContent>
         <TabsContent value="users">
           <UsersRolesSettings />
+        </TabsContent>
+        <TabsContent value="notifications">
+          <NotificationSettings />
         </TabsContent>
       </Tabs>
     </div>

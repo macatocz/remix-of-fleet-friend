@@ -12,7 +12,9 @@ import { useDriverContext } from "@/hooks/useDriverContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { predictKm, type KmPrediction } from "@/lib/mileage/predict";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Mic, MicOff, WifiOff } from "lucide-react";
+import { useVoiceInput } from "@/hooks/useVoiceInput";
+import { enqueueTrip } from "@/lib/offline/tripQueue";
 
 interface Props {
   open: boolean;
@@ -29,6 +31,22 @@ export default function QuickTripDialog({ open, onOpenChange }: Props) {
   const [purpose, setPurpose] = useState("");
   const [saving, setSaving] = useState(false);
   const [pred, setPred] = useState<KmPrediction | null>(null);
+  const voice = useVoiceInput("cs-CZ");
+  const [voiceTarget, setVoiceTarget] = useState<"routeFrom" | "routeTo" | "purpose" | null>(null);
+
+  // Pipe transcript into the focused field
+  useEffect(() => {
+    if (!voice.transcript || !voiceTarget) return;
+    if (voiceTarget === "routeFrom") setRouteFrom(voice.transcript);
+    if (voiceTarget === "routeTo") setRouteTo(voice.transcript);
+    if (voiceTarget === "purpose") setPurpose(voice.transcript);
+    voice.reset();
+  }, [voice.transcript]);
+
+  const startVoice = (target: "routeFrom" | "routeTo" | "purpose") => {
+    setVoiceTarget(target);
+    voice.start();
+  };
 
   useEffect(() => {
     setPred(null);
@@ -61,7 +79,7 @@ export default function QuickTripDialog({ open, onOpenChange }: Props) {
     if (end < start) { toast.error("Konečný stav km musí být ≥ počáteční"); return; }
 
     setSaving(true);
-    const { error } = await supabase.from("trip_logs").insert({
+    const payload = {
       vehicle_id: vehicleId,
       driver_id: driver?.id || null,
       date: new Date().toISOString().split("T")[0],
@@ -71,11 +89,26 @@ export default function QuickTripDialog({ open, onOpenChange }: Props) {
       route_from: routeFrom || null,
       route_to: routeTo || null,
       purpose: purpose || null,
-    });
-    setSaving(false);
+    };
 
-    if (error) { toast.error("Chyba: " + error.message); return; }
-    toast.success("Jízda zapsána");
+    if (!navigator.onLine) {
+      await enqueueTrip(payload);
+      setSaving(false);
+      toast.success("Offline – uloženo, odešle se po obnovení sítě");
+      reset();
+      onOpenChange(false);
+      return;
+    }
+
+    const { error } = await supabase.from("trip_logs").insert(payload);
+    setSaving(false);
+    if (error) {
+      // fall back to offline queue on network errors
+      await enqueueTrip(payload);
+      toast.message("Uloženo offline, zkusíme znovu později");
+    } else {
+      toast.success("Jízda zapsána");
+    }
     reset();
     onOpenChange(false);
   };
@@ -123,16 +156,42 @@ export default function QuickTripDialog({ open, onOpenChange }: Props) {
           )}
           <div className="space-y-1.5">
             <Label>Odkud</Label>
-            <Input className="h-12" value={routeFrom} onChange={e => setRouteFrom(e.target.value)} placeholder="Praha" />
+            <div className="flex gap-2">
+              <Input className="h-12 flex-1" value={routeFrom} onChange={e => setRouteFrom(e.target.value)} placeholder="Praha" />
+              {voice.supported && (
+                <Button type="button" variant="outline" size="icon" className="h-12 w-12" onClick={() => voice.listening ? voice.stop() : startVoice("routeFrom")}>
+                  {voice.listening && voiceTarget === "routeFrom" ? <MicOff className="h-5 w-5 text-destructive" /> : <Mic className="h-5 w-5" />}
+                </Button>
+              )}
+            </div>
           </div>
           <div className="space-y-1.5">
             <Label>Kam</Label>
-            <Input className="h-12" value={routeTo} onChange={e => setRouteTo(e.target.value)} placeholder="Brno" />
+            <div className="flex gap-2">
+              <Input className="h-12 flex-1" value={routeTo} onChange={e => setRouteTo(e.target.value)} placeholder="Brno" />
+              {voice.supported && (
+                <Button type="button" variant="outline" size="icon" className="h-12 w-12" onClick={() => voice.listening ? voice.stop() : startVoice("routeTo")}>
+                  {voice.listening && voiceTarget === "routeTo" ? <MicOff className="h-5 w-5 text-destructive" /> : <Mic className="h-5 w-5" />}
+                </Button>
+              )}
+            </div>
           </div>
           <div className="space-y-1.5">
             <Label>Účel</Label>
-            <Input className="h-12" value={purpose} onChange={e => setPurpose(e.target.value)} placeholder="Služební jednání" />
+            <div className="flex gap-2">
+              <Input className="h-12 flex-1" value={purpose} onChange={e => setPurpose(e.target.value)} placeholder="Služební jednání" />
+              {voice.supported && (
+                <Button type="button" variant="outline" size="icon" className="h-12 w-12" onClick={() => voice.listening ? voice.stop() : startVoice("purpose")}>
+                  {voice.listening && voiceTarget === "purpose" ? <MicOff className="h-5 w-5 text-destructive" /> : <Mic className="h-5 w-5" />}
+                </Button>
+              )}
+            </div>
           </div>
+          {!navigator.onLine && (
+            <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400 border border-amber-500/30 bg-amber-500/10 rounded p-2">
+              <WifiOff className="h-4 w-4" /> Offline – jízda se uloží lokálně a odešle při obnovení sítě.
+            </div>
+          )}
         </div>
         <DrawerFooter className="pb-safe gap-2">
           <Button className="w-full h-12 text-base" onClick={submit} disabled={saving}>

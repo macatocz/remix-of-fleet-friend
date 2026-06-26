@@ -493,6 +493,50 @@ export type Database = {
           },
         ]
       }
+      key_handovers: {
+        Row: {
+          action: string
+          created_at: string
+          created_by: string | null
+          from_user_id: string | null
+          id: string
+          note: string | null
+          to_name: string | null
+          to_user_id: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          action?: string
+          created_at?: string
+          created_by?: string | null
+          from_user_id?: string | null
+          id?: string
+          note?: string | null
+          to_name?: string | null
+          to_user_id?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          created_by?: string | null
+          from_user_id?: string | null
+          id?: string
+          note?: string | null
+          to_name?: string | null
+          to_user_id?: string | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "key_handovers_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
           email_enabled: boolean
@@ -1169,6 +1213,53 @@ export type Database = {
         }
         Relationships: []
       }
+      vehicle_checklists: {
+        Row: {
+          created_at: string
+          driver_name: string | null
+          id: string
+          items: Json
+          km: number | null
+          notes: string | null
+          photos: string[] | null
+          type: string
+          user_id: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string
+          driver_name?: string | null
+          id?: string
+          items?: Json
+          km?: number | null
+          notes?: string | null
+          photos?: string[] | null
+          type?: string
+          user_id?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string
+          driver_name?: string | null
+          id?: string
+          items?: Json
+          km?: number | null
+          notes?: string | null
+          photos?: string[] | null
+          type?: string
+          user_id?: string | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_checklists_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vehicle_documents: {
         Row: {
           category: string | null
@@ -1404,7 +1495,26 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      vehicle_key_status: {
+        Row: {
+          action: string | null
+          created_at: string | null
+          from_user_id: string | null
+          note: string | null
+          to_name: string | null
+          to_user_id: string | null
+          vehicle_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "key_handovers_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       has_role: {

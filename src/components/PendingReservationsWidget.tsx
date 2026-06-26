@@ -49,10 +49,15 @@ export default function PendingReservationsWidget() {
       // Best-effort notify the requesting driver
       try {
         if (row?.driver_name) {
+          // Split "Jméno Příjmení" and search both orders
+          const parts = row.driver_name.trim().split(/\s+/);
+          const first = parts[0] || "";
+          const last = parts.slice(1).join(" ") || first;
           const { data: drv } = await supabase
             .from("drivers")
-            .select("user_id, jmeno")
-            .ilike("jmeno", row.driver_name)
+            .select("user_id, first_name, last_name")
+            .or(`and(first_name.ilike.${first},last_name.ilike.${last}),and(first_name.ilike.${last},last_name.ilike.${first})`)
+            .not("user_id", "is", null)
             .limit(1)
             .maybeSingle();
           if (drv?.user_id) {

@@ -1,0 +1,58 @@
+import { useEffect, useState } from "react";
+import QRCode from "qrcode";
+import { Button } from "@/components/ui/button";
+import { Download, Printer } from "lucide-react";
+
+interface Props {
+  vehicleId: string;
+  label?: string;
+  size?: number;
+}
+
+/**
+ * Generates a QR code that opens the mobile vehicle detail directly
+ * (so a driver can scan it from inside the car).
+ */
+export function VehicleQRCode({ vehicleId, label, size = 220 }: Props) {
+  const [dataUrl, setDataUrl] = useState<string>("");
+  const target = `${window.location.origin}/m/vozidla/${vehicleId}`;
+
+  useEffect(() => {
+    QRCode.toDataURL(target, { width: size, margin: 1 }).then(setDataUrl).catch(() => {});
+  }, [target, size]);
+
+  const download = () => {
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = `qr-${(label || vehicleId).replace(/\s+/g, "-")}.png`;
+    a.click();
+  };
+
+  const print = () => {
+    const w = window.open("", "_blank", "width=600,height=600");
+    if (!w) return;
+    w.document.write(`
+      <html><head><title>QR ${label || ""}</title>
+      <style>body{font-family:sans-serif;text-align:center;padding:40px}img{margin:20px 0}h1{font-size:20px;margin:0}</style>
+      </head><body>
+      <h1>${label || "Vozidlo"}</h1>
+      <img src="${dataUrl}" />
+      <p>Naskenujte pro otevření karty vozidla</p>
+      </body></html>`);
+    w.document.close();
+    setTimeout(() => w.print(), 300);
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-3 p-4 border rounded-lg bg-card">
+      {dataUrl ? <img src={dataUrl} alt="QR kód vozidla" width={size} height={size} /> : (
+        <div style={{ width: size, height: size }} className="bg-muted animate-pulse" />
+      )}
+      <div className="text-xs text-muted-foreground text-center break-all">{target}</div>
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm" onClick={download}><Download className="h-4 w-4 mr-1" />Stáhnout</Button>
+        <Button variant="outline" size="sm" onClick={print}><Printer className="h-4 w-4 mr-1" />Vytisknout</Button>
+      </div>
+    </div>
+  );
+}

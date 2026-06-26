@@ -27,21 +27,21 @@ export async function predictKm(vehicleId: string, targetDate: Date = new Date()
 
   const { data: rows } = await supabase
     .from("trip_logs")
-    .select("datum, km_start, km_end")
+    .select("date, km_start, km_end")
     .eq("vehicle_id", vehicleId)
-    .order("datum", { ascending: false })
+    .order("date", { ascending: false })
     .limit(60);
 
   if (!rows || rows.length === 0) return { lastKm: null, lastDate: null, avgDailyKm: 0, projected: null };
 
   // Latest km
-  const sorted = [...rows].sort((a: any, b: any) => (a.datum < b.datum ? 1 : -1));
+  const sorted = [...rows].sort((a: any, b: any) => (a.date < b.date ? 1 : -1));
   const latest = sorted[0] as any;
   const lastKm = parseKm(latest.km_end) ?? parseKm(latest.km_start);
-  const lastDate = latest.datum as string;
+  const lastDate = latest.date as string;
 
   // Avg daily km over last 30 days
-  const recent = sorted.filter((r: any) => r.datum >= since.toISOString().slice(0, 10));
+  const recent = sorted.filter((r: any) => r.date >= since.toISOString().slice(0, 10));
   let totalKm = 0;
   for (const r of recent as any[]) {
     const s = parseKm(r.km_start);

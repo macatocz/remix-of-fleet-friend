@@ -28,6 +28,7 @@ import VehicleAlerts from "@/components/VehicleAlerts";
 import VehicleService from "@/components/VehicleService";
 import VehicleTripLogInline from "@/components/VehicleTripLogInline";
 import VehicleFuelCards from "@/components/VehicleFuelCards";
+import { VehicleQRCode } from "@/components/VehicleQRCode";
 import VehicleVignettes from "@/components/VehicleVignettes";
 import VehicleServicePlan from "@/components/VehicleServicePlan";
 import VehicleHandover from "@/components/VehicleHandover";
@@ -614,6 +615,15 @@ export default function VehicleDetail() {
             )}
             <EditableCard title="Dokumenty a kontroly" fields={DOC_FIELDS} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit} />
             <EditableCard title="Provozní údaje" fields={getOpsFields(branchOptions)} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit} />
+            <Card>
+              <CardHeader><CardTitle className="text-base">QR kód vozidla</CardTitle></CardHeader>
+              <CardContent>
+                <VehicleQRCode vehicleId={vehicle.id} label={`${vehicle.znacka || ""} ${vehicle.rz || ""}`.trim()} />
+                <p className="text-xs text-muted-foreground mt-3">
+                  Vytiskněte a nalepte do vozu — řidič nascanováním ihned otevře kartu vozidla.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 

@@ -126,6 +126,32 @@ export function MobileLayout() {
               <AlertTriangle className="h-7 w-7 text-destructive" />
               <span>Hlásit škodu</span>
             </Button>
+            <Button
+              variant="outline"
+              className="h-28 flex-col gap-2 text-base"
+              onClick={() => { setFabOpen(false); setNowResOpen(true); }}
+            >
+              <Zap className="h-7 w-7 text-primary" />
+              <span>Rezervace teď</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-28 flex-col gap-2 text-base"
+              onClick={() => { setFabOpen(false); setChecklistOpen(true); }}
+              disabled={!primaryVehicle}
+            >
+              <ClipboardCheck className="h-7 w-7" />
+              <span>Kontrola vozu</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-28 flex-col gap-2 text-base col-span-2"
+              onClick={() => { setFabOpen(false); setKeysOpen(true); }}
+              disabled={!primaryVehicle}
+            >
+              <Key className="h-7 w-7" />
+              <span>Klíče (vyzvednout / vrátit)</span>
+            </Button>
           </div>
         </DrawerContent>
       </Drawer>
@@ -188,6 +214,23 @@ export function MobileLayout() {
 
       <QuickTripDialog open={tripOpen} onOpenChange={setTripOpen} />
       <QuickIncidentDialog open={incidentOpen} onOpenChange={setIncidentOpen} />
+      <QuickNowReservation open={nowResOpen} onOpenChange={setNowResOpen} />
+      {primaryVehicle && (
+        <>
+          <ChecklistDialog
+            open={checklistOpen}
+            onOpenChange={setChecklistOpen}
+            vehicleId={primaryVehicle.id}
+            vehicleLabel={`${primaryVehicle.znacka || ""} ${primaryVehicle.rz || ""}`.trim()}
+          />
+          <KeyHandoverDialog
+            open={keysOpen}
+            onOpenChange={setKeysOpen}
+            vehicleId={primaryVehicle.id}
+            vehicleLabel={`${primaryVehicle.znacka || ""} ${primaryVehicle.rz || ""}`.trim()}
+          />
+        </>
+      )}
       <FindVehicleSheet
         open={findOpen}
         onOpenChange={setFindOpen}

@@ -55,11 +55,18 @@ export default function TravelOrders() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <FileText className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold">Cestovní příkazy</h1>
-          {data && <span className="text-muted-foreground">({data.length})</span>}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-2">
+          <FileText className="h-6 w-6 text-primary mt-1" />
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold">Cestovní příkazy</h1>
+              {data && <span className="text-muted-foreground">({data.length})</span>}
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              Tuzemské i zahraniční cesťáky včetně výpočtu stravného a exportu PDF.
+            </p>
+          </div>
         </div>
         <Button onClick={() => navigate("/cestovni-prikazy/novy")}>
           <Plus className="h-4 w-4" />

@@ -286,7 +286,12 @@ export default function Drivers() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Řidiči</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Řidiči</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Zaměstnanci a uživatelé aplikace, jejich oprávnění a vozidla.
+          </p>
+        </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={handleExport} disabled={drivers.length === 0}>
             <Download className="mr-2 h-4 w-4" />Export

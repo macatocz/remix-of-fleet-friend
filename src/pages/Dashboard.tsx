@@ -444,9 +444,6 @@ export default function Dashboard() {
       {/* Extra widgety */}
       <DashboardExtraWidgets />
 
-      {/* Notifications */}
-      <VehicleNotifications />
-
       {/* Today's summary */}
       {reservationStats.today > 0 && (
         <Card className="border-info/30 bg-info/5">

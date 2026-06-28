@@ -1,14 +1,28 @@
 ## Cíl
-V kalendáři vozidla (detail vozu → tab Kalendář → Nová rezervace) nahradit textový input "Jméno řidiče" výběrem z databáze řidičů — stejně jako už funguje v sekci Rezervace.
+Pod každou položku v levém menu (desktop sidebar) přidat drobnou vysvětlivku — sekundární řádek menším šedým písmem pod hlavním názvem. Zobrazí se jen v rozbaleném stavu sidebaru (v ikonkovém režimu zmizí, stejně jako titulky).
+
+## Návrh textů
+
+| Položka | Vysvětlivka |
+|---|---|
+| Dashboard | Přehled a upozornění |
+| Vozidla | Evidence vozového parku |
+| Řidiči | Zaměstnanci a oprávnění |
+| Rezervace | Plánování jízd a schvalování |
+| Servis | Servisní plány a záznamy |
+| Škody | Nehody a pojistné události |
+| Kniha jízd | Přehled jízd a export |
+| Náklady | Provozní a leasingové výdaje |
+| Tankovací karty | Palivové karty a PINy |
+| Cestovní příkazy | Tuzemské i zahraniční CP |
+| Nastavení | Firma, sazby, notifikace |
 
 ## Změny
-**`src/components/VehicleCalendar.tsx`**
-- Načíst aktivní řidiče z `drivers` (`id, first_name, last_name`, filtr `status = 'aktivní'`, řazení podle příjmení) při mountu.
-- Stav `formDriver` zůstává jako string s celým jménem (sloupec `reservations.driver_name` je text), ale vyplní se výběrem ze `Select`u.
-- Nahradit `<Input placeholder="Jméno řidiče">` komponentou `<Select>` (shadcn) s položkami `"{first_name} {last_name}"`.
-- Při resetu formuláře vyčistit i výběr.
-- Validace zůstává (`!formDriver.trim()`).
+**`src/components/AppSidebar.tsx`**
+- Rozšířit `mainItems` a `settingsItems` o pole `description`.
+- Upravit render `SidebarMenuButton`: místo jednořádkového textu vykreslit blok se dvěma řádky — název (`text-sm font-medium`) a popisek (`text-xs text-muted-foreground leading-tight`). Popisek skrýt v `collapsed` režimu.
+- Lehce zvýšit výšku položek (`h-auto py-2`), aby se vešly dva řádky.
 
 ## Mimo rozsah
-- Schéma `reservations` neměním (zůstává `driver_name TEXT`). Vazba na `driver_id` by byla větší refaktor.
-- Mobilní rychlou rezervaci a stránku Rezervace neřeším — tam už výběr funguje.
+- Mobilní layout (`MobileLayout.tsx`) neupravuji — tam je prostorově malý footer/drawer.
+- Žádné změny dat ani routingu.

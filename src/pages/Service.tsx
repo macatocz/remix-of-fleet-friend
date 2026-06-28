@@ -195,7 +195,12 @@ export default function Service() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Servis a údržba</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Servis a údržba</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Servisní plány, STK, emise a historie oprav.
+          </p>
+        </div>
         <Button onClick={() => openCreate(activeTab as any)}>
           <Plus className="mr-2 h-4 w-4" />Nový záznam
         </Button>

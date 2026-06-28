@@ -66,9 +66,14 @@ export default function Incidents() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <AlertTriangle className="h-6 w-6 text-warning" />
-        <h1 className="text-2xl font-bold">Škody a pojistné události</h1>
+      <div className="flex items-start gap-2">
+        <AlertTriangle className="h-6 w-6 text-warning mt-1" />
+        <div>
+          <h1 className="text-2xl font-bold">Škody a pojistné události</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Evidence nehod a pojistných událostí včetně fotodokumentace.
+          </p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

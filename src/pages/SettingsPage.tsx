@@ -9,7 +9,12 @@ import { TravelRatesSettings } from "@/components/settings/TravelRatesSettings";
 export default function SettingsPage() {
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Nastavení</h1>
+      <div>
+        <h1 className="text-2xl font-bold">Nastavení</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Údaje firmy, cestovní sazby, notifikace a uživatelé.
+        </p>
+      </div>
 
       <Tabs defaultValue="company" className="w-full">
         <TabsList>

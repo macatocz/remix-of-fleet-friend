@@ -329,7 +329,12 @@ export default function Vehicles() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Vozidla</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Vozidla</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Evidence vozidel — leasing, doklady, servis, dokumenty.
+          </p>
+        </div>
         <div className="flex items-center gap-2">
           <VehicleImport onImported={fetchVehicles} />
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

@@ -68,9 +68,14 @@ export default function FuelCards() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <CreditCard className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-bold text-foreground">Tankovací karty</h1>
+      <div className="flex items-start gap-3">
+        <CreditCard className="h-6 w-6 text-primary mt-1" />
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Tankovací karty</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Palivové karty, alokace k vozidlům a správa PINů.
+          </p>
+        </div>
       </div>
 
       <div className="flex gap-4">

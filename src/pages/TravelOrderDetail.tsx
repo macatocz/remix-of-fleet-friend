@@ -237,14 +237,60 @@ export default function TravelOrderDetail() {
       const { error } = await supabase.from("travel_orders").update(payload).eq("id", saveId);
       if (error) { toast({ title: "Chyba", description: error.message, variant: "destructive" }); return null; }
     }
-    await Promise.all([
-      supabase.from("travel_order_legs").delete().eq("travel_order_id", saveId),
-      supabase.from("travel_order_meals").delete().eq("travel_order_id", saveId),
-      supabase.from("travel_order_expenses").delete().eq("travel_order_id", saveId),
-    ]);
-    if (legs.length) await supabase.from("travel_order_legs").insert(legs.map((l, i) => ({ ...l, id: undefined, travel_order_id: saveId, sort_order: i })));
-    if (meals.length) await supabase.from("travel_order_meals").insert(meals.map((m) => ({ ...m, id: undefined, travel_order_id: saveId })));
-    if (expenses.length) await supabase.from("travel_order_expenses").insert(expenses.map((e) => ({ ...e, id: undefined, travel_order_id: saveId })));
+
+    const emptyToNull = (v: any) => (v === "" || v === undefined ? null : v);
+    const legsPayload = legs.map((l, i) => ({
+      travel_order_id: saveId,
+      date: l.date,
+      time_from: emptyToNull(l.time_from),
+      time_to: emptyToNull(l.time_to),
+      place_from: emptyToNull(l.place_from),
+      place_to: emptyToNull(l.place_to),
+      km: l.km != null && l.km !== ("" as any) ? Math.round(Number(l.km)) : 0,
+      transport: l.transport || "sluzebni",
+      note: emptyToNull((l as any).note),
+      sort_order: i,
+      country: l.country || "CZ",
+      timezone: l.timezone || "Europe/Prague",
+    }));
+    const mealsPayload = meals.map((m) => ({
+      travel_order_id: saveId,
+      date: m.date,
+      hours: Number(m.hours) || 0,
+      country: m.country || "CZ",
+      rate: Number(m.rate) || 0,
+      amount: Number(m.amount) || 0,
+      currency: m.currency || "CZK",
+      pocket_money_pct: Number(m.pocket_money_pct) || 0,
+      pocket_money_amount: Number(m.pocket_money_amount) || 0,
+    }));
+    const expensesPayload = expenses.map((e) => ({
+      travel_order_id: saveId,
+      type: e.type || "ostatni",
+      description: emptyToNull(e.description),
+      amount: Number(e.amount) || 0,
+      currency: e.currency || "CZK",
+    }));
+
+    const delLegs = await supabase.from("travel_order_legs").delete().eq("travel_order_id", saveId);
+    if (delLegs.error) { toast({ title: "Chyba při mazání úseků", description: delLegs.error.message, variant: "destructive" }); return null; }
+    const delMeals = await supabase.from("travel_order_meals").delete().eq("travel_order_id", saveId);
+    if (delMeals.error) { toast({ title: "Chyba při mazání stravného", description: delMeals.error.message, variant: "destructive" }); return null; }
+    const delExp = await supabase.from("travel_order_expenses").delete().eq("travel_order_id", saveId);
+    if (delExp.error) { toast({ title: "Chyba při mazání výdajů", description: delExp.error.message, variant: "destructive" }); return null; }
+
+    if (legsPayload.length) {
+      const { error } = await supabase.from("travel_order_legs").insert(legsPayload);
+      if (error) { console.error("legs insert error", error, legsPayload); toast({ title: "Chyba při ukládání úseků", description: error.message, variant: "destructive" }); return null; }
+    }
+    if (mealsPayload.length) {
+      const { error } = await supabase.from("travel_order_meals").insert(mealsPayload);
+      if (error) { console.error("meals insert error", error, mealsPayload); toast({ title: "Chyba při ukládání stravného", description: error.message, variant: "destructive" }); return null; }
+    }
+    if (expensesPayload.length) {
+      const { error } = await supabase.from("travel_order_expenses").insert(expensesPayload);
+      if (error) { console.error("expenses insert error", error, expensesPayload); toast({ title: "Chyba při ukládání výdajů", description: error.message, variant: "destructive" }); return null; }
+    }
 
     if (newStatus) setStatus(newStatus);
     qc.invalidateQueries({ queryKey: ["travel_orders"] });

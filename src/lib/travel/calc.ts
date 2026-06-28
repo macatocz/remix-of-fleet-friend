@@ -10,21 +10,30 @@ export type MealRates = { "5_12": number; "12_18": number; "18_plus": number };
 export const MEAL_RATES_BY_YEAR: Record<number, MealRates> = {
   2024: { "5_12": 140, "12_18": 212, "18_plus": 333 },
   2025: { "5_12": 166, "12_18": 252, "18_plus": 396 },
-  2026: { "5_12": 166, "12_18": 252, "18_plus": 396 }, // POZOR: dočasně = 2025, doplň po vydání vyhlášky MF ČR pro rok 2026
+  // Vyhláška č. 573/2025 Sb. — dolní sazba pro soukromou sféru (§ 163 ZP).
+  2026: { "5_12": 155, "12_18": 236, "18_plus": 370 },
 };
 
 /** Průměrná cena PHM (Natural 95) podle vyhlášky MF ČR — Kč/l. */
 export const FUEL_PRICE_BY_YEAR: Record<number, number> = {
   2024: 38.20,
   2025: 36.10,
-  2026: 36.10, // POZOR: dočasně = 2025
+  // Vyhláška č. 573/2025 Sb. — Natural 95.
+  2026: 34.70,
 };
 
 /** Sazba základní náhrady za 1 km u osobních vozidel — Kč/km. */
 export const KM_RATE_BY_YEAR: Record<number, number> = {
   2024: 5.60,
   2025: 5.85,
-  2026: 5.85, // POZOR: dočasně = 2025
+  // Vyhláška č. 573/2025 Sb. — osobní silniční motorová vozidla.
+  2026: 5.90,
+};
+
+/** Doplňkové ceny PHM podle vyhlášky (Kč/l, resp. Kč/kWh). Pro budoucí rozšíření výpočtu. */
+export const FUEL_PRICE_DETAIL_BY_YEAR: Record<number, { n95: number; n98: number; diesel: number; electricity: number }> = {
+  2025: { n95: 36.10, n98: 38.30, diesel: 34.40, electricity: 7.70 },
+  2026: { n95: 34.70, n98: 39.00, diesel: 34.10, electricity: 7.20 },
 };
 
 export const LATEST_YEAR = Math.max(...Object.keys(MEAL_RATES_BY_YEAR).map(Number));

@@ -8,6 +8,7 @@ import { useDriverContext } from "@/hooks/useDriverContext";
 import { useAuth } from "@/contexts/AuthContext";
 import NewReservationDialog from "@/components/mobile/NewReservationDialog";
 import PendingApprovalCard, { PendingReservation } from "@/components/mobile/PendingApprovalCard";
+import ReservationFuelCardWidget from "@/components/mobile/ReservationFuelCardWidget";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
@@ -198,6 +199,12 @@ function MyList({
             {r.purpose && (
               <p className="text-sm text-muted-foreground">{r.purpose}</p>
             )}
+
+            {r.status === "schváleno" &&
+              r.date_from <= new Date().toISOString().split("T")[0] &&
+              r.date_to >= new Date().toISOString().split("T")[0] && (
+                <ReservationFuelCardWidget vehicleId={r.vehicle_id} />
+              )}
 
             {r.status === "čeká" && (
               <AlertDialog>

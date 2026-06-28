@@ -131,7 +131,17 @@ export function mealAmountForHours(hours: number, ratesOrDate?: MealRates | stri
  * Vrací { amount, currency } v měně dané země.
  */
 export function mealAmountForeign(country: string, hours: number, date?: string): { amount: number; currency: string } {
-  const rate = getForeignMealRate(country, date);
+  return mealAmountForeignWith(country, hours, date, null);
+}
+
+/** Varianta `mealAmountForeign` s podporou firemního override. */
+export function mealAmountForeignWith(
+  country: string,
+  hours: number,
+  date?: string,
+  override?: Record<string, Record<string, ForeignMealRate>> | null,
+): { amount: number; currency: string } {
+  const rate = getForeignMealRate(country, date, override);
   if (!rate || hours < 1) return { amount: 0, currency: rate?.currency || "EUR" };
   let factor = 0;
   if (hours <= 12) factor = 1 / 3;

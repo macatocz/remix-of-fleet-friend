@@ -12,10 +12,11 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import {
-  getKmRate, getFuelPrice, mealAmountForHours, mealAmountForeign,
+  getKmRate, getFuelPrice, getMealRates, mealAmountForHours, mealAmountForeignWith,
   pocketMoneyAmount, hoursBetween, formatCZK, formatCurrency, isForeignCountry, COUNTRY_TIMEZONES,
 } from "@/lib/travel/calc";
 import { generateTravelOrderPDF, type TravelOrderPDFData } from "@/lib/travel/pdf";
+import { useCompanySettings } from "@/hooks/useCompanySettings";
 
 type Leg = { id?: string; date: string; time_from?: string; time_to?: string; place_from?: string; place_to?: string; km?: number; transport?: string; sort_order?: number; country?: string; timezone?: string };
 type Meal = { id?: string; date: string; hours: number; country: string; rate: number; amount: number; currency?: string; pocket_money_pct?: number; pocket_money_amount?: number };
@@ -30,6 +31,7 @@ export default function TravelOrderDetail() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { toast } = useToast();
+  const { data: companyOv } = useCompanySettings();
 
   const [orderId, setOrderId] = useState<string | null>(isNew ? null : id!);
   const [number, setNumber] = useState("");
@@ -119,9 +121,9 @@ export default function TravelOrderDetail() {
   const vehicleReimb = useMemo(() => {
     if (transport !== "vlastni") return 0;
     const consumption = 7;
-    const fuelPart = (consumption / 100) * getFuelPrice(dateFrom);
-    return Math.round(totalKm * (getKmRate(dateFrom) + fuelPart) * 100) / 100;
-  }, [totalKm, transport, dateFrom]);
+    const fuelPart = (consumption / 100) * getFuelPrice(dateFrom, companyOv?.fuel_price_override);
+    return Math.round(totalKm * (getKmRate(dateFrom, companyOv?.km_rate_override) + fuelPart) * 100) / 100;
+  }, [totalKm, transport, dateFrom, companyOv]);
 
   // Souhrny per měna
   const mealsByCurrency = useMemo(() => {
@@ -181,10 +183,11 @@ export default function TravelOrderDetail() {
   const recomputeMealRow = (m: Meal): Meal => {
     let amount: number; let currency: string;
     if (isForeignCountry(m.country, m.date)) {
-      const r = mealAmountForeign(m.country, m.hours, m.date);
+      const r = mealAmountForeignWith(m.country, m.hours, m.date, companyOv?.foreign_meal_rates_override);
       amount = r.amount; currency = r.currency;
     } else {
-      amount = mealAmountForHours(m.hours, m.date); currency = "CZK";
+      const rates = getMealRates(m.date, companyOv?.meal_rates_override);
+      amount = mealAmountForHours(m.hours, rates); currency = "CZK";
     }
     const pocket = pocketMoneyAmount(amount, m.pocket_money_pct || 0);
     return { ...m, amount, currency, rate: amount, pocket_money_amount: pocket };

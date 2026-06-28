@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, Plus, X, Clock } from "lucide-react";
+import { CalendarDays, Plus, X, Clock, History } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useDriverContext } from "@/hooks/useDriverContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -99,6 +99,43 @@ export default function MyReservations() {
     load();
   };
 
+  const todayStr = new Date().toISOString().split("T")[0];
+  const activeItems = items.filter(r => r.date_to >= todayStr);
+  const pastItems = items.filter(r => r.date_to < todayStr);
+
+  const renderReservations = () => {
+    if (loading) {
+      return <p className="text-sm text-muted-foreground">Načítání…</p>;
+    }
+    if (items.length === 0) {
+      return (
+        <Card>
+          <CardContent className="p-6 text-center text-sm text-muted-foreground">
+            Nemáte žádné rezervace. Vytvořte novou žádost tlačítkem nahoře.
+          </CardContent>
+        </Card>
+      );
+    }
+    return (
+      <>
+        {activeItems.length > 0 && (
+          <ActiveList items={activeItems} statusVariant={statusVariant} cancel={cancel} />
+        )}
+        {pastItems.length > 0 && (
+          <>
+            <div className="flex items-center gap-2 pt-2">
+              <History className="h-3.5 w-3.5 text-muted-foreground" />
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Ukončené rezervace
+              </p>
+            </div>
+            <PastList items={pastItems} />
+          </>
+        )}
+      </>
+    );
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -127,9 +164,7 @@ export default function MyReservations() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="mine" className="space-y-4 mt-4">
-            <MyList
-              loading={loading} items={items} statusVariant={statusVariant} cancel={cancel}
-            />
+            {renderReservations()}
           </TabsContent>
           <TabsContent value="approvals" className="space-y-3 mt-4">
             {pending.length === 0 ? (
@@ -142,7 +177,7 @@ export default function MyReservations() {
           </TabsContent>
         </Tabs>
       ) : (
-        <MyList loading={loading} items={items} statusVariant={statusVariant} cancel={cancel} />
+        renderReservations()
       )}
 
       <NewReservationDialog
@@ -154,23 +189,15 @@ export default function MyReservations() {
   );
 }
 
-function MyList({
-  loading, items, statusVariant, cancel,
+function ActiveList({
+  items, statusVariant, cancel,
 }: {
-  loading: boolean;
   items: Reservation[];
   statusVariant: (s: string) => "default" | "secondary" | "outline" | "destructive";
   cancel: (id: string) => void;
 }) {
   return (
     <>
-      {loading && <p className="text-sm text-muted-foreground">Načítání…</p>}
-      {!loading && items.length === 0 && (
-        <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">
-          Nemáte žádné rezervace. Vytvořte novou žádost tlačítkem nahoře.
-        </CardContent></Card>
-      )}
-
       {items.map((r) => (
         <Card key={r.id}>
           <CardContent className="p-4 space-y-3">
@@ -226,6 +253,44 @@ function MyList({
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
+            )}
+          </CardContent>
+        </Card>
+      ))}
+    </>
+  );
+}
+
+function PastList({ items }: { items: Reservation[] }) {
+  return (
+    <>
+      {items.map((r) => (
+        <Card key={r.id} className="bg-muted/40 opacity-90 border-muted">
+          <CardContent className="p-4 space-y-2">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <CalendarDays className="h-5 w-5 text-muted-foreground shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-medium text-base truncate text-muted-foreground">
+                    {r.vehicle?.rz || "?"}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {r.vehicle?.znacka || "—"}
+                  </p>
+                </div>
+              </div>
+              <Badge variant="outline" className="shrink-0 text-muted-foreground border-muted-foreground/30">
+                Ukončeno
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground bg-accent/20 rounded-lg px-3 py-2">
+              <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+              <span>
+                {r.date_from} {r.time_from?.slice(0,5)} → {r.date_to} {r.time_to?.slice(0,5)}
+              </span>
+            </div>
+            {r.purpose && (
+              <p className="text-sm text-muted-foreground">{r.purpose}</p>
             )}
           </CardContent>
         </Card>

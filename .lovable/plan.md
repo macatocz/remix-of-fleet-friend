@@ -1,46 +1,23 @@
+## Plán: Označení minulých rezervací na mobilu
 
-## Cíl
-Řidič uvidí v mobilní aplikaci tankovací kartu(y) přiřazené k vozu, který má aktuálně rezervovaný — bez přístupu do celkového přehledu karet.
+### Problém
+Na stránce **/m/rezervace** se zobrazují všechny rezervace bez rozlišení — staré (již ukončené) vypadají stejně jako aktivní. Uživatel chce vidět, že rezervace už není aktivní.
 
-## Kde se to objeví
-1. **Domovská obrazovka mobilu** (`MobileHome`) — pokud má řidič právě probíhající rezervaci, zobrazí se pod ní karta "Tankovací karta k vozu" s:
-   - Značka karty (CCS, Shell, OMV…)
-   - Maskované číslo (••••  1234)
-   - Tlačítko "Zobrazit PIN" (odkrytí na klik, auto-skrytí po 10s)
-   - Limit / měsíční zůstatek pokud je vyplněn
+### Řešení
+1. **Rozdělit seznam** v `MyReservations.tsx` na dvě logické sekce:
+   - **Aktivní a budoucí** — rezervace s `date_to >= dnešek`
+   - **Ukončené** — rezervace s `date_to < dnešek`
 
-2. **Detail rezervace** (`MobileReservationDetail` nebo sekce v `MobileReservations`) — stejná karta i zde, aby ji řidič našel i u budoucí/aktuální rezervace.
+2. **Vizuální odlišení ukončených rezervací:**
+   - Šedší pozadí karty (`bg-muted/40` nebo podobně)
+   - Badge **"Ukončeno"** místo stávajícího statusu (nebo vedle něj)
+   - Trochu menší kontrast písma pro datum
+   - Ukončené rezervace půjdou na konec seznamu
 
-## Logika
-- Načíst `reservations` kde `driver_id = current_user_driver_id` a `start_at <= now() <= end_at` (nebo nejbližší budoucí v rámci 24 h).
-- K `vehicle_id` z rezervace načíst `fuel_cards` kde `vehicle_id = ...` a `status = 'aktivní'`.
-- Pokud řidič nemá rezervaci → sekce se nezobrazí.
-- Pokud vůz nemá kartu → zobrazí se hláška "K tomuto vozu není přiřazena tankovací karta".
+3. **DriverHome (`/m/`) zůstane beze změny** — tam se zobrazují už jen aktivní rezervace.
 
-## Bezpečnost (RLS)
-Stávající policy `fuel_cards` povoluje SELECT pouze adminovi/dispečerovi. Přidáme policy:
+### Soubory ke změně
+- `src/pages/mobile/MyReservations.tsx` — filtrování, řazení a odlišný styl ukončených karet
 
-```
-"Drivers can view fuel cards of their active reservation vehicle"
-USING (
-  EXISTS (
-    SELECT 1 FROM reservations r
-    JOIN drivers d ON d.id = r.driver_id
-    WHERE r.vehicle_id = fuel_cards.vehicle_id
-      AND d.user_id = auth.uid()
-      AND r.start_at <= now() AND r.end_at >= now()
-  )
-)
-```
-
-PIN se posílá jen na vyžádání — komponenta ho po načtení drží v paměti, nezapisuje do logu.
-
-## Soubory
-- **Nový** `src/components/mobile/ReservationFuelCardWidget.tsx` — kompaktní komponenta s reveal PIN.
-- **Upravit** `src/pages/mobile/MobileHome.tsx` — vložit widget pod sekci s aktivní rezervací.
-- **Upravit** `src/pages/mobile/MobileReservations.tsx` — vložit widget do rozkliknutého detailu.
-- **Migrace** — přidat RLS policy pro řidiče na `fuel_cards`.
-
-## Co NEMĚNÍM
-- Stávající `/m/tankovaci-karty` (přehled všech karet pro admina) zůstává beze změny.
-- Mobilní spodní navigace se nemění — řidič stále vidí jen Domů / Najít vůz / Rezervace.
+### Výsledek
+Uživatel na mobilní stránce "Moje rezervace" okamžitě pozná, které rezervace jsou aktivní a které už skončily.

@@ -72,6 +72,7 @@ export default function VehicleCalendar({ vehicleId }: { vehicleId: string }) {
   const [formPurpose, setFormPurpose] = useState("");
   const [saving, setSaving] = useState(false);
   const [detailRes, setDetailRes] = useState<Reservation | null>(null);
+  const [drivers, setDrivers] = useState<{ id: string; first_name: string; last_name: string }[]>([]);
   const { toast } = useToast();
 
   const fetchReservations = async () => {
@@ -86,6 +87,15 @@ export default function VehicleCalendar({ vehicleId }: { vehicleId: string }) {
   };
 
   useEffect(() => { fetchReservations(); }, [vehicleId]);
+
+  useEffect(() => {
+    supabase
+      .from("drivers")
+      .select("id, first_name, last_name")
+      .eq("status", "aktivní")
+      .order("last_name")
+      .then(({ data }) => setDrivers(data || []));
+  }, []);
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: view === "week" ? 7 : 1 }, (_, i) =>
@@ -464,7 +474,17 @@ export default function VehicleCalendar({ vehicleId }: { vehicleId: string }) {
           <div className="grid gap-4 py-2">
             <div>
               <Label>Řidič *</Label>
-              <Input placeholder="Jméno řidiče" value={formDriver} onChange={e => setFormDriver(e.target.value)} autoFocus />
+              <Select value={formDriver} onValueChange={setFormDriver}>
+                <SelectTrigger autoFocus>
+                  <SelectValue placeholder="Vyberte řidiče" />
+                </SelectTrigger>
+                <SelectContent>
+                  {drivers.map(d => {
+                    const name = `${d.first_name} ${d.last_name}`.trim();
+                    return <SelectItem key={d.id} value={name}>{name}</SelectItem>;
+                  })}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>

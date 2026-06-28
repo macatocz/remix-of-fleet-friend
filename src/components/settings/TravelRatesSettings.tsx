@@ -5,7 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 import {
   MEAL_RATES_BY_YEAR, FOREIGN_MEAL_RATES_BY_YEAR,
-  FUEL_PRICE_BY_YEAR, KM_RATE_BY_YEAR, LATEST_YEAR,
+  FUEL_PRICE_BY_YEAR, FUEL_PRICE_DETAIL_BY_YEAR, KM_RATE_BY_YEAR, LATEST_YEAR,
 } from "@/lib/travel/calc";
 
 export function TravelRatesSettings() {
@@ -60,7 +60,7 @@ export function TravelRatesSettings() {
       <Card>
         <CardHeader>
           <CardTitle>Vlastní vozidlo</CardTitle>
-          <CardDescription>Základní náhrada Kč/km a průměrná cena PHM (Natural 95).</CardDescription>
+          <CardDescription>Základní náhrada Kč/km a průměrné ceny PHM dle vyhlášky.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -68,17 +68,26 @@ export function TravelRatesSettings() {
               <TableRow>
                 <TableHead>Rok</TableHead>
                 <TableHead className="text-right">Sazba Kč/km</TableHead>
-                <TableHead className="text-right">Cena PHM Kč/l</TableHead>
+                <TableHead className="text-right">N95 Kč/l</TableHead>
+                <TableHead className="text-right">N98 Kč/l</TableHead>
+                <TableHead className="text-right">Nafta Kč/l</TableHead>
+                <TableHead className="text-right">El. Kč/kWh</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {years.map((y) => (
-                <TableRow key={y}>
-                  <TableCell className="font-medium">{y}</TableCell>
-                  <TableCell className="text-right">{KM_RATE_BY_YEAR[y]?.toFixed(2)} Kč</TableCell>
-                  <TableCell className="text-right">{FUEL_PRICE_BY_YEAR[y]?.toFixed(2)} Kč</TableCell>
-                </TableRow>
-              ))}
+              {years.map((y) => {
+                const d = FUEL_PRICE_DETAIL_BY_YEAR[y];
+                return (
+                  <TableRow key={y}>
+                    <TableCell className="font-medium">{y}</TableCell>
+                    <TableCell className="text-right">{KM_RATE_BY_YEAR[y]?.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">{(d?.n95 ?? FUEL_PRICE_BY_YEAR[y])?.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">{d?.n98?.toFixed(2) ?? "—"}</TableCell>
+                    <TableCell className="text-right">{d?.diesel?.toFixed(2) ?? "—"}</TableCell>
+                    <TableCell className="text-right">{d?.electricity?.toFixed(2) ?? "—"}</TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>

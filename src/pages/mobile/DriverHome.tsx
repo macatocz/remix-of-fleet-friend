@@ -11,6 +11,7 @@ import SpravceCalendarStrip from "@/components/mobile/SpravceCalendarStrip";
 import FindVehicleSheet from "@/components/mobile/FindVehicleSheet";
 import NewReservationDialog from "@/components/mobile/NewReservationDialog";
 import PendingApprovalCard, { PendingReservation } from "@/components/mobile/PendingApprovalCard";
+import ReservationFuelCardWidget from "@/components/mobile/ReservationFuelCardWidget";
 
 interface UpcomingReservation {
   id: string;
@@ -388,6 +389,14 @@ function DriverOnlyHome({ greeting, isPrivileged }: { greeting: string; isPrivil
           ))}
         </CardContent>
       </Card>
+
+      {(() => {
+        const today = new Date().toISOString().split("T")[0];
+        const current = active.find(
+          r => r.status === "schváleno" && r.date_from <= today && r.date_to >= today
+        );
+        return current ? <ReservationFuelCardWidget vehicleId={current.vehicle_id} /> : null;
+      })()}
 
       {isPrivileged && <PendingApprovalsSection scope="all" />}
 

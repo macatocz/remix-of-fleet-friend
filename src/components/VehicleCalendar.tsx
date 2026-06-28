@@ -73,6 +73,7 @@ export default function VehicleCalendar({ vehicleId }: { vehicleId: string }) {
   const [saving, setSaving] = useState(false);
   const [detailRes, setDetailRes] = useState<Reservation | null>(null);
   const [drivers, setDrivers] = useState<{ id: string; first_name: string; last_name: string }[]>([]);
+  const [editId, setEditId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchReservations = async () => {
@@ -124,12 +125,25 @@ export default function VehicleCalendar({ vehicleId }: { vehicleId: string }) {
   const openNewReservation = (date?: Date, hour?: number) => {
     const d = date || currentDate;
     const dateStr = format(d, "yyyy-MM-dd");
+    setEditId(null);
     setFormDateFrom(dateStr);
     setFormDateTo(dateStr);
     setFormTimeFrom(hour !== undefined ? `${String(hour).padStart(2, "0")}:00` : "08:00");
     setFormTimeTo(hour !== undefined ? `${String(hour + 1).padStart(2, "0")}:00` : "17:00");
     setFormDriver("");
     setFormPurpose("");
+    setDialogOpen(true);
+  };
+
+  const openEditReservation = (r: Reservation) => {
+    setEditId(r.id);
+    setFormDriver(r.driver_name);
+    setFormDateFrom(r.date_from);
+    setFormDateTo(r.date_to);
+    setFormTimeFrom(r.time_from?.slice(0, 5) || "08:00");
+    setFormTimeTo(r.time_to?.slice(0, 5) || "17:00");
+    setFormPurpose(r.purpose || "");
+    setDetailRes(null);
     setDialogOpen(true);
   };
 
@@ -159,26 +173,29 @@ export default function VehicleCalendar({ vehicleId }: { vehicleId: string }) {
     setSaving(true);
 
     const hasCollision = await checkCollision(formDateFrom, formDateTo, formTimeFrom, formTimeTo);
-    if (hasCollision) {
+    if (hasCollision && !editId) {
       toast({ title: "Kolize rezervací", description: "Vozidlo je v tomto období a čase již rezervováno.", variant: "destructive" });
       setSaving(false);
       return;
     }
 
-    const { error } = await supabase.from("reservations").insert([{
-      vehicle_id: vehicleId,
+    const payload = {
       driver_name: formDriver.trim(),
       date_from: formDateFrom,
       date_to: formDateTo,
       time_from: formTimeFrom,
       time_to: formTimeTo,
       purpose: formPurpose.trim() || null,
-    }]);
+    };
+    const { error } = editId
+      ? await supabase.from("reservations").update(payload).eq("id", editId)
+      : await supabase.from("reservations").insert([{ vehicle_id: vehicleId, ...payload }]);
     if (error) {
       toast({ title: "Chyba", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Rezervace vytvořena" });
+      toast({ title: editId ? "Rezervace upravena" : "Rezervace vytvořena" });
       setDialogOpen(false);
+      setEditId(null);
       fetchReservations();
     }
     setSaving(false);
@@ -459,6 +476,13 @@ export default function VehicleCalendar({ vehicleId }: { vehicleId: string }) {
                 <span className="text-muted-foreground">Stav</span>
                 <Badge className={statusColor[detailRes.status]}>{statusLabel[detailRes.status] || detailRes.status}</Badge>
               </div>
+              {detailRes.status === "čeká" && (
+                <div className="pt-2 flex justify-end">
+                  <Button size="sm" onClick={() => openEditReservation(detailRes)}>
+                    Upravit rezervaci
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
@@ -468,8 +492,10 @@ export default function VehicleCalendar({ vehicleId }: { vehicleId: string }) {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Nová rezervace</DialogTitle>
-            <DialogDescription>Vytvořte rezervaci pro toto vozidlo.</DialogDescription>
+            <DialogTitle>{editId ? "Upravit rezervaci" : "Nová rezervace"}</DialogTitle>
+            <DialogDescription>
+              {editId ? "Upravte detaily čekající rezervace." : "Vytvořte rezervaci pro toto vozidlo."}
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2">
             <div>
@@ -525,7 +551,7 @@ export default function VehicleCalendar({ vehicleId }: { vehicleId: string }) {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Zrušit</Button>
             <Button onClick={handleCreate} disabled={saving}>
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Vytvořit
+              {editId ? "Uložit" : "Vytvořit"}
             </Button>
           </DialogFooter>
         </DialogContent>

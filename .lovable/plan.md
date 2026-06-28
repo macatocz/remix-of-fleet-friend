@@ -1,58 +1,40 @@
-## Cíl
-Aktualizovat sazby stravného (ČR i zahraničí) na hodnoty platné pro rok 2026 podle vyhlášek MF ČR a MF ČR pro zahraniční diety, a do budoucna mít přehledný způsob, jak je každý rok aktualizovat.
+## Aktualizace cestovních sazeb na rok 2026
 
-## Kontext
-Dnes jsou sazby natvrdo v `src/lib/travel/calc.ts`:
-- `DEFAULT_MEAL_RATES` (ČR): 166 / 252 / 396 Kč
-- `FOREIGN_MEAL_RATES` (~13 zemí): plné denní sazby v EUR/CHF/GBP/USD
-- `DEFAULT_KM_RATE` 5,85 Kč/km, `DEFAULT_FUEL_PRICE` 36,10 Kč/l
+Z vyhlášky **č. 573/2025 Sb.** (tuzemské stravné, Kč/km, PHM) a vyhlášky **č. 489/2025 Sb.** (zahraniční stravné) přepíšu hodnoty v `src/lib/travel/calc.ts`.
 
-Tyto hodnoty odpovídají vyhláškám pro rok 2024. Pro rok 2026 je třeba je nahradit aktuálními hodnotami z vyhlášek MF ČR (tuzemské stravné + průměrné ceny PHM) a MF ČR / MZV (zahraniční stravné).
+### Tuzemské stravné 2026 (Kč, dolní sazba soukromé sféry)
+| Pásmo | 2025 | **2026** |
+|---|---:|---:|
+| 5–12 h | 166 | **155** |
+| 12–18 h | 252 | **236** |
+| nad 18 h | 396 | **370** |
 
-## Doporučený přístup: dvě úrovně (zdroj pravdy + uživatelská změna)
+> Pozn.: hodnoty pro 2026 jsou *nižší* než 2025 — to odpovídá zdroji (Pohoda portál, 9. 1. 2026). Použiju dolní hranici dle § 163 ZP, stejně jako dnes pro 2025.
 
-### 1) Zdroj pravdy v kódu — roční sazebník
-Místo jediné konstanty zavést **sazebník po letech** přímo v `src/lib/travel/calc.ts`:
+### Vlastní vozidlo 2026
+| Položka | 2025 | **2026** |
+|---|---:|---:|
+| Sazba Kč/km (osobní) | 5,80 | **5,90** |
+| Benzin 95 (Kč/l) | 39,10 | **34,70** |
+| Benzin 98 (Kč/l) | — | **39,00** |
+| Nafta (Kč/l) | 37,50 | **34,10** |
+| Elektřina (Kč/kWh) | 8,20 | **7,20** |
 
-```ts
-MEAL_RATES_BY_YEAR = {
-  2024: { "5_12": 140, "12_18": 212, "18_plus": 333 },
-  2025: { "5_12": 166, "12_18": 252, "18_plus": 396 },
-  2026: { "5_12": ?,   "12_18": ?,   "18_plus": ? },  // doplnit po vydání vyhlášky
-}
-FOREIGN_MEAL_RATES_BY_YEAR = { 2025: {...}, 2026: {...} }
-FUEL_PRICE_BY_YEAR = { 2025: 36.10, 2026: ? }
-KM_RATE_BY_YEAR = { 2025: 5.85, 2026: ? }
-```
+### Zahraniční stravné 2026
+Vyhláška 489/2025 Sb. obsahuje **přes 200 zemí**. Provedu:
+- Aktualizaci států, které už v `FOREIGN_MEAL_RATES_BY_YEAR[2026]` máme (jen ty, které dnes reálně používáš — Německo, Rakousko, Slovensko, Polsko, atd.).
+- Zbytek nechám zdědit z 2025 jako fallback (lookup vrátí poslední dostupný rok), abychom neblokovali export. Doplňování dalších zemí přidám postupně dle reálného použití nebo po dodání oficiální Excel tabulky z vyhlášky.
 
-Funkce `mealAmountForHours` / `mealAmountForeign` / `vehicleReimbursement` budou brát rok z **data cesty** a vybírat správnou sazbu. Pro starší cesty se tím zachová historická správnost (audit).
+### Soubory ke změně
+1. `src/lib/travel/calc.ts` — přepsat `MEAL_RATES_BY_YEAR[2026]`, `KM_RATE_BY_YEAR[2026]`, `FUEL_PRICE_BY_YEAR[2026]` (rozšířit o varianty 98 a elektřina, pokud dnes nejsou), a aktualizovat `FOREIGN_MEAL_RATES_BY_YEAR[2026]` pro běžné EU státy.
+2. `src/components/settings/TravelRatesSettings.tsx` — pokud přibude sloupec (nafta/elektřina/98), rozšířit přehledovou tabulku.
+3. Odebrat komentář „dočasně = 2025" z `calc.ts`.
 
-### 2) Přepsání sazeb na úrovni firmy (volitelné)
-V tabulce `company_settings` přidat JSON pole `meal_rates_override` — pokud má firma vyšší kolektivní smlouvu / vlastní sazby, admin si je upraví v Nastavení → Cestovní příkazy bez zásahu do kódu.
+### Co se nemění
+- Logika výpočtu (pásma 1/3, 2/3, plná sazba) zůstává.
+- Stará data starých cestovních příkazů se nepřepočtou — výběr sazby je vázán na **datum cesty**.
 
-Priorita: cesta v roce X → override firmy pro rok X → výchozí sazba pro rok X v kódu.
+### Zdroj
+Pohoda portál (9. 1. 2026), citace vyhlášek č. 573/2025 Sb. a 489/2025 Sb.
 
-### 3) UI v Nastavení
-Nová sekce **Nastavení → Cestovní příkazy → Sazby stravného**:
-- Tabulka sazeb tuzemských (5–12 / 12–18 / 18+) s tlačítkem "Vrátit na výchozí 2026"
-- Tabulka zahraničních (země, měna, plná sazba)
-- Cena PHM a sazba Kč/km
-- Vše s polem "Platné od (datum)" pro budoucí připravení sazeb dopředu
-
-## Kde získat hodnoty pro rok 2026
-Vyhláška MF ČR o základních sazbách stravného a o průměrné ceně PHM vychází obvykle v prosinci a platí od 1. 1. následujícího roku. Vyhláška MF ČR o zahraničním stravném vychází podobně.
-
-Než pro rok 2026 vyhláška vyjde nebo než budou hodnoty veřejné, navrhuji:
-- **Varianta A:** Implementovat strukturu (rok 2025 = stávající hodnoty), pro 2026 dočasně použít stejné hodnoty jako 2025 a doplnit po vydání vyhlášky jednou drobnou změnou.
-- **Varianta B:** Pokud už hodnoty pro 2026 máš (z účetní / vyhlášky), pošli je a rovnou je zadám.
-
-## Co konkrétně udělám (po schválení plánu)
-1. Refactor `src/lib/travel/calc.ts` — sazebník po letech, funkce přijmou `date`/`year`.
-2. Migrace DB — přidat `company_settings.meal_rates_override JSONB`, `fuel_price_override`, `km_rate_override`.
-3. UI sekce v `src/components/settings/` — editace sazeb s "platné od".
-4. Update všech volajících (`TravelOrderDetail.tsx`, PDF export, kalkulace v dialogu) tak, aby předávaly datum cesty.
-5. Doplnit hodnoty pro 2026 (Varianta A nebo B podle tvé volby).
-
-## Otázky
-1. Máš už k dispozici **konkrétní hodnoty z vyhlášky pro rok 2026** (tuzemské stravné, cena PHM, sazba Kč/km, zahraniční diety)? Pokud ano, pošli je. Pokud ne, implementuji strukturu a 2026 prozatím dorovnám na 2025.
-2. Chceš mít **možnost úpravy sazeb v Nastavení** (override firmy), nebo stačí, že je budu měnit v kódu při každé nové vyhlášce?
+Mám pokračovat?

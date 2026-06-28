@@ -1,40 +1,30 @@
-## Aktualizace cestovních sazeb na rok 2026
+## Bug: úseky/stravné se po uložení neukládají do DB
 
-Z vyhlášky **č. 573/2025 Sb.** (tuzemské stravné, Kč/km, PHM) a vyhlášky **č. 489/2025 Sb.** (zahraniční stravné) přepíšu hodnoty v `src/lib/travel/calc.ts`.
+### Diagnóza
+Ověřil jsem v DB: oba existující cestovní příkazy (`CP-2026-0001` i `CP-2026-0002`) mají **0 řádků v `travel_order_legs` i `travel_order_meals`**, přestože parent řádek se aktualizuje (updated_at se mění). Insert sloupců do těchto tabulek prošel ručně přes psql se stejnými daty, takže RLS i schéma jsou OK — bug je ve volání ze `src/pages/TravelOrderDetail.tsx`.
 
-### Tuzemské stravné 2026 (Kč, dolní sazba soukromé sféry)
-| Pásmo | 2025 | **2026** |
-|---|---:|---:|
-| 5–12 h | 166 | **155** |
-| 12–18 h | 252 | **236** |
-| nad 18 h | 396 | **370** |
+V `save()` (řádky 240–247) jsou tři `await supabase.from(...).insert(...)` **bez kontroly návratového `error`**, a přesto se vždy zobrazí "Uloženo". Skutečná chyba se v UI nikdy neobjeví.
 
-> Pozn.: hodnoty pro 2026 jsou *nižší* než 2025 — to odpovídá zdroji (Pohoda portál, 9. 1. 2026). Použiju dolní hranici dle § 163 ZP, stejně jako dnes pro 2025.
+### Pravděpodobné příčiny (jedna nebo více)
+1. **Spread extra polí z DB**: pokud uživatel načte existující CP, dostane `meals/legs` se sloupcem `created_at` (jako string). Při dalším save() se přes `{...m, id: undefined}` `created_at` posílá zpět — to projde, ale když je leg/meal nově vytvořený (z `loadFromTripLogs` / `recomputeMeals`), nemá id ale má všechna pole z TS typu — to také projde.
+2. **`time_from: t.time?.slice(0,5)`** v `loadFromTripLogs`: pokud trip_log nemá time (null), pošle se `undefined` → OK. Pokud má jiný formát, mohlo by selhat. (Nepravděpodobné.)
+3. **Reálná příčina nejspíš**: PostgREST odmítne nějaké pole / hodnotu, ale UI to spolkne. Bez error handlingu netušíme co.
 
-### Vlastní vozidlo 2026
-| Položka | 2025 | **2026** |
-|---|---:|---:|
-| Sazba Kč/km (osobní) | 5,80 | **5,90** |
-| Benzin 95 (Kč/l) | 39,10 | **34,70** |
-| Benzin 98 (Kč/l) | — | **39,00** |
-| Nafta (Kč/l) | 37,50 | **34,10** |
-| Elektřina (Kč/kWh) | 8,20 | **7,20** |
+### Plán opravy v `src/pages/TravelOrderDetail.tsx`
 
-### Zahraniční stravné 2026
-Vyhláška 489/2025 Sb. obsahuje **přes 200 zemí**. Provedu:
-- Aktualizaci států, které už v `FOREIGN_MEAL_RATES_BY_YEAR[2026]` máme (jen ty, které dnes reálně používáš — Německo, Rakousko, Slovensko, Polsko, atd.).
-- Zbytek nechám zdědit z 2025 jako fallback (lookup vrátí poslední dostupný rok), abychom neblokovali export. Doplňování dalších zemí přidám postupně dle reálného použití nebo po dodání oficiální Excel tabulky z vyhlášky.
-
-### Soubory ke změně
-1. `src/lib/travel/calc.ts` — přepsat `MEAL_RATES_BY_YEAR[2026]`, `KM_RATE_BY_YEAR[2026]`, `FUEL_PRICE_BY_YEAR[2026]` (rozšířit o varianty 98 a elektřina, pokud dnes nejsou), a aktualizovat `FOREIGN_MEAL_RATES_BY_YEAR[2026]` pro běžné EU státy.
-2. `src/components/settings/TravelRatesSettings.tsx` — pokud přibude sloupec (nafta/elektřina/98), rozšířit přehledovou tabulku.
-3. Odebrat komentář „dočasně = 2025" z `calc.ts`.
+1. **Whitelist polí** pro insert (sanitizace), aby do PostgRESTu šly jen sloupce, které existují v cílové tabulce:
+   - `travel_order_legs`: `date, time_from, time_to, place_from, place_to, km, transport, note, sort_order, country, timezone, travel_order_id`
+   - `travel_order_meals`: `date, hours, country, rate, amount, currency, pocket_money_pct, pocket_money_amount, travel_order_id`
+   - `travel_order_expenses`: `type, description, amount, currency, receipt_path, travel_order_id`
+2. **Kontrola erroru** u všech tří insertů a delete. Při chybě:
+   - Toast s konkrétní chybou Postgresu (nikoli "Uloženo").
+   - `return null`, aby workflow funkce nepokračovala.
+3. **Sekvenční insert** místo paralelního, aby případná chyba šla přiřadit k tabulce a v toastu se ukázalo „Chyba při ukládání úseků/stravného/výdajů: …".
+4. **Coercion typů**:
+   - `km` → `Number(l.km) || 0` (sloupec integer).
+   - `hours, rate, amount, pocket_money_pct, pocket_money_amount` → `Number(...)` (numeric).
+   - prázdné stringy `""` → `null` u všech volitelných text polí (`time_from`, `time_to`, `note`, `description`).
+5. **Verifikace v build módu**: po opravě otevřu CP-2026-0002 v Playwright, kliknu Načíst z knihy jízd → Přepočítat stravné → Uložit a ověřím v DB, že `travel_order_legs` a `_meals` mají řádky.
 
 ### Co se nemění
-- Logika výpočtu (pásma 1/3, 2/3, plná sazba) zůstává.
-- Stará data starých cestovních příkazů se nepřepočtou — výběr sazby je vázán na **datum cesty**.
-
-### Zdroj
-Pohoda portál (9. 1. 2026), citace vyhlášek č. 573/2025 Sb. a 489/2025 Sb.
-
-Mám pokračovat?
+Bez změny zůstává: výpočetní logika v `calc.ts`, schéma DB, PDF export, UI komponenty mimo tlačítko Uložit.

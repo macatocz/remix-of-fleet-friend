@@ -12,7 +12,6 @@ interface FuelCard {
   pin: string | null;
   status: string | null;
   valid_until: string | null;
-  monthly_limit?: number | null;
 }
 
 function maskNumber(num: string | null): string {
@@ -31,7 +30,7 @@ export default function ReservationFuelCardWidget({ vehicleId }: { vehicleId: st
     (async () => {
       const { data } = await supabase
         .from("fuel_cards")
-        .select("id, provider, card_number, pin, status, valid_until, monthly_limit")
+        .select("id, provider, card_number, pin, status, valid_until")
         .eq("vehicle_id", vehicleId)
         .eq("status", "aktivní");
       if (!cancelled) setCards((data as FuelCard[]) || []);
@@ -88,16 +87,11 @@ export default function ReservationFuelCardWidget({ vehicleId }: { vehicleId: st
                 </div>
               </div>
             )}
-            {(c.monthly_limit || c.valid_until) && (
-              <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t">
-                {c.monthly_limit ? (
-                  <span>Limit: {c.monthly_limit.toLocaleString("cs-CZ")} Kč/měs</span>
-                ) : <span />}
-                {c.valid_until && (
-                  <Badge variant="outline" className="text-[10px]">
-                    do {new Date(c.valid_until).toLocaleDateString("cs-CZ")}
-                  </Badge>
-                )}
+            {c.valid_until && (
+              <div className="flex items-center justify-end text-xs text-muted-foreground pt-1 border-t">
+                <Badge variant="outline" className="text-[10px]">
+                  platnost do {new Date(c.valid_until).toLocaleDateString("cs-CZ")}
+                </Badge>
               </div>
             )}
           </div>

@@ -297,7 +297,7 @@ export default function TravelOrderDetail() {
       reportSubmittedBy, reportSubmittedAt,
       reportApprovedBy, reportApprovedAt,
     };
-    const doc = generateTravelOrderPDF(data);
+    const doc = await generateTravelOrderPDF(data);
     const fname = `CP-${number || "novy"}-${driver?.last_name || ""}.pdf`;
     doc.save(fname);
   };

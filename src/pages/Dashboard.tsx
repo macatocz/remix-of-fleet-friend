@@ -240,6 +240,8 @@ export default function Dashboard() {
         </p>
       </div>
 
+      <VehicleNotifications />
+
       {/* Stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {statCards.map((s) => (
@@ -441,9 +443,6 @@ export default function Dashboard() {
 
       {/* Extra widgety */}
       <DashboardExtraWidgets />
-
-      {/* Notifications */}
-      <VehicleNotifications />
 
       {/* Today's summary */}
       {reservationStats.today > 0 && (

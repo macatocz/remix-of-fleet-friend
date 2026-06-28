@@ -10,20 +10,20 @@ import {
 } from "@/components/ui/sidebar";
 
 const mainItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Vozidla", url: "/vozidla", icon: Car },
-  { title: "Řidiči", url: "/ridici", icon: Users },
-  { title: "Rezervace", url: "/rezervace", icon: CalendarDays },
-  { title: "Servis", url: "/servis", icon: Wrench },
-  { title: "Škody", url: "/skody", icon: AlertTriangle },
-  { title: "Kniha jízd", url: "/kniha-jizd", icon: BookOpen },
-  { title: "Náklady", url: "/naklady", icon: DollarSign },
-  { title: "Tankovací karty", url: "/tankovaci-karty", icon: CreditCard },
-  { title: "Cestovní příkazy", url: "/cestovni-prikazy", icon: FileText },
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, description: "Přehled a upozornění" },
+  { title: "Vozidla", url: "/vozidla", icon: Car, description: "Evidence vozového parku" },
+  { title: "Řidiči", url: "/ridici", icon: Users, description: "Zaměstnanci a oprávnění" },
+  { title: "Rezervace", url: "/rezervace", icon: CalendarDays, description: "Plánování jízd a schvalování" },
+  { title: "Servis", url: "/servis", icon: Wrench, description: "Servisní plány a záznamy" },
+  { title: "Škody", url: "/skody", icon: AlertTriangle, description: "Nehody a pojistné události" },
+  { title: "Kniha jízd", url: "/kniha-jizd", icon: BookOpen, description: "Přehled jízd a export" },
+  { title: "Náklady", url: "/naklady", icon: DollarSign, description: "Provozní a leasingové výdaje" },
+  { title: "Tankovací karty", url: "/tankovaci-karty", icon: CreditCard, description: "Palivové karty a PINy" },
+  { title: "Cestovní příkazy", url: "/cestovni-prikazy", icon: FileText, description: "Tuzemské i zahraniční CP" },
 ];
 
 const settingsItems = [
-  { title: "Nastavení", url: "/nastaveni", icon: Settings },
+  { title: "Nastavení", url: "/nastaveni", icon: Settings, description: "Firma, sazby, notifikace" },
 ];
 
 export function AppSidebar() {
@@ -49,15 +49,20 @@ export function AppSidebar() {
             <SidebarMenu>
               {mainItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild className="h-auto py-2">
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
-                      className="hover:bg-sidebar-accent/50"
+                      className="hover:bg-sidebar-accent/50 items-start"
                       activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
                     >
-                      <item.icon className="mr-2 h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                      <item.icon className="mr-2 h-4 w-4 mt-0.5 shrink-0" />
+                      {!collapsed && (
+                        <div className="flex flex-col leading-tight min-w-0">
+                          <span className="text-sm font-medium truncate">{item.title}</span>
+                          <span className="text-xs text-muted-foreground truncate">{item.description}</span>
+                        </div>
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -72,14 +77,19 @@ export function AppSidebar() {
             <SidebarMenu>
               {settingsItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild className="h-auto py-2">
                     <NavLink
                       to={item.url}
-                      className="hover:bg-sidebar-accent/50"
+                      className="hover:bg-sidebar-accent/50 items-start"
                       activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
                     >
-                      <item.icon className="mr-2 h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                      <item.icon className="mr-2 h-4 w-4 mt-0.5 shrink-0" />
+                      {!collapsed && (
+                        <div className="flex flex-col leading-tight min-w-0">
+                          <span className="text-sm font-medium truncate">{item.title}</span>
+                          <span className="text-xs text-muted-foreground truncate">{item.description}</span>
+                        </div>
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

@@ -45,8 +45,12 @@ export type Database = {
           created_at: string
           dic: string | null
           email: string | null
+          foreign_meal_rates_override: Json | null
+          fuel_price_override: Json | null
           ico: string | null
           id: string
+          km_rate_override: Json | null
+          meal_rates_override: Json | null
           name: string | null
           phone: string | null
           updated_at: string
@@ -59,8 +63,12 @@ export type Database = {
           created_at?: string
           dic?: string | null
           email?: string | null
+          foreign_meal_rates_override?: Json | null
+          fuel_price_override?: Json | null
           ico?: string | null
           id?: string
+          km_rate_override?: Json | null
+          meal_rates_override?: Json | null
           name?: string | null
           phone?: string | null
           updated_at?: string
@@ -73,8 +81,12 @@ export type Database = {
           created_at?: string
           dic?: string | null
           email?: string | null
+          foreign_meal_rates_override?: Json | null
+          fuel_price_override?: Json | null
           ico?: string | null
           id?: string
+          km_rate_override?: Json | null
+          meal_rates_override?: Json | null
           name?: string | null
           phone?: string | null
           updated_at?: string

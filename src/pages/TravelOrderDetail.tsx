@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import {
-  DEFAULT_KM_RATE, DEFAULT_FUEL_PRICE, mealAmountForHours, mealAmountForeign,
+  getKmRate, getFuelPrice, mealAmountForHours, mealAmountForeign,
   pocketMoneyAmount, hoursBetween, formatCZK, formatCurrency, isForeignCountry, COUNTRY_TIMEZONES,
 } from "@/lib/travel/calc";
 import { generateTravelOrderPDF, type TravelOrderPDFData } from "@/lib/travel/pdf";
@@ -119,9 +119,9 @@ export default function TravelOrderDetail() {
   const vehicleReimb = useMemo(() => {
     if (transport !== "vlastni") return 0;
     const consumption = 7;
-    const fuelPart = (consumption / 100) * DEFAULT_FUEL_PRICE;
-    return Math.round(totalKm * (DEFAULT_KM_RATE + fuelPart) * 100) / 100;
-  }, [totalKm, transport]);
+    const fuelPart = (consumption / 100) * getFuelPrice(dateFrom);
+    return Math.round(totalKm * (getKmRate(dateFrom) + fuelPart) * 100) / 100;
+  }, [totalKm, transport, dateFrom]);
 
   // Souhrny per měna
   const mealsByCurrency = useMemo(() => {
@@ -180,11 +180,11 @@ export default function TravelOrderDetail() {
   // Přepočet jednoho řádku stravného (země / hodiny / kapesné)
   const recomputeMealRow = (m: Meal): Meal => {
     let amount: number; let currency: string;
-    if (isForeignCountry(m.country)) {
-      const r = mealAmountForeign(m.country, m.hours);
+    if (isForeignCountry(m.country, m.date)) {
+      const r = mealAmountForeign(m.country, m.hours, m.date);
       amount = r.amount; currency = r.currency;
     } else {
-      amount = mealAmountForHours(m.hours); currency = "CZK";
+      amount = mealAmountForHours(m.hours, m.date); currency = "CZK";
     }
     const pocket = pocketMoneyAmount(amount, m.pocket_money_pct || 0);
     return { ...m, amount, currency, rate: amount, pocket_money_amount: pocket };

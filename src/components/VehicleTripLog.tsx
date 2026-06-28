@@ -13,7 +13,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
-import { Plus, Loader2, Pencil, Trash2 } from "lucide-react";
+import { Plus, Loader2, Pencil, Trash2, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -39,6 +39,7 @@ interface TripLog {
 
 interface Props {
   vehicleId?: string;
+  readOnly?: boolean;
 }
 
 const emptyForm = {
@@ -59,7 +60,7 @@ const emptyForm = {
   other_price: "",
 };
 
-export default function VehicleTripLog({ vehicleId }: Props) {
+export default function VehicleTripLog({ vehicleId, readOnly = false }: Props) {
   const { sortKey, sortDirection, handleSort, sortData } = useSortableTable("date");
   const [logs, setLogs] = useState<TripLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,6 +70,7 @@ export default function VehicleTripLog({ vehicleId }: Props) {
   const [editId, setEditId] = useState<string | null>(null);
   const [vehicles, setVehicles] = useState<{ id: string; znacka: string; rz: string }[]>([]);
   const [drivers, setDrivers] = useState<{ id: string; first_name: string; last_name: string }[]>([]);
+  const [filterVehicle, setFilterVehicle] = useState<string>("all");
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -88,6 +90,7 @@ export default function VehicleTripLog({ vehicleId }: Props) {
       .lte("date", endDate)
       .order("date", { ascending: true });
     if (vehicleId) q = q.eq("vehicle_id", vehicleId);
+    else if (filterVehicle !== "all") q = q.eq("vehicle_id", filterVehicle);
     const { data, error } = await q;
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
     setLogs((data as any[]) || []);
@@ -96,7 +99,7 @@ export default function VehicleTripLog({ vehicleId }: Props) {
 
   useEffect(() => {
     fetchLogs();
-  }, [vehicleId, selectedMonth]);
+  }, [vehicleId, selectedMonth, filterVehicle]);
 
   useEffect(() => {
     if (!vehicleId) {
@@ -182,13 +185,61 @@ export default function VehicleTripLog({ vehicleId }: Props) {
 
   const f = (key: string, val: string) => setForm(p => ({ ...p, [key]: val }));
 
+  const exportCsv = () => {
+    const header = ["Datum","Čas","Vozidlo","RZ","Popis","Účel","Z","Do","Poč. km","Kon. km","Km","PHM (l)","PHM (Kč)","Ostatní (Kč)"];
+    const rows = logs.map((l: any) => [
+      l.date,
+      l.time?.slice(0, 5) || "",
+      l.vehicles?.znacka || "",
+      l.vehicles?.rz || "",
+      l.description || "",
+      l.purpose || "",
+      l.route_from || "",
+      l.route_to || "",
+      l.km_start ?? "",
+      l.km_end ?? "",
+      l.km_total ?? "",
+      l.fuel_quantity ?? "",
+      l.fuel_price ?? "",
+      l.other_price ?? "",
+    ]);
+    const esc = (v: any) => `"${String(v).replace(/"/g, '""')}"`;
+    const csv = "\uFEFF" + [header, ...rows].map(r => r.map(esc).join(";")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `kniha-jizd-${selectedMonth}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Label className="text-sm">Měsíc:</Label>
           <Input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="w-44 h-8" />
+          {readOnly && !vehicleId && (
+            <>
+              <Label className="text-sm ml-2">Vozidlo:</Label>
+              <Select value={filterVehicle} onValueChange={setFilterVehicle}>
+                <SelectTrigger className="w-56 h-8"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Všechna vozidla</SelectItem>
+                  {vehicles.map(v => (
+                    <SelectItem key={v.id} value={v.id}>{v.znacka} ({v.rz})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          )}
         </div>
+        {readOnly ? (
+          <Button size="sm" variant="outline" onClick={exportCsv} disabled={logs.length === 0}>
+            <Download className="mr-2 h-4 w-4" />Export CSV
+          </Button>
+        ) : (
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm" onClick={openNew}><Plus className="mr-2 h-4 w-4" />Nový záznam</Button>
@@ -265,6 +316,7 @@ export default function VehicleTripLog({ vehicleId }: Props) {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       {loading ? (
@@ -287,12 +339,12 @@ export default function VehicleTripLog({ vehicleId }: Props) {
                 <SortableTableHead sortKey="fuel_quantity" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} className="text-right">PHM (l)</SortableTableHead>
                 <SortableTableHead sortKey="fuel_price" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} className="text-right">PHM (Kč)</SortableTableHead>
                 <SortableTableHead sortKey="other_price" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} className="text-right">Ost. (Kč)</SortableTableHead>
-                <TableHead></TableHead>
+                {!readOnly && <TableHead></TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {logs.length === 0 ? (
-                <TableRow><TableCell colSpan={vehicleId ? 13 : 14} className="text-center text-muted-foreground py-8">Žádné záznamy v tomto měsíci</TableCell></TableRow>
+                <TableRow><TableCell colSpan={(vehicleId ? 13 : 14) - (readOnly ? 1 : 0)} className="text-center text-muted-foreground py-8">Žádné záznamy v tomto měsíci</TableCell></TableRow>
               ) : sortData(logs, (item: any, key: string) => {
                 if (key === "vehicle") return (item as any).vehicles?.znacka || "";
                 return item[key];
@@ -311,12 +363,12 @@ export default function VehicleTripLog({ vehicleId }: Props) {
                   <TableCell className="text-right">{log.fuel_quantity ? Number(log.fuel_quantity).toLocaleString("cs-CZ", { minimumFractionDigits: 2 }) : "—"}</TableCell>
                   <TableCell className="text-right">{log.fuel_price ? `${Number(log.fuel_price).toLocaleString("cs-CZ")} Kč` : "—"}</TableCell>
                   <TableCell className="text-right">{log.other_price ? `${Number(log.other_price).toLocaleString("cs-CZ")} Kč` : "—"}</TableCell>
-                  <TableCell>
+                  {!readOnly && <TableCell>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(log)}><Pencil className="h-3 w-3" /></Button>
                       <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(log.id)}><Trash2 className="h-3 w-3" /></Button>
                     </div>
-                  </TableCell>
+                  </TableCell>}
                 </TableRow>
               ))}
             </TableBody>

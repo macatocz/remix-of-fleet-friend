@@ -227,7 +227,7 @@ export default function TripLogGeneratorDialog({ open, onOpenChange, vehicleId, 
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4 items-end">
+            <div className="grid grid-cols-4 gap-4 items-end">
               <div>
                 <Label className="text-xs">Odjezd (tam)</Label>
                 <Input type="time" value={prefs.timeOut} onChange={e => setPrefs({ ...prefs, timeOut: e.target.value })} />
@@ -235,6 +235,16 @@ export default function TripLogGeneratorDialog({ open, onOpenChange, vehicleId, 
               <div>
                 <Label className="text-xs">Návrat (zpět)</Label>
                 <Input type="time" value={prefs.timeBack} onChange={e => setPrefs({ ...prefs, timeBack: e.target.value })} />
+              </div>
+              <div>
+                <Label className="text-xs">Počet jízdních dní</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  placeholder="všechny"
+                  value={prefs.tripDaysCount}
+                  onChange={e => setPrefs({ ...prefs, tripDaysCount: e.target.value })}
+                />
               </div>
               <label className="flex items-center gap-2 text-sm mb-2">
                 <Checkbox

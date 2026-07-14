@@ -625,7 +625,7 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
     if (aggregatedDirty.length) {
       toast({
         title: "Sloučený den nelze editovat v kalendáři",
-        description: "Řádek obsahuje 2 jízdy (tam a zpět). Upravte je v pohledu „Volné".",
+        description: 'Řádek obsahuje 2 jízdy (tam a zpět). Upravte je v pohledu „Volné".',
         variant: "destructive",
       });
       return;

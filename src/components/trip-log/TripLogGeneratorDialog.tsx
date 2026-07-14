@@ -159,7 +159,8 @@ export default function TripLogGeneratorDialog({ open, onOpenChange, vehicleId, 
   const handleSave = async () => {
     if (!trips.length) return;
     setSaving(true);
-    const { error } = await supabase.from("trip_logs").insert(trips as any);
+    const payload = trips.map(({ km_total, ...rest }) => rest);
+    const { error } = await supabase.from("trip_logs").insert(payload as any);
     setSaving(false);
     if (error) {
       toast({ title: "Chyba ukládání", description: error.message, variant: "destructive" });

@@ -32,6 +32,7 @@ type PrefState = {
   timeBack: string;
   workingDaysOnly: boolean;
   roundTripMode: "split" | "single";
+  tripDaysCount: string; // prázdné = každý pracovní den
 };
 
 const prefKey = (vid: string) => `trip-gen:${vid}`;
@@ -49,6 +50,7 @@ function loadPrefs(vid: string): PrefState {
     timeBack: "16:30",
     workingDaysOnly: true,
     roundTripMode: "split",
+    tripDaysCount: "",
   };
 }
 
@@ -148,6 +150,7 @@ export default function TripLogGeneratorDialog({ open, onOpenChange, vehicleId, 
       timeOut: prefs.timeOut,
       timeBack: prefs.timeBack,
       roundTripMode: prefs.roundTripMode,
+      tripDaysCount: prefs.tripDaysCount ? parseInt(prefs.tripDaysCount) : null,
     });
     setTrips(trips);
     setWarnings(warnings);

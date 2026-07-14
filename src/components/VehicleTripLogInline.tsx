@@ -42,6 +42,8 @@ interface TripRow {
   other_price: number | null;
   _dirty?: boolean;
   _new?: boolean;
+  _aggregated?: boolean;
+  _sourceIds?: string[];
 }
 
 const COLUMNS = [
@@ -134,10 +136,47 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
 
     for (let day = 1; day <= daysInMonth; day++) {
       const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-      const existing = existingRows.find(r => r.date === dateStr);
+      const dayTrips = existingRows
+        .filter(r => r.date === dateStr)
+        .sort((a, b) => (a.time || "").localeCompare(b.time || ""));
 
-      if (existing) {
-        result.push({ ...existing });
+      if (dayTrips.length === 1) {
+        result.push({ ...dayTrips[0] });
+      } else if (dayTrips.length > 1) {
+        // Sloučit více jízd stejného dne (např. tam + zpět z generátoru) do jednoho řádku
+        const first = dayTrips[0];
+        const last = dayTrips[dayTrips.length - 1];
+        const kmStarts = dayTrips.map(t => t.km_start).filter((v): v is number => v != null);
+        const kmEnds = dayTrips.map(t => t.km_end).filter((v): v is number => v != null);
+        const kmTotalSum = dayTrips.reduce((s, t) => s + (t.km_total || 0), 0);
+        const sumNum = (key: keyof TripRow) =>
+          dayTrips.reduce((s, t) => s + (Number((t as any)[key]) || 0), 0) || null;
+
+        // Trasa: pokud první route_from == poslední route_to (kruhová jízda), zobraz "A – B – A"
+        const middle = first.route_to && first.route_to !== last.route_to
+          ? first.route_to
+          : dayTrips.find(t => t.route_to && t.route_to !== first.route_from)?.route_to || last.route_to;
+        const routeTo = first.route_from && last.route_to === first.route_from && middle
+          ? `${middle} – ${last.route_to}`
+          : last.route_to;
+
+        result.push({
+          ...first,
+          time: first.time,
+          route_from: first.route_from,
+          route_to: routeTo,
+          km_start: kmStarts.length ? Math.min(...kmStarts) : null,
+          km_end: kmEnds.length ? Math.max(...kmEnds) : null,
+          km_total: kmTotalSum || null,
+          fuel_quantity: sumNum("fuel_quantity"),
+          fuel_price: sumNum("fuel_price"),
+          other_quantity: sumNum("other_quantity"),
+          other_price: sumNum("other_price"),
+          _dirty: false,
+          _new: false,
+          _aggregated: true,
+          _sourceIds: dayTrips.map(t => t.id).filter((v): v is string => !!v),
+        });
       } else {
         // Find last km_end from previous rows
         let prevKmEnd: number | null = null;
@@ -582,6 +621,15 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
 
   const saveCalendar = async () => {
     const dirty = calRows.filter(r => r._dirty);
+    const aggregatedDirty = dirty.filter(r => r._aggregated);
+    if (aggregatedDirty.length) {
+      toast({
+        title: "Sloučený den nelze editovat v kalendáři",
+        description: "Řádek obsahuje 2 jízdy (tam a zpět). Upravte je v pohledu „Volné".",
+        variant: "destructive",
+      });
+      return;
+    }
     if (!dirty.length) { toast({ title: "Žádné změny" }); return; }
     setSaving(true);
     const err = await saveRows(dirty);

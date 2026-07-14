@@ -149,6 +149,13 @@ export type Database = {
             foreignKeyName: "document_folders_vehicle_id_fkey"
             columns: ["vehicle_id"]
             isOneToOne: false
+            referencedRelation: "vehicle_key_status"
+            referencedColumns: ["vehicle_id"]
+          },
+          {
+            foreignKeyName: "document_folders_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
@@ -202,6 +209,13 @@ export type Database = {
             foreignKeyName: "drivers_vehicle_id_fkey"
             columns: ["vehicle_id"]
             isOneToOne: false
+            referencedRelation: "vehicle_key_status"
+            referencedColumns: ["vehicle_id"]
+          },
+          {
+            foreignKeyName: "drivers_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
@@ -248,6 +262,13 @@ export type Database = {
           vehicle_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fuel_cards_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_key_status"
+            referencedColumns: ["vehicle_id"]
+          },
           {
             foreignKeyName: "fuel_cards_vehicle_id_fkey"
             columns: ["vehicle_id"]
@@ -450,6 +471,13 @@ export type Database = {
             foreignKeyName: "inspections_vehicle_id_fkey"
             columns: ["vehicle_id"]
             isOneToOne: false
+            referencedRelation: "vehicle_key_status"
+            referencedColumns: ["vehicle_id"]
+          },
+          {
+            foreignKeyName: "inspections_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
@@ -500,6 +528,13 @@ export type Database = {
             foreignKeyName: "insurance_vehicle_id_fkey"
             columns: ["vehicle_id"]
             isOneToOne: false
+            referencedRelation: "vehicle_key_status"
+            referencedColumns: ["vehicle_id"]
+          },
+          {
+            foreignKeyName: "insurance_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
@@ -540,6 +575,13 @@ export type Database = {
           vehicle_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "key_handovers_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_key_status"
+            referencedColumns: ["vehicle_id"]
+          },
           {
             foreignKeyName: "key_handovers_vehicle_id_fkey"
             columns: ["vehicle_id"]
@@ -717,6 +759,13 @@ export type Database = {
             foreignKeyName: "reservations_vehicle_id_fkey"
             columns: ["vehicle_id"]
             isOneToOne: false
+            referencedRelation: "vehicle_key_status"
+            referencedColumns: ["vehicle_id"]
+          },
+          {
+            foreignKeyName: "reservations_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
@@ -802,6 +851,13 @@ export type Database = {
           vehicle_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "service_records_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_key_status"
+            referencedColumns: ["vehicle_id"]
+          },
           {
             foreignKeyName: "service_records_vehicle_id_fkey"
             columns: ["vehicle_id"]
@@ -1082,6 +1138,13 @@ export type Database = {
             foreignKeyName: "travel_orders_vehicle_id_fkey"
             columns: ["vehicle_id"]
             isOneToOne: false
+            referencedRelation: "vehicle_key_status"
+            referencedColumns: ["vehicle_id"]
+          },
+          {
+            foreignKeyName: "travel_orders_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
@@ -1158,6 +1221,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "drivers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_logs_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_key_status"
+            referencedColumns: ["vehicle_id"]
           },
           {
             foreignKeyName: "trip_logs_vehicle_id_fkey"
@@ -1276,6 +1346,13 @@ export type Database = {
             foreignKeyName: "vehicle_checklists_vehicle_id_fkey"
             columns: ["vehicle_id"]
             isOneToOne: false
+            referencedRelation: "vehicle_key_status"
+            referencedColumns: ["vehicle_id"]
+          },
+          {
+            foreignKeyName: "vehicle_checklists_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
@@ -1317,6 +1394,13 @@ export type Database = {
             foreignKeyName: "vehicle_documents_vehicle_id_fkey"
             columns: ["vehicle_id"]
             isOneToOne: false
+            referencedRelation: "vehicle_key_status"
+            referencedColumns: ["vehicle_id"]
+          },
+          {
+            foreignKeyName: "vehicle_documents_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
@@ -1352,6 +1436,13 @@ export type Database = {
             foreignKeyName: "vehicle_mileage_vehicle_id_fkey"
             columns: ["vehicle_id"]
             isOneToOne: false
+            referencedRelation: "vehicle_key_status"
+            referencedColumns: ["vehicle_id"]
+          },
+          {
+            foreignKeyName: "vehicle_mileage_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
@@ -1380,6 +1471,13 @@ export type Database = {
           vehicle_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "vehicle_vignettes_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_key_status"
+            referencedColumns: ["vehicle_id"]
+          },
           {
             foreignKeyName: "vehicle_vignettes_vehicle_id_fkey"
             columns: ["vehicle_id"]
@@ -1518,23 +1616,24 @@ export type Database = {
     Views: {
       vehicle_key_status: {
         Row: {
-          action: string | null
-          created_at: string | null
-          from_user_id: string | null
-          note: string | null
-          to_name: string | null
-          to_user_id: string | null
+          last_handover_id: string | null
+          nahradni_klic: string | null
+          rz: string | null
           vehicle_id: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "key_handovers_vehicle_id_fkey"
-            columns: ["vehicle_id"]
-            isOneToOne: false
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Insert: {
+          last_handover_id?: never
+          nahradni_klic?: string | null
+          rz?: string | null
+          vehicle_id?: string | null
+        }
+        Update: {
+          last_handover_id?: never
+          nahradni_klic?: string | null
+          rz?: string | null
+          vehicle_id?: string | null
+        }
+        Relationships: []
       }
     }
     Functions: {
@@ -1545,6 +1644,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_driver_id: { Args: { _driver_id: string }; Returns: boolean }
+      is_driver_named: { Args: { _driver_name: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "dispatcer" | "ridic"

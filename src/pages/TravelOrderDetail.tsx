@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus, Trash2, Save, FileDown, RefreshCw, CheckCircle2, Banknote } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, FileDown, RefreshCw, CheckCircle2, Banknote, Send, XCircle, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
   getKmRate, getFuelPrice, getMealRates, mealAmountForHours, mealAmountForeignWith,
@@ -17,6 +18,10 @@ import {
 } from "@/lib/travel/calc";
 import { generateTravelOrderPDF, type TravelOrderPDFData } from "@/lib/travel/pdf";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
+import { TravelOrderStepper } from "@/components/travel/TravelOrderStepper";
+import { STATUS_LABEL, STATUS_BADGE_CLASS } from "@/lib/travel/status";
+import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 
 type Leg = { id?: string; date: string; time_from?: string; time_to?: string; place_from?: string; place_to?: string; km?: number; transport?: string; sort_order?: number; country?: string; timezone?: string };
 type Meal = { id?: string; date: string; hours: number; country: string; rate: number; amount: number; currency?: string; pocket_money_pct?: number; pocket_money_amount?: number };
@@ -32,6 +37,8 @@ export default function TravelOrderDetail() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const { data: companyOv } = useCompanySettings();
+  const { hasRole } = useAuth();
+  const canApprove = hasRole("admin") || hasRole("dispatcer");
 
   const [orderId, setOrderId] = useState<string | null>(isNew ? null : id!);
   const [number, setNumber] = useState("");
@@ -60,6 +67,11 @@ export default function TravelOrderDetail() {
   const [reportSubmittedAt, setReportSubmittedAt] = useState<string>("");
   const [reportApprovedBy, setReportApprovedBy] = useState<string>("");
   const [reportApprovedAt, setReportApprovedAt] = useState<string>("");
+  const [rejectedBy, setRejectedBy] = useState<string>("");
+  const [rejectedAt, setRejectedAt] = useState<string>("");
+  const [rejectionReason, setRejectionReason] = useState<string>("");
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectDraft, setRejectDraft] = useState("");
 
   const [legs, setLegs] = useState<Leg[]>([]);
   const [meals, setMeals] = useState<Meal[]>([]);
@@ -111,6 +123,8 @@ export default function TravelOrderDetail() {
     setRequestApprovedBy(o.request_approved_by || ""); setRequestApprovedAt(o.request_approved_at || "");
     setReportSubmittedBy(o.report_submitted_by || ""); setReportSubmittedAt(o.report_submitted_at || "");
     setReportApprovedBy(o.report_approved_by || ""); setReportApprovedAt(o.report_approved_at || "");
+    setRejectedBy(o.rejected_by || ""); setRejectedAt(o.rejected_at || "");
+    setRejectionReason(o.rejection_reason || "");
     setLegs(existing.legs as Leg[]);
     setMeals(existing.meals as Meal[]);
     setExpenses(existing.expenses as Expense[]);
@@ -229,6 +243,8 @@ export default function TravelOrderDetail() {
       request_approved_by: requestApprovedBy || null, request_approved_at: requestApprovedAt || null,
       report_submitted_by: reportSubmittedBy || null, report_submitted_at: reportSubmittedAt || null,
       report_approved_by: reportApprovedBy || null, report_approved_at: reportApprovedAt || null,
+      rejected_by: rejectedBy || null, rejected_at: rejectedAt || null,
+      rejection_reason: rejectionReason || null,
       ...overrides,
     };
     let saveId = orderId;
@@ -308,22 +324,36 @@ export default function TravelOrderDetail() {
     return d ? `${d.first_name} ${d.last_name}` : "—";
   }, [drivers, driverId]);
 
-  const setWorkflow = async (kind: "request" | "approve_request" | "submit_report" | "approve_report") => {
+  const setWorkflow = async (
+    kind: "submit" | "submit_report" | "approve_report" | "reject" | "reopen",
+    reason?: string
+  ) => {
     const now = new Date().toISOString();
     const me = driverName;
-    if (kind === "request") {
+    if (kind === "submit") {
       setRequestedBy(me); setRequestedAt(now);
-      await save(undefined, { requested_by: me, requested_at: now });
-    } else if (kind === "approve_request") {
-      setRequestApprovedBy(me); setRequestApprovedAt(now);
-      await save("zadost_schvalena", { request_approved_by: me, request_approved_at: now, status: "zadost_schvalena" });
+      await save("odeslano", { requested_by: me, requested_at: now, status: "odeslano" });
     } else if (kind === "submit_report") {
       setReportSubmittedBy(me); setReportSubmittedAt(now);
       await save("vyuctovano", { report_submitted_by: me, report_submitted_at: now, status: "vyuctovano" });
     } else if (kind === "approve_report") {
       setReportApprovedBy(me); setReportApprovedAt(now);
       await save("schvaleno", { report_approved_by: me, report_approved_at: now, status: "schvaleno" });
+    } else if (kind === "reject") {
+      setRejectedBy(me); setRejectedAt(now); setRejectionReason(reason || "");
+      await save("zamitnuto", {
+        rejected_by: me, rejected_at: now, rejection_reason: reason || null, status: "zamitnuto",
+      });
+    } else if (kind === "reopen") {
+      setRejectedBy(""); setRejectedAt(""); setRejectionReason("");
+      await save("koncept", { rejected_by: null, rejected_at: null, rejection_reason: null, status: "koncept" });
     }
+  };
+
+  const openReject = () => { setRejectDraft(rejectionReason || ""); setRejectDialogOpen(true); };
+  const confirmReject = async () => {
+    setRejectDialogOpen(false);
+    await setWorkflow("reject", rejectDraft.trim() || undefined);
   };
 
   const exportPDF = async () => {
@@ -359,13 +389,66 @@ export default function TravelOrderDetail() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <h1 className="text-2xl font-bold">{isNew ? "Nový cestovní příkaz" : number}</h1>
-          {!isNew && <Badge variant={status === "schvaleno" ? "default" : "outline"}>{status}</Badge>}
+          {!isNew && (
+            <Badge variant="outline" className={cn(STATUS_BADGE_CLASS[status])}>
+              {STATUS_LABEL[status] || status}
+            </Badge>
+          )}
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={exportPDF}><FileDown className="h-4 w-4" />PDF</Button>
           <Button onClick={() => save()}><Save className="h-4 w-4" />Uložit</Button>
         </div>
       </div>
+
+      {!isNew && (
+        <Card>
+          <CardHeader><CardTitle>Stav příkazu</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <TravelOrderStepper
+              status={status}
+              signatures={{
+                koncept: { by: requestedBy ? "Řidič" : driverName, at: undefined },
+                odeslano: { by: requestedBy, at: requestedAt },
+                vyuctovano: { by: reportSubmittedBy, at: reportSubmittedAt },
+                schvaleno: { by: reportApprovedBy, at: reportApprovedAt },
+              }}
+              rejection={{ by: rejectedBy, at: rejectedAt, reason: rejectionReason }}
+            />
+
+            <div className="flex flex-wrap gap-2 pt-2 border-t">
+              {status === "koncept" && (
+                <Button size="sm" onClick={() => setWorkflow("submit")}>
+                  <Send className="h-4 w-4" />Odeslat / zahájit cestu
+                </Button>
+              )}
+              {(status === "koncept" || status === "odeslano") && (
+                <Button size="sm" variant="outline" onClick={() => setWorkflow("submit_report")}>
+                  <CheckCircle2 className="h-4 w-4" />Vyúčtovat
+                </Button>
+              )}
+              {status === "vyuctovano" && canApprove && (
+                <Button size="sm" onClick={() => setWorkflow("approve_report")}>
+                  <CheckCircle2 className="h-4 w-4" />Schválit vyúčtování
+                </Button>
+              )}
+              {canApprove && status !== "koncept" && status !== "schvaleno" && status !== "zamitnuto" && (
+                <Button size="sm" variant="outline" className="text-destructive" onClick={openReject}>
+                  <XCircle className="h-4 w-4" />Zamítnout
+                </Button>
+              )}
+              {status === "zamitnuto" && (
+                <Button size="sm" variant="outline" onClick={() => setWorkflow("reopen")}>
+                  <RotateCcw className="h-4 w-4" />Vrátit do konceptu
+                </Button>
+              )}
+              {!canApprove && status === "vyuctovano" && (
+                <span className="text-xs text-muted-foreground self-center">Čeká na schválení admin/dispečer.</span>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader><CardTitle>Základní údaje</CardTitle></CardHeader>
@@ -568,39 +651,25 @@ export default function TravelOrderDetail() {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Schvalovací workflow</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-            <div className="border rounded p-3">
-              <div className="font-semibold">1. Žádost vystavil</div>
-              <div className="text-muted-foreground">{requestedBy ? `${requestedBy} • ${new Date(requestedAt).toLocaleString("cs-CZ")}` : "—"}</div>
-              {!requestedBy && <Button size="sm" variant="outline" className="mt-2" onClick={() => setWorkflow("request")}><CheckCircle2 className="h-4 w-4" />Vystavit žádost</Button>}
-            </div>
-            <div className="border rounded p-3">
-              <div className="font-semibold">2. Žádost schválil</div>
-              <div className="text-muted-foreground">{requestApprovedBy ? `${requestApprovedBy} • ${new Date(requestApprovedAt).toLocaleString("cs-CZ")}` : "—"}</div>
-              {requestedBy && !requestApprovedBy && <Button size="sm" variant="outline" className="mt-2" onClick={() => setWorkflow("approve_request")}><CheckCircle2 className="h-4 w-4" />Schválit žádost</Button>}
-            </div>
-            <div className="border rounded p-3">
-              <div className="font-semibold">3. Výkaz vystavil</div>
-              <div className="text-muted-foreground">{reportSubmittedBy ? `${reportSubmittedBy} • ${new Date(reportSubmittedAt).toLocaleString("cs-CZ")}` : "—"}</div>
-              {requestApprovedBy && !reportSubmittedBy && <Button size="sm" variant="outline" className="mt-2" onClick={() => setWorkflow("submit_report")}><CheckCircle2 className="h-4 w-4" />Vyúčtovat</Button>}
-            </div>
-            <div className="border rounded p-3">
-              <div className="font-semibold">4. Výkaz schválil</div>
-              <div className="text-muted-foreground">{reportApprovedBy ? `${reportApprovedBy} • ${new Date(reportApprovedAt).toLocaleString("cs-CZ")}` : "—"}</div>
-              {reportSubmittedBy && !reportApprovedBy && <Button size="sm" variant="outline" className="mt-2" onClick={() => setWorkflow("approve_report")}><CheckCircle2 className="h-4 w-4" />Schválit výkaz</Button>}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
         <CardHeader><CardTitle>Poznámky</CardTitle></CardHeader>
         <CardContent>
           <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
         </CardContent>
       </Card>
+
+      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Zamítnout cestovní příkaz</DialogTitle>
+            <DialogDescription>Uveďte důvod — řidič ho uvidí v detailu příkazu.</DialogDescription>
+          </DialogHeader>
+          <Textarea rows={4} value={rejectDraft} onChange={(e) => setRejectDraft(e.target.value)} placeholder="Např. chybějící doklady, nesouhlasí částky…" />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>Zrušit</Button>
+            <Button variant="destructive" onClick={confirmReject}>Zamítnout</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

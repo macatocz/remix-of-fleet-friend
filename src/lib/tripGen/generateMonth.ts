@@ -44,6 +44,31 @@ export function generateMonth(input: GeneratorInput): { trips: GeneratedTrip[]; 
     return { trips: [], warnings };
   }
 
+  // Volitelně omez počet jízdních dní (dny s tankováním zůstávají vždy).
+  const requested = input.tripDaysCount ?? null;
+  if (requested != null && requested > 0 && requested < activeDays.length) {
+    const fuelDays = activeDays.filter((d) => fuelByDate.has(ymd(d)));
+    const otherDays = activeDays.filter((d) => !fuelByDate.has(ymd(d)));
+    const needed = Math.max(0, requested - fuelDays.length);
+    // Rovnoměrně rozmístit `needed` dní přes `otherDays`
+    const picked: Date[] = [];
+    if (needed > 0 && otherDays.length > 0) {
+      const step = otherDays.length / needed;
+      for (let i = 0; i < needed; i++) {
+        const idx = Math.min(otherDays.length - 1, Math.floor(i * step + step / 2));
+        picked.push(otherDays[idx]);
+      }
+    }
+    const keep = new Set<string>([...fuelDays, ...picked].map(ymd));
+    // Zachovat pořadí podle kalendáře
+    const filtered = activeDays.filter((d) => keep.has(ymd(d)));
+    if (filtered.length < requested) {
+      warnings.push(`Požadováno ${requested} jízdních dní, ale k dispozici je jen ${filtered.length}.`);
+    }
+    activeDays.length = 0;
+    activeDays.push(...filtered);
+  }
+
   // km per day: fuel days get 1.5x the average weight to reflect longer trip
   const weights = activeDays.map((d) => (fuelByDate.has(ymd(d)) ? 1.6 : 1));
   const sumW = weights.reduce((a, b) => a + b, 0);

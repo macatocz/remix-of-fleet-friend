@@ -97,6 +97,7 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
   const [calRows, setCalRows] = useState<TripRow[]>([]);
   const [multiMonthData, setMultiMonthData] = useState<any[]>([]);
   const [genOpen, setGenOpen] = useState(false);
+  const [newRowMode, setNewRowMode] = useState<"single" | "roundtrip">("single");
   const { toast } = useToast();
   const tableRef = useRef<HTMLDivElement>(null);
   const calTableRef = useRef<HTMLDivElement>(null);
@@ -254,17 +255,38 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
 
   const addRow = () => {
     const lastRow = rows[rows.length - 1];
-    const newRow: TripRow = {
+    // Načíst domácí základnu z preferencí generátoru (pokud existují)
+    let base: string | null = null;
+    try {
+      const raw = localStorage.getItem(`trip-gen:${vehicleId}`);
+      if (raw) base = (JSON.parse(raw) as any)?.base || null;
+    } catch { /* ignore */ }
+    const today = new Date().toISOString().split("T")[0];
+    const makeEmpty = (): TripRow => ({
       vehicle_id: vehicleId,
       driver_id: lastRow?.driver_id || null,
-      date: new Date().toISOString().split("T")[0],
+      date: today,
       time: null, break_minutes: null, description: null, purpose: null,
       route_from: null, route_to: null,
       km_start: lastRow?.km_end || null, km_end: null, km_total: null,
       fuel_quantity: null, fuel_price: null, other_quantity: null, other_price: null,
       _dirty: true, _new: true,
-    };
-    setRows(prev => [...prev, newRow]);
+    });
+
+    if (newRowMode === "roundtrip") {
+      // Dva řádky: tam a zpět s předvyplněnou základnou
+      const outbound = makeEmpty();
+      outbound.route_from = base;
+      const back = makeEmpty();
+      back.route_to = base;
+      back.km_start = null; // navazuje na km_end prvního řádku po vyplnění
+      setRows(prev => [...prev, outbound, back]);
+    } else {
+      // Jeden řádek — pokud známe základnu, předvyplníme kruhovou trasu (route_from = base)
+      const row = makeEmpty();
+      if (base) row.route_from = base;
+      setRows(prev => [...prev, row]);
+    }
     setTimeout(() => {
       const inputs = tableRef.current?.querySelectorAll(`[data-row="${rows.length}"]`);
       if (inputs?.[0]) (inputs[0] as HTMLElement).focus();
@@ -717,7 +739,18 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
           <TripLogExport vehicleId={vehicleId} selectedMonth={selectedMonth} vehicleLabel={vehicleLabel} />
           {dirtyCount > 0 && <span className="text-xs text-muted-foreground">{dirtyCount} neuložených</span>}
           {viewMode === "free" && (
-            <Button size="sm" variant="outline" onClick={addRow}><Plus className="mr-1 h-4 w-4" />Řádek</Button>
+            <div className="flex items-center gap-1">
+              <Select value={newRowMode} onValueChange={(v) => setNewRowMode(v as any)}>
+                <SelectTrigger className="h-8 w-[150px] text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="single" className="text-xs">Jeden řádek</SelectItem>
+                  <SelectItem value="roundtrip" className="text-xs">Tam a zpět (2×)</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button size="sm" variant="outline" onClick={addRow}><Plus className="mr-1 h-4 w-4" />Řádek</Button>
+            </div>
           )}
           <Button size="sm" onClick={viewMode === "calendar" ? saveCalendar : saveAll} disabled={saving || dirtyCount === 0}>
             {saving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Save className="mr-1 h-4 w-4" />}

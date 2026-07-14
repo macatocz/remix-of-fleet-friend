@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
-import { Plus, Loader2, Trash2, Save, TrendingUp, Fuel, Route, DollarSign, Filter, CalendarDays, List, Download, Copy, ArrowDownToLine, MoreVertical, Bookmark } from "lucide-react";
+import { Plus, Loader2, Trash2, Save, TrendingUp, Fuel, Route, DollarSign, Filter, CalendarDays, List, Download, Copy, ArrowDownToLine, MoreVertical, Bookmark, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import TripLogExport from "@/components/TripLogExport";
 import TripTemplatesPopover, { TripTemplate } from "@/components/TripTemplatesPopover";
+import TripLogGeneratorDialog from "@/components/trip-log/TripLogGeneratorDialog";
 import { useRouteHistory } from "@/hooks/useRouteHistory";
 import { parseTSV, coerceForColumn } from "@/lib/tripParse";
 import {
@@ -95,6 +96,7 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
   const [viewMode, setViewMode] = useState<"free" | "calendar">("free");
   const [calRows, setCalRows] = useState<TripRow[]>([]);
   const [multiMonthData, setMultiMonthData] = useState<any[]>([]);
+  const [genOpen, setGenOpen] = useState(false);
   const { toast } = useToast();
   const tableRef = useRef<HTMLDivElement>(null);
   const calTableRef = useRef<HTMLDivElement>(null);
@@ -709,6 +711,9 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
               applyTemplate(idx, tpl, isCal);
             }}
           />
+          <Button size="sm" variant="outline" onClick={() => setGenOpen(true)}>
+            <Sparkles className="mr-1 h-4 w-4" />Vygenerovat měsíc
+          </Button>
           <TripLogExport vehicleId={vehicleId} selectedMonth={selectedMonth} vehicleLabel={vehicleLabel} />
           {dirtyCount > 0 && <span className="text-xs text-muted-foreground">{dirtyCount} neuložených</span>}
           {viewMode === "free" && (
@@ -720,6 +725,17 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
           </Button>
         </div>
       </div>
+
+      <TripLogGeneratorDialog
+        open={genOpen}
+        onOpenChange={setGenOpen}
+        vehicleId={vehicleId}
+        month={selectedMonth}
+        onSaved={() => {
+          fetchLogs();
+          fetchMultiMonth();
+        }}
+      />
 
       {/* Filters (free view only) */}
       {showFilters && viewMode === "free" && (

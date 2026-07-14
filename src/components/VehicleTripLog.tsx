@@ -16,6 +16,8 @@ import {
 import { Plus, Loader2, Pencil, Trash2, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Sparkles } from "lucide-react";
+import TripLogGeneratorDialog from "@/components/trip-log/TripLogGeneratorDialog";
 
 interface TripLog {
   id: string;
@@ -68,6 +70,7 @@ export default function VehicleTripLog({ vehicleId, readOnly = false }: Props) {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState<string | null>(null);
+  const [genOpen, setGenOpen] = useState(false);
   const [vehicles, setVehicles] = useState<{ id: string; znacka: string; rz: string }[]>([]);
   const [drivers, setDrivers] = useState<{ id: string; first_name: string; last_name: string }[]>([]);
   const [filterVehicle, setFilterVehicle] = useState<string>("all");
@@ -240,6 +243,12 @@ export default function VehicleTripLog({ vehicleId, readOnly = false }: Props) {
             <Download className="mr-2 h-4 w-4" />Export CSV
           </Button>
         ) : (
+        <div className="flex items-center gap-2">
+          {vehicleId && (
+            <Button size="sm" variant="outline" onClick={() => setGenOpen(true)}>
+              <Sparkles className="mr-2 h-4 w-4" />Vygenerovat měsíc
+            </Button>
+          )}
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm" onClick={openNew}><Plus className="mr-2 h-4 w-4" />Nový záznam</Button>
@@ -316,8 +325,18 @@ export default function VehicleTripLog({ vehicleId, readOnly = false }: Props) {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
         )}
       </div>
+      {vehicleId && (
+        <TripLogGeneratorDialog
+          open={genOpen}
+          onOpenChange={setGenOpen}
+          vehicleId={vehicleId}
+          month={selectedMonth}
+          onSaved={fetchLogs}
+        />
+      )}
 
       {loading ? (
         <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>

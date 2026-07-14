@@ -979,6 +979,9 @@ export type Database = {
           place_from: string | null
           place_to: string | null
           purpose: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
           report_approved_at: string | null
           report_approved_by: string | null
           report_submitted_at: string | null
@@ -1012,6 +1015,9 @@ export type Database = {
           place_from?: string | null
           place_to?: string | null
           purpose?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
           report_approved_at?: string | null
           report_approved_by?: string | null
           report_submitted_at?: string | null
@@ -1045,6 +1051,9 @@ export type Database = {
           place_from?: string | null
           place_to?: string | null
           purpose?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
           report_approved_at?: string | null
           report_approved_by?: string | null
           report_submitted_at?: string | null

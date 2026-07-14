@@ -202,6 +202,28 @@ export default function TripLogGeneratorDialog({ open, onOpenChange, vehicleId, 
               <Input value={prefs.base} onChange={e => setPrefs({ ...prefs, base: e.target.value })} />
             </div>
 
+            <div>
+              <Label className="text-xs">Formát jízdy tam a zpět</Label>
+              <div className="flex gap-2 mt-1">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={prefs.roundTripMode === "split" ? "default" : "outline"}
+                  onClick={() => setPrefs({ ...prefs, roundTripMode: "split" })}
+                >
+                  Dva řádky (tam / zpět)
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={prefs.roundTripMode === "single" ? "default" : "outline"}
+                  onClick={() => setPrefs({ ...prefs, roundTripMode: "single" })}
+                >
+                  Jeden řádek (Praha – Brno – Praha)
+                </Button>
+              </div>
+            </div>
+
             <div className="grid grid-cols-3 gap-4 items-end">
               <div>
                 <Label className="text-xs">Odjezd (tam)</Label>

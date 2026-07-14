@@ -18,6 +18,7 @@ export type GeneratorInput = {
   fuelStops: FuelStop[];
   timeOut: string;       // "07:30"
   timeBack: string;      // "16:30"
+  roundTripMode?: "split" | "single"; // split = 2 řádky, single = jeden řádek (Praha – Brno – Praha)
 };
 
 export type GeneratedTrip = {

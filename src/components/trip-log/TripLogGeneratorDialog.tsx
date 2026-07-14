@@ -31,6 +31,7 @@ type PrefState = {
   timeOut: string;
   timeBack: string;
   workingDaysOnly: boolean;
+  roundTripMode: "split" | "single";
 };
 
 const prefKey = (vid: string) => `trip-gen:${vid}`;
@@ -47,6 +48,7 @@ function loadPrefs(vid: string): PrefState {
     timeOut: "07:30",
     timeBack: "16:30",
     workingDaysOnly: true,
+    roundTripMode: "split",
   };
 }
 
@@ -145,6 +147,7 @@ export default function TripLogGeneratorDialog({ open, onOpenChange, vehicleId, 
       fuelStops: fuel.filter(f => f.date && f.place),
       timeOut: prefs.timeOut,
       timeBack: prefs.timeBack,
+      roundTripMode: prefs.roundTripMode,
     });
     setTrips(trips);
     setWarnings(warnings);

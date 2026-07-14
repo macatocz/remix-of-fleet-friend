@@ -10,21 +10,22 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCZK } from "@/lib/travel/calc";
+import { STATUS_LABEL, STATUS_BADGE_CLASS } from "@/lib/travel/status";
+import { cn } from "@/lib/utils";
 
-const STATUS_VARIANT: Record<string, "secondary" | "default" | "outline"> = {
-  koncept: "outline",
-  schvaleny: "default",
-  vyuctovany: "secondary",
-};
-const STATUS_LABEL: Record<string, string> = {
-  koncept: "Koncept",
-  schvaleny: "Schválený",
-  vyuctovany: "Vyúčtovaný",
-};
+const FILTERS: { key: string; label: string }[] = [
+  { key: "all", label: "Vše" },
+  { key: "koncept", label: "Koncepty" },
+  { key: "odeslano", label: "Odesláno" },
+  { key: "vyuctovano", label: "K schválení" },
+  { key: "schvaleno", label: "Schválené" },
+  { key: "zamitnuto", label: "Zamítnuté" },
+];
 
 export default function TravelOrders() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<string>("all");
 
   const { data, isLoading } = useQuery({
     queryKey: ["travel_orders"],
@@ -41,8 +42,9 @@ export default function TravelOrders() {
   const filtered = useMemo(() => {
     if (!data) return [];
     const q = search.toLowerCase().trim();
-    if (!q) return data;
     return data.filter((o: any) => {
+      if (filter !== "all" && o.status !== filter) return false;
+      if (!q) return true;
       const driver = `${o.drivers?.first_name || ""} ${o.drivers?.last_name || ""}`.toLowerCase();
       return (
         o.number?.toLowerCase().includes(q) ||
@@ -51,7 +53,13 @@ export default function TravelOrders() {
         o.purpose?.toLowerCase().includes(q)
       );
     });
-  }, [data, search]);
+  }, [data, search, filter]);
+
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { all: data?.length || 0 };
+    (data || []).forEach((o: any) => { c[o.status] = (c[o.status] || 0) + 1; });
+    return c;
+  }, [data]);
 
   return (
     <div className="space-y-4">
@@ -82,6 +90,20 @@ export default function TravelOrders() {
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9"
         />
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {FILTERS.map((f) => (
+          <Button
+            key={f.key}
+            size="sm"
+            variant={filter === f.key ? "default" : "outline"}
+            onClick={() => setFilter(f.key)}
+          >
+            {f.label}
+            <span className="ml-1 opacity-70">({counts[f.key] || 0})</span>
+          </Button>
+        ))}
       </div>
 
       <Card>
@@ -120,7 +142,7 @@ export default function TravelOrders() {
                   <TableCell className="text-sm">{o.date_from} → {o.date_to}</TableCell>
                   <TableCell className="max-w-[240px] truncate">{o.purpose || "—"}</TableCell>
                   <TableCell>
-                    <Badge variant={STATUS_VARIANT[o.status] || "outline"}>
+                    <Badge variant="outline" className={cn(STATUS_BADGE_CLASS[o.status])}>
                       {STATUS_LABEL[o.status] || o.status}
                     </Badge>
                   </TableCell>

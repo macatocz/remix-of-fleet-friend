@@ -739,7 +739,18 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
           <TripLogExport vehicleId={vehicleId} selectedMonth={selectedMonth} vehicleLabel={vehicleLabel} />
           {dirtyCount > 0 && <span className="text-xs text-muted-foreground">{dirtyCount} neuložených</span>}
           {viewMode === "free" && (
-            <Button size="sm" variant="outline" onClick={addRow}><Plus className="mr-1 h-4 w-4" />Řádek</Button>
+            <div className="flex items-center gap-1">
+              <Select value={newRowMode} onValueChange={(v) => setNewRowMode(v as any)}>
+                <SelectTrigger className="h-8 w-[150px] text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="single" className="text-xs">Jeden řádek</SelectItem>
+                  <SelectItem value="roundtrip" className="text-xs">Tam a zpět (2×)</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button size="sm" variant="outline" onClick={addRow}><Plus className="mr-1 h-4 w-4" />Řádek</Button>
+            </div>
           )}
           <Button size="sm" onClick={viewMode === "calendar" ? saveCalendar : saveAll} disabled={saving || dirtyCount === 0}>
             {saving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Save className="mr-1 h-4 w-4" />}

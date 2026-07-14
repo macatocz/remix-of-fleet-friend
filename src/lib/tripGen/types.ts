@@ -19,6 +19,7 @@ export type GeneratorInput = {
   timeOut: string;       // "07:30"
   timeBack: string;      // "16:30"
   roundTripMode?: "split" | "single"; // split = 2 řádky, single = jeden řádek (Praha – Brno – Praha)
+  tripDaysCount?: number | null; // volitelně: kolik pracovních dní má obsahovat jízdu (zbytek zůstane prázdný)
 };
 
 export type GeneratedTrip = {

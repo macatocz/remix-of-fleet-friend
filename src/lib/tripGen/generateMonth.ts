@@ -68,6 +68,28 @@ export function generateMonth(input: GeneratorInput): { trips: GeneratedTrip[]; 
       : pick(input.destinations, destIdx++) || "Zákazník";
     const purpose = pick(input.purposes, purposeIdx++) || "Služební jednání";
 
+    if (input.roundTripMode === "single") {
+      // Jeden řádek: kruhová trasa základna → cíl → základna
+      const start = runningKm;
+      const end = runningKm + dayKm;
+      trips.push({
+        vehicle_id: input.vehicleId,
+        driver_id: input.driverId || null,
+        date: dayStr,
+        time: input.timeOut,
+        route_from: input.base,
+        route_to: `${destination} – ${input.base}`,
+        purpose,
+        km_start: start,
+        km_end: end,
+        km_total: dayKm,
+        fuel_quantity: fuel ? fuel.liters : null,
+        fuel_price: fuel ? fuel.price : null,
+      });
+      runningKm = end;
+      return;
+    }
+
     const outKm = Math.round(dayKm / 2);
     const backKm = dayKm - outKm;
 

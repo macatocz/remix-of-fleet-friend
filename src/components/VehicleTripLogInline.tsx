@@ -97,6 +97,7 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
   const [calRows, setCalRows] = useState<TripRow[]>([]);
   const [multiMonthData, setMultiMonthData] = useState<any[]>([]);
   const [genOpen, setGenOpen] = useState(false);
+  const [newRowMode, setNewRowMode] = useState<"single" | "roundtrip">("single");
   const { toast } = useToast();
   const tableRef = useRef<HTMLDivElement>(null);
   const calTableRef = useRef<HTMLDivElement>(null);
@@ -254,17 +255,38 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
 
   const addRow = () => {
     const lastRow = rows[rows.length - 1];
-    const newRow: TripRow = {
+    // Načíst domácí základnu z preferencí generátoru (pokud existují)
+    let base: string | null = null;
+    try {
+      const raw = localStorage.getItem(`trip-gen:${vehicleId}`);
+      if (raw) base = (JSON.parse(raw) as any)?.base || null;
+    } catch { /* ignore */ }
+    const today = new Date().toISOString().split("T")[0];
+    const makeEmpty = (): TripRow => ({
       vehicle_id: vehicleId,
       driver_id: lastRow?.driver_id || null,
-      date: new Date().toISOString().split("T")[0],
+      date: today,
       time: null, break_minutes: null, description: null, purpose: null,
       route_from: null, route_to: null,
       km_start: lastRow?.km_end || null, km_end: null, km_total: null,
       fuel_quantity: null, fuel_price: null, other_quantity: null, other_price: null,
       _dirty: true, _new: true,
-    };
-    setRows(prev => [...prev, newRow]);
+    });
+
+    if (newRowMode === "roundtrip") {
+      // Dva řádky: tam a zpět s předvyplněnou základnou
+      const outbound = makeEmpty();
+      outbound.route_from = base;
+      const back = makeEmpty();
+      back.route_to = base;
+      back.km_start = null; // navazuje na km_end prvního řádku po vyplnění
+      setRows(prev => [...prev, outbound, back]);
+    } else {
+      // Jeden řádek — pokud známe základnu, předvyplníme kruhovou trasu (route_from = base)
+      const row = makeEmpty();
+      if (base) row.route_from = base;
+      setRows(prev => [...prev, row]);
+    }
     setTimeout(() => {
       const inputs = tableRef.current?.querySelectorAll(`[data-row="${rows.length}"]`);
       if (inputs?.[0]) (inputs[0] as HTMLElement).focus();

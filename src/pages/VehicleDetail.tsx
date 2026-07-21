@@ -15,12 +15,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { ArrowLeft, FileText, CalendarDays, Info, Loader2, Pencil, Save, X, Trash2, Wrench, BookOpen, CreditCard, CalendarIcon, Gauge, ClipboardCheck, AlertTriangle } from "lucide-react";
+import { ArrowLeft, FileText, CalendarDays, Info, Loader2, Pencil, Save, X, Trash2, Wrench, BookOpen, CreditCard, CalendarIcon, Gauge, ClipboardCheck, AlertTriangle, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format, parseISO, differenceInMonths } from "date-fns";
 import { cs } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { buildVehicleName } from "@/lib/vehicleName";
 import VehicleDocuments from "@/components/VehicleDocuments";
 import VehicleCalendar from "@/components/VehicleCalendar";
 
@@ -46,6 +47,7 @@ interface FieldDef {
 // Branch options loaded dynamically — see useBranchOptions below
 
 const BASIC_FIELDS: FieldDef[] = [
+  { key: "nazev_vozu", label: "Název vozu" },
   { key: "znacka", label: "Značka / Model" },
   { key: "spravce", label: "Správce", type: "driver_select" },
   { key: "rz", label: "RZ" },

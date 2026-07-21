@@ -117,7 +117,7 @@ export default function MobileVehicles() {
       if (categoryFilter !== "all" && v.kategorie !== categoryFilter) return false;
       if (locationFilter !== "all" && v.lokalita !== locationFilter) return false;
       if (!q) return true;
-      const hay = [v.rz, v.znacka, v.vin, v.spravce].filter(Boolean).join(" ").toLowerCase();
+      const hay = [v.nazev_vozu, v.rz, v.znacka, v.vin, v.spravce].filter(Boolean).join(" ").toLowerCase();
       return hay.includes(q);
     });
   }, [vehicles, search, statusFilter, categoryFilter, locationFilter]);
@@ -265,14 +265,12 @@ export default function MobileVehicles() {
                   {/* Top row */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <div className="font-semibold text-base font-mono truncate">
+                      <div className="font-semibold text-base truncate">
+                        {v.nazev_vozu || v.znacka || "—"}
+                      </div>
+                      <div className="text-xs text-muted-foreground truncate font-mono">
                         {v.rz || "—"}
                       </div>
-                      {v.znacka && (
-                        <div className="text-xs text-muted-foreground truncate">
-                          {v.znacka}
-                        </div>
-                      )}
                     </div>
                     <Badge
                       variant="outline"

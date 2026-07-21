@@ -217,6 +217,15 @@ export default function VehicleHandover({ vehicleId }: Props) {
                   </Select>
                 </div>
                 <div>
+                  <Label>Datum a čas</Label>
+                  <Input
+                    type="datetime-local"
+                    value={form.date}
+                    onChange={(e) => setForm({ ...form, date: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Lze zadat i zpětně.</p>
+                </div>
+                <div>
                   <Label>Řidič</Label>
                   <Input value={form.driver_name} onChange={(e) => setForm({ ...form, driver_name: e.target.value })} />
                 </div>

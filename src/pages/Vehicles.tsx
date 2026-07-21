@@ -30,6 +30,7 @@ import * as XLSX from "xlsx";
 
 // All available columns definition
 const ALL_COLUMNS = [
+  { key: "nazev_vozu", label: "Název vozu" },
   { key: "znacka", label: "Značka" },
   { key: "spravce", label: "Správce" },
   { key: "rz", label: "RZ" },
@@ -66,7 +67,7 @@ const ALL_COLUMNS = [
 type ColumnKey = typeof ALL_COLUMNS[number]["key"];
 
 const DEFAULT_VISIBLE: ColumnKey[] = [
-  "znacka", "spravce", "rz", "vlastnik", "typ_vlastnictvi", "stk", "lokalita", "status"
+  "nazev_vozu", "rz", "spravce", "kategorie", "vlastnik", "stk", "lokalita", "status"
 ];
 
 const STORAGE_KEY = "vehicles-visible-columns";
@@ -231,7 +232,7 @@ export default function Vehicles() {
   const { sortKey, sortDirection, handleSort, sortData } = useSortableTable();
 
   const filtered = sortData(vehicles.filter((v) => {
-    const searchStr = `${v.znacka || ""} ${v.spravce || ""} ${v.rz || ""} ${v.vin || ""}`.toLowerCase();
+    const searchStr = `${v.nazev_vozu || ""} ${v.znacka || ""} ${v.spravce || ""} ${v.rz || ""} ${v.vin || ""}`.toLowerCase();
     const matchSearch = searchStr.includes(search.toLowerCase());
     const matchStatus = statusFilter === "all" || v.status === statusFilter;
     const matchLokalita = lokalitaFilter === "all" || v.lokalita === lokalitaFilter;

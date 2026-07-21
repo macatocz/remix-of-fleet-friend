@@ -314,11 +314,14 @@ export type Database = {
         Row: {
           checklist: Json
           created_at: string
+          damage_cost_estimate: number | null
+          damage_description: string | null
           date: string
           driver_name: string | null
           fuel_percent: number | null
           handover_by: string | null
           id: string
+          incident_id: string | null
           km: number | null
           notes: string | null
           reservation_id: string | null
@@ -329,11 +332,14 @@ export type Database = {
         Insert: {
           checklist?: Json
           created_at?: string
+          damage_cost_estimate?: number | null
+          damage_description?: string | null
           date?: string
           driver_name?: string | null
           fuel_percent?: number | null
           handover_by?: string | null
           id?: string
+          incident_id?: string | null
           km?: number | null
           notes?: string | null
           reservation_id?: string | null
@@ -344,11 +350,14 @@ export type Database = {
         Update: {
           checklist?: Json
           created_at?: string
+          damage_cost_estimate?: number | null
+          damage_description?: string | null
           date?: string
           driver_name?: string | null
           fuel_percent?: number | null
           handover_by?: string | null
           id?: string
+          incident_id?: string | null
           km?: number | null
           notes?: string | null
           reservation_id?: string | null
@@ -356,7 +365,15 @@ export type Database = {
           updated_at?: string
           vehicle_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "handover_protocols_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       incident_photos: {
         Row: {

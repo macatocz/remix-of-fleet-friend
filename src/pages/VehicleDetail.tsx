@@ -522,8 +522,11 @@ export default function VehicleDetail() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold">{vehicle.znacka || "Vozidlo"}</h1>
-          <p className="text-muted-foreground">{vehicle.rz || "—"} · {vehicle.spravce || "—"}</p>
+          <h1 className="text-2xl font-bold">{vehicle.nazev_vozu || vehicle.znacka || "Vozidlo"}</h1>
+          <p className="text-muted-foreground">
+            {vehicle.rz || "—"} · {vehicle.spravce || "—"}
+            {vehicle.nazev_vozu && vehicle.znacka ? ` · ${vehicle.znacka}` : ""}
+          </p>
           <div className="flex items-center gap-1.5 mt-1 text-sm text-muted-foreground">
             <Gauge className="h-4 w-4" />
             {mileageRecords.length > 0 ? (
@@ -567,6 +570,21 @@ export default function VehicleDetail() {
             </>
           ) : (
             <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const suggested = buildVehicleName({
+                    znacka: editData.znacka ?? vehicle.znacka,
+                    spravce: editData.spravce ?? vehicle.spravce,
+                    lokalita: editData.lokalita ?? vehicle.lokalita,
+                  });
+                  handleEdit("nazev_vozu", suggested);
+                }}
+                title="Vygenerovat z modelu a správce"
+              >
+                <Sparkles className="mr-2 h-4 w-4" />Návrh názvu
+              </Button>
               <Button variant="outline" size="sm" onClick={cancelEditing}>
                 <X className="mr-2 h-4 w-4" />Zrušit
               </Button>

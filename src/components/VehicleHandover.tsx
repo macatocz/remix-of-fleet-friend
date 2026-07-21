@@ -64,6 +64,7 @@ export default function VehicleHandover({ vehicleId }: Props) {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [form, setForm] = useState({
     type: "predani",
+    date: "",
     driver_name: "",
     handover_by: "",
     km: "",
@@ -107,8 +108,11 @@ export default function VehicleHandover({ vehicleId }: Props) {
   useEffect(() => { fetchData(); }, [vehicleId]);
 
   const resetForm = () => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     setForm({
       type: "predani",
+      date: now.toISOString().slice(0, 16),
       driver_name: "",
       handover_by: "",
       km: "",
@@ -119,6 +123,14 @@ export default function VehicleHandover({ vehicleId }: Props) {
     setPendingFiles([]);
   };
 
+  useEffect(() => {
+    if (dialogOpen && !form.date) {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      setForm((f) => ({ ...f, date: now.toISOString().slice(0, 16) }));
+    }
+  }, [dialogOpen]);
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -127,6 +139,7 @@ export default function VehicleHandover({ vehicleId }: Props) {
         .insert({
           vehicle_id: vehicleId,
           type: form.type,
+          date: form.date ? new Date(form.date).toISOString() : new Date().toISOString(),
           driver_name: form.driver_name || null,
           handover_by: form.handover_by || null,
           km: form.km ? parseInt(form.km) : null,

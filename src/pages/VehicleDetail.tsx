@@ -54,10 +54,10 @@ const BASIC_FIELDS: FieldDef[] = [
   {
     key: "kategorie", label: "Kategorie", type: "select",
     options: [
-      { value: "Ředitel", label: "Ředitel" },
-      { value: "Projektový manažer", label: "Projektový manažer" },
-      { value: "Konzultant Senior", label: "Konzultant Senior" },
-      { value: "Konzultant", label: "Konzultant" },
+      { value: "A", label: "A – Ředitel" },
+      { value: "B", label: "B – Management" },
+      { value: "C", label: "C – Konzultant" },
+      { value: "D", label: "D – Referent" },
     ]
   },
   {

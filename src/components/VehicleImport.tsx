@@ -11,9 +11,11 @@ import { Upload, Loader2, Check, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
+import { buildVehicleName } from "@/lib/vehicleName";
 
 // Map Czech headers to DB columns
 const HEADER_MAP: Record<string, string> = {
+  "název vozu": "nazev_vozu", "nazev vozu": "nazev_vozu", "nazev_vozu": "nazev_vozu",
   "značka": "znacka", "znacka": "znacka", "značka / model": "znacka", "model": "znacka",
   "rz": "rz", "spz": "rz", "registrační značka": "rz",
   "vin": "vin",
@@ -140,6 +142,13 @@ export default function VehicleImport({ onImported }: Props) {
       const row: Record<string, any> = { ...r.data };
       if (row.spravce && driverMap.has(row.spravce)) {
         row.spravce_id = driverMap.get(row.spravce);
+      }
+      if (!row.nazev_vozu) {
+        row.nazev_vozu = buildVehicleName({
+          znacka: row.znacka,
+          spravce: row.spravce,
+          lokalita: row.lokalita,
+        });
       }
       return row;
     });

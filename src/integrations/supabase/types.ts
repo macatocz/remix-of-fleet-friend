@@ -1506,6 +1506,7 @@ export type Database = {
           misto_uskladneni_pneu: string | null
           nahradni_klic: string | null
           najezd_za_rok: string | null
+          nazev_vozu: string | null
           parkovaci_stani: string | null
           poznamky: string | null
           rz: string | null
@@ -1544,6 +1545,7 @@ export type Database = {
           misto_uskladneni_pneu?: string | null
           nahradni_klic?: string | null
           najezd_za_rok?: string | null
+          nazev_vozu?: string | null
           parkovaci_stani?: string | null
           poznamky?: string | null
           rz?: string | null
@@ -1582,6 +1584,7 @@ export type Database = {
           misto_uskladneni_pneu?: string | null
           nahradni_klic?: string | null
           najezd_za_rok?: string | null
+          nazev_vozu?: string | null
           parkovaci_stani?: string | null
           poznamky?: string | null
           rz?: string | null

@@ -682,10 +682,10 @@ export default function Vehicles() {
               <Select value={bulkValue} onValueChange={setBulkValue}>
                 <SelectTrigger><SelectValue placeholder="Vyberte kategorii" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Ředitel">Ředitel</SelectItem>
-                  <SelectItem value="Projektový manažer">Projektový manažer</SelectItem>
-                  <SelectItem value="Konzultant Senior">Konzultant Senior</SelectItem>
-                  <SelectItem value="Konzultant">Konzultant</SelectItem>
+                  <SelectItem value="A">A – Ředitel</SelectItem>
+                  <SelectItem value="B">B – Management</SelectItem>
+                  <SelectItem value="C">C – Konzultant</SelectItem>
+                  <SelectItem value="D">D – Referent</SelectItem>
                 </SelectContent>
               </Select>
             )}

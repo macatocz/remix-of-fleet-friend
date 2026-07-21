@@ -14,6 +14,7 @@ import * as XLSX from "xlsx";
 
 // Map Czech headers to DB columns
 const HEADER_MAP: Record<string, string> = {
+  "název vozu": "nazev_vozu", "nazev vozu": "nazev_vozu", "nazev_vozu": "nazev_vozu",
   "značka": "znacka", "znacka": "znacka", "značka / model": "znacka", "model": "znacka",
   "rz": "rz", "spz": "rz", "registrační značka": "rz",
   "vin": "vin",

@@ -198,7 +198,7 @@ export default function NewReservationDialog({
             )}
           </div>
           <div className="space-y-1.5">
-            <Label>Účel cesty</Label>
+            <Label>Poznámka k účelu</Label>
             <Textarea value={purpose} onChange={e => setPurpose(e.target.value)} rows={3} placeholder="Služební jednání v Brně" className="text-base" />
           </div>
           <p className="text-xs text-muted-foreground">

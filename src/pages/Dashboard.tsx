@@ -305,6 +305,15 @@ export default function Dashboard() {
 
       <VehicleNotifications />
 
+      <DashboardFilters
+        period={period}
+        onPeriodChange={setPeriod}
+        vehicleId={vehicleFilter}
+        onVehicleChange={setVehicleFilter}
+        driverId={driverFilter}
+        onDriverChange={setDriverFilter}
+      />
+
       {/* ---------- Přehled ---------- */}
       <section className="space-y-3">
         <div className="flex items-center gap-3">
@@ -360,19 +369,20 @@ export default function Dashboard() {
       <section className="space-y-3">
         <div className="flex items-center gap-3">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Náklady a provoz</h2>
+          <span className="text-xs text-muted-foreground">{periodTitle}</span>
           <div className="h-px flex-1 bg-border" />
         </div>
 
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <StatCard label="Tento měsíc km" value={monthlyKpi.totalKm.toLocaleString("cs-CZ")} hint="najeto celkem" icon={Route} tone="primary" spark={kmSpark} />
-          <StatCard label="PHM tento měsíc" value={`${monthlyKpi.fuelCost.toLocaleString("cs-CZ")} Kč`} hint="pohonné hmoty" icon={Fuel} tone="warning" spark={phmSpark} delay={60} />
-          <StatCard label="Servis tento měsíc" value={`${monthlyKpi.serviceCost.toLocaleString("cs-CZ")} Kč`} hint="opravy a údržba" icon={Wrench} tone="destructive" spark={servisSpark} delay={120} />
+          <StatCard label="Najeté km" value={monthlyKpi.totalKm.toLocaleString("cs-CZ")} hint={periodTitle} icon={Route} tone="primary" spark={kmSpark} />
+          <StatCard label="PHM" value={`${monthlyKpi.fuelCost.toLocaleString("cs-CZ")} Kč`} hint={periodTitle} icon={Fuel} tone="warning" spark={phmSpark} delay={60} />
+          <StatCard label="Servis" value={`${monthlyKpi.serviceCost.toLocaleString("cs-CZ")} Kč`} hint={driverFilter !== "all" ? "bez filtru řidiče" : periodTitle} icon={Wrench} tone="destructive" spark={servisSpark} delay={120} />
           <StatCard label="Počet jízd" value={monthlyKpi.tripCount} hint="záznamů v knize jízd" icon={TrendingUp} tone="success" delay={180} />
         </div>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <ChartCard
-            title="Náklady za posledních 6 měsíců"
+            title="Vývoj nákladů"
             subtitle="PHM a servis podle měsíců"
             icon={DollarSign}
             className="lg:col-span-2"

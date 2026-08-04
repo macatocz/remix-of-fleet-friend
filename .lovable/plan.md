@@ -24,7 +24,7 @@ Ověřeno v databázi a v kódu:
 
 4. **Oprava výpočtu alertů** — místo „nejnovější minus nejstarší záznam“ se ujeté km počítají jako `aktuální tachometr − výchozí stav tachometru`, takže stačí jediný údaj. Alerty tak začnou fungovat.
 
-5. **Přehled napříč flotilou** — na dashboardu karta „Čerpání nájezdu leasingových vozů“ seřazená podle odchylky od plánu, s prokliky na vozy.
+5. **Přehled napříč flotilou** — na dashboardu karta „Čerpání nájezdu leasingových vozů“ seřazená podle odchylky od plánu. Každý řádek obsahuje progress bar a proklik na vozidlo; kliknutí otevře detail s rozbaleným panelem nájezdu.
 
 ## Technické detaily
 

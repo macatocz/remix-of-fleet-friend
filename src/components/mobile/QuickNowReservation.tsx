@@ -27,7 +27,7 @@ export default function QuickNowReservation({ open, onOpenChange }: Props) {
   const [duration, setDuration] = useState(60); // minutes
   const [purpose, setPurpose] = useState("");
   const [vehicleId, setVehicleId] = useState("");
-  const [free, setFree] = useState<{ id: string; rz: string | null; znacka: string | null }[]>([]);
+  const [free, setFree] = useState<{ id: string; rz: string | null; znacka: string | null; nazev_vozu?: string | null }[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -117,7 +117,7 @@ export default function QuickNowReservation({ open, onOpenChange }: Props) {
                 <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {free.map((v) => (
-                    <SelectItem key={v.id} value={v.id} className="py-3">{v.rz || "?"} – {v.znacka || "?"}</SelectItem>
+                    <SelectItem key={v.id} value={v.id} className="py-3">{v.nazev_vozu || v.znacka || "?"} · {v.rz || "?"}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

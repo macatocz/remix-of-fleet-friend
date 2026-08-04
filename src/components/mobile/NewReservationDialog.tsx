@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   PURPOSE_TYPES, checkAdvanceLimit, checkPrivateLimit, getPrivateUsage,
-  PRIVATE_LIMIT_WEEKENDS, PRIVATE_LIMIT_WORKDAYS,
+  PRIVATE_LIMIT_WEEKENDS, PRIVATE_LIMIT_WORKDAYS, MAX_ADVANCE_DAYS,
 } from "@/lib/reservationRules";
 
 interface Props {
@@ -35,6 +35,11 @@ export default function NewReservationDialog({
 }: Props) {
   const { driver, myVehicles, allVehicles } = useDriverContext();
   const today = new Date().toISOString().split("T")[0];
+  const maxDate = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + MAX_ADVANCE_DAYS);
+    return d.toISOString().split("T")[0];
+  })();
 
   const [vehicleId, setVehicleId] = useState(initialVehicleId || "");
   const [dateFrom, setDateFrom] = useState(initialDateFrom || today);
@@ -166,11 +171,11 @@ export default function NewReservationDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Datum od *</Label>
-              <MobileDatePicker value={dateFrom} onChange={setDateFrom} />
+              <MobileDatePicker value={dateFrom} onChange={setDateFrom} min={today} max={maxDate} />
             </div>
             <div className="space-y-1.5">
               <Label>Datum do *</Label>
-              <MobileDatePicker value={dateTo} onChange={setDateTo} min={dateFrom} />
+              <MobileDatePicker value={dateTo} onChange={setDateTo} min={dateFrom} max={maxDate} />
             </div>
             <div className="space-y-1.5">
               <Label>Čas od</Label>
@@ -203,6 +208,9 @@ export default function NewReservationDialog({
           </div>
           <p className="text-xs text-muted-foreground">
             Žádost bude odeslána ke schválení správci nebo dispečerovi.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Rezervovat lze nejvýše {MAX_ADVANCE_DAYS} dní dopředu.
           </p>
         </div>
         <DrawerFooter className="pb-safe gap-2">

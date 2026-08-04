@@ -17,6 +17,7 @@ interface MobileDatePickerProps {
   onChange: (val: string) => void;
   placeholder?: string;
   min?: string; // "YYYY-MM-DD"
+  max?: string; // "YYYY-MM-DD"
   className?: string;
   disabled?: boolean;
 }
@@ -34,12 +35,14 @@ export function MobileDatePicker({
   onChange,
   placeholder = "Vyberte datum",
   min,
+  max,
   className,
   disabled,
 }: MobileDatePickerProps) {
   const [open, setOpen] = React.useState(false);
   const selected = toDate(value);
   const minDate = toDate(min || "");
+  const maxDate = toDate(max || "");
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -69,7 +72,11 @@ export function MobileDatePicker({
               setOpen(false);
             }
           }}
-          disabled={minDate ? (date) => date < minDate : undefined}
+          disabled={
+            minDate || maxDate
+              ? (date) => (!!minDate && date < minDate) || (!!maxDate && date > maxDate)
+              : undefined
+          }
           locale={cs}
           weekStartsOn={1}
           initialFocus

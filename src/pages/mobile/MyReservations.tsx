@@ -25,7 +25,7 @@ interface Reservation {
   time_to: string | null;
   purpose: string | null;
   status: string;
-  vehicle?: { znacka: string | null; rz: string | null };
+  vehicle?: { znacka: string | null; rz: string | null; nazev_vozu?: string | null };
 }
 
 export default function MyReservations() {
@@ -51,7 +51,7 @@ export default function MyReservations() {
     const ids = Array.from(new Set(list.map(r => r.vehicle_id)));
     if (ids.length) {
       const { data: vs } = await supabase
-        .from("vehicles").select("id, znacka, rz").in("id", ids);
+        .from("vehicles").select("id, znacka, rz, nazev_vozu").in("id", ids);
       const map = new Map((vs || []).map((v: any) => [v.id, v]));
       list.forEach(r => { r.vehicle = map.get(r.vehicle_id); });
     }
@@ -77,7 +77,7 @@ export default function MyReservations() {
     const list = (data as PendingReservation[]) || [];
     const ids = Array.from(new Set(list.map(r => r.vehicle_id)));
     if (ids.length) {
-      const { data: vs } = await supabase.from("vehicles").select("id, rz, znacka").in("id", ids);
+        const { data: vs } = await supabase.from("vehicles").select("id, rz, znacka, nazev_vozu").in("id", ids);
       const map = new Map((vs || []).map((v: any) => [v.id, v]));
       list.forEach(r => { r.vehicle = map.get(r.vehicle_id); });
     }
@@ -206,10 +206,10 @@ function ActiveList({
                 <CalendarDays className="h-5 w-5 text-primary shrink-0" />
                 <div className="min-w-0">
                   <p className="font-semibold text-base truncate">
-                    {r.vehicle?.rz || "?"}
+                    {r.vehicle?.nazev_vozu || r.vehicle?.znacka || "?"}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
-                    {r.vehicle?.znacka || "—"}
+                    {r.vehicle?.rz || "—"}
                   </p>
                 </div>
               </div>
@@ -272,10 +272,10 @@ function PastList({ items }: { items: Reservation[] }) {
                 <CalendarDays className="h-5 w-5 text-muted-foreground shrink-0" />
                 <div className="min-w-0">
                   <p className="font-medium text-base truncate text-muted-foreground">
-                    {r.vehicle?.rz || "?"}
+                    {r.vehicle?.nazev_vozu || r.vehicle?.znacka || "?"}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
-                    {r.vehicle?.znacka || "—"}
+                    {r.vehicle?.rz || "—"}
                   </p>
                 </div>
               </div>

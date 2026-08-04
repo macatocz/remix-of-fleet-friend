@@ -20,7 +20,7 @@ import {
 } from "date-fns";
 import { cs } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
-import { PURPOSE_TYPES } from "@/lib/reservationRules";
+import { PURPOSE_TYPES, checkAdvanceLimit, checkPrivateLimit } from "@/lib/reservationRules";
 
 interface Reservation {
   id: string;
@@ -175,6 +175,22 @@ export default function VehicleCalendar({ vehicleId }: { vehicleId: string }) {
       return;
     }
     setSaving(true);
+
+    const advanceErr = checkAdvanceLimit(formDateFrom);
+    if (advanceErr) {
+      toast({ title: "Mimo povolený termín", description: advanceErr, variant: "destructive" });
+      setSaving(false);
+      return;
+    }
+
+    if (formPurposeType === "soukrome") {
+      const limitErr = await checkPrivateLimit(formDriver.trim(), formDateFrom, formDateTo, editId || undefined);
+      if (limitErr) {
+        toast({ title: "Vyčerpaný limit", description: limitErr, variant: "destructive" });
+        setSaving(false);
+        return;
+      }
+    }
 
     const hasCollision = await checkCollision(formDateFrom, formDateTo, formTimeFrom, formTimeTo);
     if (hasCollision && !editId) {

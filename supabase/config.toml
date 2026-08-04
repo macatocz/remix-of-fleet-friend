@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.notify-expirations]
 verify_jwt = false
+
+[functions.notify-travel-orders]
+verify_jwt = false

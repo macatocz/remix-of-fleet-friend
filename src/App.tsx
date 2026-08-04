@@ -28,6 +28,7 @@ import Incidents from "@/pages/Incidents";
 import SettingsPage from "@/pages/SettingsPage";
 import NotificationsPage from "@/pages/NotificationsPage";
 import Login from "@/pages/Login";
+import SetPassword from "@/pages/SetPassword";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/prihlaseni" element={<Login />} />
+            <Route path="/nastaveni-hesla" element={<SetPassword />} />
             <Route
               element={
                 <ProtectedRoute>

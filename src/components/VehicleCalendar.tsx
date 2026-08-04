@@ -20,6 +20,7 @@ import {
 } from "date-fns";
 import { cs } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import { PURPOSE_TYPES } from "@/lib/reservationRules";
 
 interface Reservation {
   id: string;
@@ -81,7 +82,7 @@ export default function VehicleCalendar({ vehicleId }: { vehicleId: string }) {
     setLoading(true);
     const { data } = await supabase
       .from("reservations")
-      .select("id, driver_name, date_from, date_to, time_from, time_to, purpose, status")
+      .select("id, driver_name, date_from, date_to, time_from, time_to, purpose, purpose_type, status")
       .eq("vehicle_id", vehicleId)
       .order("date_from");
     setReservations(data || []);

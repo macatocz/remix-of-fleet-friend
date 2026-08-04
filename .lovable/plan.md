@@ -18,7 +18,8 @@ Ověřeno v databázi a v kódu:
 3. **Panel „Čerpání nájezdu“ v detailu vozu** (jen u operativního leasingu):
    - smluvní nájezd celkem = nájezd/rok × doba leasingu
    - ujeto k dnešku, plán k dnešku, rozdíl (+/− km)
-   - progress bar s barvou podle stavu
+   - **progress bar s barvou podle stavu** (zelená < 70 %, žlutá 70–80 %, oranžová 80–95 %, červená > 95 %)
+   - **minigraf** vývoje km v čase (skutečný vs. plánovaný průběh leasingu)
    - odhad nájezdu ke konci leasingu při současném tempu (km/měsíc) a předpokládané přejetí/nedojetí v km
 
 4. **Oprava výpočtu alertů** — místo „nejnovější minus nejstarší záznam“ se ujeté km počítají jako `aktuální tachometr − výchozí stav tachometru`, takže stačí jediný údaj. Alerty tak začnou fungovat.

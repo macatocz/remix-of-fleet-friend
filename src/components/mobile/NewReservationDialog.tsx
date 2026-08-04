@@ -13,6 +13,7 @@ import {
 import { useDriverContext } from "@/hooks/useDriverContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { insertOrQueue } from "@/lib/offline/tripQueue";
 import {
   PURPOSE_TYPES, checkAdvanceLimit, checkPrivateLimit, getPrivateUsage,
   PRIVATE_LIMIT_WEEKENDS, PRIVATE_LIMIT_WORKDAYS, MAX_ADVANCE_DAYS,
@@ -129,7 +130,7 @@ export default function NewReservationDialog({
       return;
     }
 
-    const { error } = await supabase.from("reservations").insert({
+    const res = await insertOrQueue("reservations", {
       vehicle_id: vehicleId,
       driver_name: driver.fullName,
       date_from: dateFrom,
@@ -141,8 +142,10 @@ export default function NewReservationDialog({
       status: "čeká",
     });
     setSaving(false);
-    if (error) { toast.error("Chyba: " + error.message); return; }
-    toast.success("Žádost odeslána ke schválení");
+    if (res.status === "error") { toast.error("Chyba: " + res.message); return; }
+    toast.success(res.status === "queued"
+      ? "Offline – žádost uložena, odešle se po obnovení sítě"
+      : "Žádost odeslána ke schválení");
     reset();
     onOpenChange(false);
     onCreated?.();

@@ -1684,6 +1684,19 @@ export type Database = {
           vehicle_id: string
         }[]
       }
+      list_users_admin: {
+        Args: never
+        Returns: {
+          confirmed: boolean
+          created_at: string
+          email: string
+          first_name: string
+          last_name: string
+          last_sign_in_at: string
+          roles: string[]
+          user_id: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "dispatcer" | "ridic"

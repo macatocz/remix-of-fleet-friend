@@ -513,12 +513,19 @@ export default function Reservations() {
                 {filtered.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="font-medium">
-                      {r.vehicles?.znacka || "—"} ({r.vehicles?.rz || "—"})
+                      {r.vehicles?.nazev_vozu || r.vehicles?.znacka || "—"} · {r.vehicles?.rz || "—"}
                     </TableCell>
                     <TableCell>{r.driver_name}</TableCell>
                     <TableCell>{new Date(r.date_from).toLocaleDateString("cs-CZ")} {r.time_from?.slice(0, 5) || ""}</TableCell>
                     <TableCell>{new Date(r.date_to).toLocaleDateString("cs-CZ")} {r.time_to?.slice(0, 5) || ""}</TableCell>
-                    <TableCell>{r.purpose || "—"}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-1">
+                        <Badge variant={r.purpose_type === "soukrome" ? "secondary" : "outline"} className="w-fit">
+                          {purposeTypeLabel(r.purpose_type)}
+                        </Badge>
+                        {r.purpose && <span className="text-xs text-muted-foreground">{r.purpose}</span>}
+                      </div>
+                    </TableCell>
                     <TableCell>{statusBadge(r.status)}</TableCell>
                     <TableCell>
                       <div className="flex gap-1 flex-wrap">

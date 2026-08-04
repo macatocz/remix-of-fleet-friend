@@ -1,6 +1,6 @@
 // Daily cron: notifies drivers to fill in a travel order (cesťák) for approved
 // reservations longer than the configured threshold that start tomorrow.
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

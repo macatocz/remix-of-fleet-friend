@@ -1,5 +1,5 @@
 // Daily cron: scans expiring documents and creates notifications for vehicle owners.
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

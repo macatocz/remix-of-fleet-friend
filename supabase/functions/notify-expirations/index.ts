@@ -25,20 +25,20 @@ Deno.serve(async (req) => {
   // Map vehicle -> owner user_id (via drivers.spravce link)
   const { data: vehicles } = await supabase
     .from("vehicles")
-    .select("id, rz, znacka, spravce_id, leasing_konec");
+    .select("id, rz, znacka, nazev_vozu, spravce_id, datum_ukonceni_leasingu");
   const { data: drivers } = await supabase.from("drivers").select("id, user_id");
   const driverUser = new Map((drivers || []).map((d: any) => [d.id, d.user_id]));
 
   type Hit = { user_id: string; vehicle_id: string; type: string; title: string; body: string; link: string };
   const hits: Hit[] = [];
 
-  const labelOf = (v: any) => `${v.znacka || ""} ${v.rz || ""}`.trim();
+  const labelOf = (v: any) => `${v.nazev_vozu || v.znacka || ""} ${v.rz || ""}`.trim();
 
   const sources: Array<{ table: string; field: string; type: string; label: string }> = [
-    { table: "inspections", field: "next_inspection", type: "expiration_stk", label: "STK" },
-    { table: "insurance", field: "platnost_do", type: "expiration_insurance", label: "Pojištění" },
-    { table: "service_plans", field: "next_service_date", type: "expiration_service", label: "Servis" },
-    { table: "vehicle_vignettes", field: "valid_to", type: "expiration_vignette", label: "Dálniční známka" },
+    { table: "inspections", field: "valid_until", type: "expiration_stk", label: "STK" },
+    { table: "insurance", field: "valid_until", type: "expiration_insurance", label: "Pojištění" },
+    { table: "service_plans", field: "next_due_date", type: "expiration_service", label: "Servis" },
+    { table: "vehicle_vignettes", field: "valid_until", type: "expiration_vignette", label: "Dálniční známka" },
   ];
 
   for (const s of sources) {
@@ -61,10 +61,10 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Leasing end from vehicles.leasing_konec
+  // Leasing end from vehicles.datum_ukonceni_leasingu
   for (const v of (vehicles || []) as any[]) {
-    if (!v.leasing_konec) continue;
-    const d = daysBetween(v.leasing_konec);
+    if (!v.datum_ukonceni_leasingu) continue;
+    const d = daysBetween(v.datum_ukonceni_leasingu);
     if (!THRESHOLDS.includes(d)) continue;
     const uid = v.spravce_id ? driverUser.get(v.spravce_id) : null;
     if (!uid) continue;
@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
       vehicle_id: v.id,
       type: "expiration_leasing",
       title: `Leasing končí za ${d} ${d === 1 ? "den" : d < 5 ? "dny" : "dní"}`,
-      body: `${labelOf(v)} — konec leasingu ${new Date(v.leasing_konec).toLocaleDateString("cs-CZ")}`,
+      body: `${labelOf(v)} — konec leasingu ${new Date(v.datum_ukonceni_leasingu).toLocaleDateString("cs-CZ")}`,
       link: `/vozidla/${v.id}`,
     });
   }

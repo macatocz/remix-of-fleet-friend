@@ -235,36 +235,6 @@ export default function Dashboard() {
     return () => { cancelled = true; };
   }, [months, vehicleFilter, driverFilter]);
 
-  const unusedFetchCostTrend = async () => {
-    const now = new Date();
-    const results: any[] = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const year = d.getFullYear();
-      const month = d.getMonth() + 1;
-      const start = `${year}-${String(month).padStart(2, "0")}-01`;
-      const end = new Date(year, month, 0).toISOString().split("T")[0];
-      const label = `${month}/${year}`;
-
-      const [tripRes, serviceRes] = await Promise.all([
-        supabase.from("trip_logs").select("fuel_price, other_price, km_total").gte("date", start).lte("date", end),
-        supabase.from("service_records").select("cost").gte("date", start).lte("date", end),
-      ]);
-
-      const fuelCost = (tripRes.data || []).reduce((s, r: any) => s + (Number(r.fuel_price) || 0), 0);
-      const otherCost = (tripRes.data || []).reduce((s, r: any) => s + (Number(r.other_price) || 0), 0);
-      const km = (tripRes.data || []).reduce((s, r: any) => s + (r.km_total || 0), 0);
-      const serviceCost = (serviceRes.data || []).reduce((s, r: any) => s + (Number(r.cost) || 0), 0);
-
-      results.push({
-        month: label,
-        PHM: Math.round(fuelCost + otherCost),
-        Servis: Math.round(serviceCost),
-        Km: km,
-      });
-    }
-    setMonthlyCostTrend(results);
-  };
 
   const kmSpark = monthlyCostTrend.map((m) => m.Km || 0);
   const phmSpark = monthlyCostTrend.map((m) => m.PHM || 0);

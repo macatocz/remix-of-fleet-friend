@@ -451,7 +451,7 @@ export default function Reservations() {
               <SelectContent>
                 <SelectItem value="all">Všechna vozidla</SelectItem>
                 {vehicles.map(v => (
-                  <SelectItem key={v.id} value={v.id}>{v.znacka || "—"} ({v.rz || "—"})</SelectItem>
+                  <SelectItem key={v.id} value={v.id}>{v.nazev_vozu || v.znacka || "—"} · {v.rz || "—"}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

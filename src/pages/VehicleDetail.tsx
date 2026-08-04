@@ -50,6 +50,7 @@ const BASIC_FIELDS: FieldDef[] = [
   { key: "nazev_vozu", label: "Název vozu" },
   { key: "znacka", label: "Značka / Model" },
   { key: "spravce", label: "Správce", type: "driver_select" },
+  { key: "hlavni_uzivatel", label: "Hlavní uživatel (u POOL vozů)" },
   { key: "rz", label: "RZ" },
   { key: "vin", label: "VIN" },
   { key: "vlastnik", label: "Vlastník" },

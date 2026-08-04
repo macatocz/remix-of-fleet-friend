@@ -23,6 +23,12 @@ import { Plus, CalendarDays, Loader2, Pencil, Trash2, Search, X } from "lucide-r
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  PURPOSE_TYPES, purposeTypeLabel, checkAdvanceLimit, checkPrivateLimit,
+  getPrivateUsage, PRIVATE_LIMIT_WEEKENDS, PRIVATE_LIMIT_WORKDAYS,
+  reservationHours, TRAVEL_ORDER_HOURS_THRESHOLD,
+} from "@/lib/reservationRules";
+import { notify } from "@/lib/notify";
 
 const statusBadge = (status: string) => {
   switch (status) {
@@ -47,6 +53,7 @@ interface ReservationForm {
   time_from: string;
   time_to: string;
   purpose: string;
+  purpose_type: string;
 }
 
 const emptyForm: ReservationForm = {
@@ -57,6 +64,7 @@ const emptyForm: ReservationForm = {
   time_from: "08:00",
   time_to: "17:00",
   purpose: "",
+  purpose_type: "pracovne",
 };
 
 export default function Reservations() {
@@ -76,6 +84,7 @@ export default function Reservations() {
   const [currentDriverId, setCurrentDriverId] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingPayload, setPendingPayload] = useState<any>(null);
+  const [privateUsage, setPrivateUsage] = useState<{ weekends: number; workdays: number } | null>(null);
   const { toast } = useToast();
 
   // Fetch current user's driver ID
@@ -88,9 +97,9 @@ export default function Reservations() {
   const fetchData = async () => {
     setLoading(true);
     const [resResult, vehResult, drvResult] = await Promise.all([
-      supabase.from("reservations").select("*, vehicles(znacka, rz, spravce_id)").order("date_from", { ascending: false }),
-      supabase.from("vehicles").select("id, znacka, rz, spravce_id").eq("status", "aktivní").order("znacka"),
-      supabase.from("drivers").select("id, first_name, last_name").eq("status", "aktivní").order("last_name"),
+      supabase.from("reservations").select("*, vehicles(znacka, rz, nazev_vozu, spravce_id)").order("date_from", { ascending: false }),
+      supabase.from("vehicles").select("id, znacka, rz, nazev_vozu, spravce_id").eq("status", "aktivní").order("nazev_vozu"),
+      supabase.from("drivers").select("id, first_name, last_name, user_id").eq("status", "aktivní").order("last_name"),
     ]);
     if (resResult.error) {
       toast({ title: "Chyba", description: resResult.error.message, variant: "destructive" });
@@ -103,6 +112,17 @@ export default function Reservations() {
   };
 
   useEffect(() => { fetchData(); }, []);
+
+  // Čerpání soukromých rezervací pro vybraného řidiče a měsíc
+  useEffect(() => {
+    if (form.purpose_type !== "soukrome" || !form.driver_name || !form.date_from) {
+      setPrivateUsage(null);
+      return;
+    }
+    getPrivateUsage(form.driver_name, form.date_from, editingId || undefined)
+      .then(setPrivateUsage)
+      .catch(() => setPrivateUsage(null));
+  }, [form.purpose_type, form.driver_name, form.date_from, editingId]);
 
   const checkCollision = async (vehicleId: string, dateFrom: string, dateTo: string, timeFrom: string, timeTo: string, excludeId?: string): Promise<{ hardCollision: boolean; softCollision: boolean }> => {
     let query = supabase
@@ -152,6 +172,7 @@ export default function Reservations() {
       time_from: r.time_from?.slice(0, 5) || "08:00",
       time_to: r.time_to?.slice(0, 5) || "17:00",
       purpose: r.purpose || "",
+      purpose_type: r.purpose_type || "pracovne",
     });
     setDialogOpen(true);
   };
@@ -166,12 +187,30 @@ export default function Reservations() {
       toast({ title: "Chyba při ukládání", description: error.message, variant: "destructive" });
     } else {
       toast({ title: editingId ? "Rezervace upravena" : "Rezervace vytvořena" });
+      await maybeNotifyTravelOrder(payload);
       setForm(emptyForm);
       setEditingId(null);
       setDialogOpen(false);
       fetchData();
     }
     setSaving(false);
+  };
+
+  const maybeNotifyTravelOrder = async (payload: any) => {
+    const hours = reservationHours(payload.date_from, payload.date_to, payload.time_from, payload.time_to);
+    if (hours <= TRAVEL_ORDER_HOURS_THRESHOLD || payload.purpose_type === "soukrome") return;
+    const drv = drivers.find(
+      (d) => `${d.first_name} ${d.last_name}`.trim() === payload.driver_name
+    );
+    if (!drv?.user_id) return;
+    await notify({
+      user_ids: [drv.user_id],
+      type: "travel_order_reminder",
+      title: "Vyplňte cestovní příkaz",
+      body: `Rezervace na ${payload.date_from} trvá déle než ${TRAVEL_ORDER_HOURS_THRESHOLD} hodin — vyplňte prosím cestovní příkaz.`,
+      link: "/cestovni-prikazy",
+      vehicle_id: payload.vehicle_id,
+    });
   };
 
   const handleSave = async () => {
@@ -189,7 +228,24 @@ export default function Reservations() {
       time_from: form.time_from || "08:00",
       time_to: form.time_to || "17:00",
       purpose: form.purpose || null,
+      purpose_type: form.purpose_type || "pracovne",
     };
+
+    const advanceErr = checkAdvanceLimit(form.date_from);
+    if (advanceErr) {
+      toast({ title: "Termín je příliš daleko", description: advanceErr, variant: "destructive" });
+      setSaving(false);
+      return;
+    }
+
+    if (form.purpose_type === "soukrome") {
+      const limitErr = await checkPrivateLimit(form.driver_name, form.date_from, form.date_to, editingId || undefined);
+      if (limitErr) {
+        toast({ title: "Limit soukromých jízd vyčerpán", description: limitErr, variant: "destructive" });
+        setSaving(false);
+        return;
+      }
+    }
 
     const { hardCollision, softCollision } = await checkCollision(
       form.vehicle_id, form.date_from, form.date_to,
@@ -266,7 +322,7 @@ export default function Reservations() {
                 <SelectContent>
                   {vehicles.map(v => (
                     <SelectItem key={v.id} value={v.id}>
-                      {v.znacka || "—"} ({v.rz || "—"})
+                      {v.nazev_vozu || v.znacka || "—"} · {v.rz || "—"}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -321,6 +377,23 @@ export default function Reservations() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div>
+              <Label>Účel cesty *</Label>
+              <Select value={form.purpose_type} onValueChange={v => setForm(p => ({ ...p, purpose_type: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PURPOSE_TYPES.map(p => (
+                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {form.purpose_type === "soukrome" && privateUsage && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Čerpáno tento měsíc: {privateUsage.weekends}/{PRIVATE_LIMIT_WEEKENDS} víkend,{" "}
+                  {privateUsage.workdays}/{PRIVATE_LIMIT_WORKDAYS} pracovních dní.
+                </p>
+              )}
             </div>
             <div>
               <Label>Účel</Label>

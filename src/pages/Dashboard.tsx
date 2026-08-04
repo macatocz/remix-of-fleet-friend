@@ -1,16 +1,22 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Car, CheckCircle, Wrench, AlertTriangle, CalendarDays, Clock, Shield, DollarSign, Fuel, TrendingUp, Route } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Car, CheckCircle, Wrench, CalendarDays, DollarSign, Fuel, TrendingUp, Route, PieChart as PieIcon } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend, LineChart, Line
+  PieChart, Pie, Cell, Legend
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import VehicleNotifications from "@/components/VehicleNotifications";
 import DashboardExtraWidgets from "@/components/DashboardExtraWidgets";
 import PendingReservationsWidget from "@/components/PendingReservationsWidget";
+import StatCard from "@/components/dashboard/StatCard";
+import ChartCard from "@/components/dashboard/ChartCard";
+import ChartTooltip from "@/components/dashboard/ChartTooltip";
+import EmptyState from "@/components/dashboard/EmptyState";
+import DeadlinesCard, { DeadlineGroup } from "@/components/dashboard/DeadlinesCard";
+import { CHART_COLORS, axisProps, gridProps, formatCzk } from "@/components/dashboard/chartTheme";
 
 function parseDateString(s: string | null): Date | null {
   if (!s) return null;
@@ -29,8 +35,6 @@ function daysDiff(date: Date): number {
   return Math.round((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-const PIE_COLORS = ["hsl(142, 71%, 45%)", "hsl(38, 92%, 50%)", "hsl(0, 84%, 60%)", "hsl(217, 71%, 45%)", "hsl(280, 60%, 50%)", "hsl(190, 70%, 45%)"];
-
 export default function Dashboard() {
   const navigate = useNavigate();
   const [vehicleStats, setVehicleStats] = useState({ total: 0, active: 0, service: 0, decommissioned: 0 });
@@ -42,10 +46,12 @@ export default function Dashboard() {
   const [insuranceSoon, setInsuranceSoon] = useState<{ id: string; label: string; days: number; type: string }[]>([]);
   const [leasingSoon, setLeasingSoon] = useState<{ id: string; label: string; days: number }[]>([]);
   const [serviceSoon, setServiceSoon] = useState<{ id: string; vehicleId: string; label: string; type: string; daysOrKm: string; overdue: boolean }[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Fetch vehicles
     supabase.from("vehicles").select("id, znacka, rz, spravce, stk, status, datum_ukonceni_leasingu, typ_vlastnictvi").then(({ data }) => {
+      setLoading(false);
       if (!data) return;
       setVehicleStats({
         total: data.length,
@@ -217,242 +223,228 @@ export default function Dashboard() {
     setMonthlyCostTrend(results);
   };
 
-  const statCards = [
-    { label: "Celkem vozidel", value: vehicleStats.total, icon: Car, color: "text-primary" },
-    { label: "Aktivních", value: vehicleStats.active, icon: CheckCircle, color: "text-success" },
-    { label: "V servisu", value: vehicleStats.service, icon: Wrench, color: "text-warning" },
-    { label: "Rezervace dnes", value: reservationStats.today, icon: CalendarDays, color: "text-info" },
-  ];
+  const kmSpark = monthlyCostTrend.map((m) => m.Km || 0);
+  const phmSpark = monthlyCostTrend.map((m) => m.PHM || 0);
+  const servisSpark = monthlyCostTrend.map((m) => m.Servis || 0);
 
-  const kpiCards = [
-    { label: "Tento měsíc km", value: monthlyKpi.totalKm.toLocaleString("cs-CZ"), icon: Route, color: "text-primary" },
-    { label: "PHM tento měsíc", value: `${monthlyKpi.fuelCost.toLocaleString("cs-CZ")} Kč`, icon: Fuel, color: "text-warning" },
-    { label: "Servis tento měsíc", value: `${monthlyKpi.serviceCost.toLocaleString("cs-CZ")} Kč`, icon: Wrench, color: "text-destructive" },
-    { label: "Počet jízd", value: monthlyKpi.tripCount, icon: TrendingUp, color: "text-success" },
+  const deadlineGroups: DeadlineGroup[] = [
+    {
+      key: "stk",
+      label: "STK",
+      emptyText: "Žádné STK v nejbližších 90 dnech",
+      items: stkSoon.map((s) => ({
+        id: s.id,
+        label: s.label,
+        tag: s.date,
+        days: s.days,
+        badge: s.days < 0 ? `${Math.abs(s.days)} d po` : `${s.days} d`,
+        onClick: () => navigate(`/vozidla/${s.id}`),
+      })),
+    },
+    {
+      key: "pojisteni",
+      label: "Pojištění",
+      emptyText: "Žádné pojištění neexpiruje do 90 dnů",
+      items: insuranceSoon.map((s) => ({
+        id: s.id,
+        label: s.label,
+        tag: s.type,
+        days: s.days,
+        badge: s.days < 0 ? `${Math.abs(s.days)} d po` : `${s.days} d`,
+      })),
+    },
+    {
+      key: "leasing",
+      label: "Leasing",
+      emptyText: "Žádný leasing nekončí",
+      items: leasingSoon.map((s) => ({
+        id: s.id,
+        label: s.label,
+        days: s.days,
+        badge: s.days < 0 ? `${Math.abs(s.days)} d po` : `${s.days} d`,
+        onClick: () => navigate(`/vozidla/${s.id}`),
+      })),
+    },
+    {
+      key: "servis",
+      label: "Servis",
+      emptyText: "Žádný plánovaný servis se neblíží",
+      items: serviceSoon.map((s) => ({
+        id: s.id,
+        label: s.label,
+        tag: s.type,
+        days: null,
+        overdue: s.overdue,
+        badge: s.daysOrKm,
+        onClick: () => navigate(`/vozidla/${s.vehicleId}`),
+      })),
+    },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Přehled vozového parku, statistiky a notifikace.
         </p>
       </div>
 
       <VehicleNotifications />
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {statCards.map((s) => (
-          <Card key={s.label}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{s.label}</CardTitle>
-              <s.icon className={`h-5 w-5 ${s.color}`} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{s.value}</div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* ---------- Přehled ---------- */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Přehled</h2>
+          <div className="h-px flex-1 bg-border" />
+        </div>
 
-      {/* Monthly KPI */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {kpiCards.map((s) => (
-          <Card key={s.label} className="bg-muted/30">
-            <CardContent className="p-4 flex items-center gap-3">
-              <s.icon className={`h-5 w-5 ${s.color}`} />
-              <div>
-                <p className="text-xs text-muted-foreground">{s.label}</p>
-                <p className="text-lg font-bold">{s.value}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Cost trend chart */}
-      {monthlyCostTrend.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-primary" />
-              Náklady za posledních 6 měsíců
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={monthlyCostTrend}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip formatter={(v: number) => `${v.toLocaleString("cs-CZ")} Kč`} />
-                <Legend />
-                <Bar dataKey="PHM" name="PHM" fill="hsl(38, 92%, 50%)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Servis" name="Servis" fill="hsl(0, 84%, 60%)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      )}
-
-      <PendingReservationsWidget />
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* STK soon */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Shield className="h-5 w-5 text-warning" />
-              Blížící se STK
-              {stkSoon.length > 0 && <Badge variant="secondary">{stkSoon.length}</Badge>}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {stkSoon.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">Žádné STK v nejbližších 90 dnech 🎉</p>
-            ) : (
-              <div className="space-y-2 max-h-[220px] overflow-y-auto">
-                {stkSoon.map(s => (
-                  <div key={s.id} className="flex items-center justify-between p-2.5 rounded-md bg-muted/50 hover:bg-muted cursor-pointer transition-colors" onClick={() => navigate(`/vozidla/${s.id}`)}>
-                    <div className="flex items-center gap-2">
-                      <Car className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">{s.label}</span>
-                    </div>
-                    <Badge variant={s.days <= 30 ? "destructive" : "secondary"} className="text-xs">
-                      {s.days < 0 ? `${Math.abs(s.days)}d po` : `${s.days}d`}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Insurance soon */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              Blížící se expirace pojištění
-              {insuranceSoon.length > 0 && <Badge variant="secondary">{insuranceSoon.length}</Badge>}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {insuranceSoon.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">Žádné pojištění neexpiruje v 90 dnech 🎉</p>
-            ) : (
-              <div className="space-y-2 max-h-[220px] overflow-y-auto">
-                {insuranceSoon.map(s => (
-                  <div key={s.id} className="flex items-center justify-between p-2.5 rounded-md bg-muted/50">
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">{s.label}</span>
-                      <Badge variant="outline" className="text-xs">{s.type}</Badge>
-                    </div>
-                    <Badge variant={s.days <= 30 ? "destructive" : "secondary"} className="text-xs">
-                      {s.days < 0 ? `${Math.abs(s.days)}d po` : `${s.days}d`}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Leasing ending */}
-        {leasingSoon.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Clock className="h-5 w-5 text-warning" />
-                Končící leasing
-                <Badge variant="secondary">{leasingSoon.length}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 max-h-[220px] overflow-y-auto">
-                {leasingSoon.map(s => (
-                  <div key={s.id} className="flex items-center justify-between p-2.5 rounded-md bg-muted/50 hover:bg-muted cursor-pointer transition-colors" onClick={() => navigate(`/vozidla/${s.id}`)}>
-                    <span className="text-sm font-medium">{s.label}</span>
-                    <Badge variant={s.days <= 30 ? "destructive" : "secondary"} className="text-xs">
-                      {s.days < 0 ? `${Math.abs(s.days)}d po` : `${s.days}d`}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        {loading ? (
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-[104px] rounded-lg" />)}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <StatCard
+              label="Celkem vozidel"
+              value={vehicleStats.total}
+              hint={`${vehicleStats.active} aktivních`}
+              icon={Car}
+              tone="primary"
+              delay={0}
+              onClick={() => navigate("/vozidla")}
+            />
+            <StatCard
+              label="Aktivních"
+              value={vehicleStats.active}
+              hint={vehicleStats.decommissioned > 0 ? `${vehicleStats.decommissioned} vyřazeno` : "v provozu"}
+              icon={CheckCircle}
+              tone="success"
+              delay={60}
+            />
+            <StatCard
+              label="V servisu"
+              value={vehicleStats.service}
+              hint={serviceSoon.length > 0 ? `${serviceSoon.length} blížících se úkonů` : "bez odstávek"}
+              icon={Wrench}
+              tone="warning"
+              delay={120}
+            />
+            <StatCard
+              label="Rezervace dnes"
+              value={reservationStats.today}
+              hint={`${reservationStats.pending} čeká na schválení`}
+              icon={CalendarDays}
+              tone="info"
+              delay={180}
+              onClick={() => navigate("/rezervace")}
+            />
+          </div>
         )}
+      </section>
 
-        {/* Service plans approaching */}
-        {serviceSoon.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Wrench className="h-5 w-5 text-warning" />
-                Blížící se plánovaný servis
-                <Badge variant="secondary">{serviceSoon.length}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 max-h-[220px] overflow-y-auto">
-                {serviceSoon.map(s => (
-                  <div key={s.id} className="flex items-center justify-between p-2.5 rounded-md bg-muted/50 hover:bg-muted cursor-pointer transition-colors" onClick={() => navigate(`/vozidla/${s.vehicleId}`)}>
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Wrench className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span className="text-sm font-medium truncate">{s.label}</span>
-                      <Badge variant="outline" className="text-xs shrink-0">{s.type}</Badge>
-                    </div>
-                    <Badge variant={s.overdue ? "destructive" : "secondary"} className="text-xs shrink-0">
-                      {s.daysOrKm}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <CalendarDays className="h-5 w-5 text-info" />
-              Aktivní rezervace podle vozidel
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+      {/* ---------- Náklady a provoz ---------- */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Náklady a provoz</h2>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <StatCard label="Tento měsíc km" value={monthlyKpi.totalKm.toLocaleString("cs-CZ")} hint="najeto celkem" icon={Route} tone="primary" spark={kmSpark} />
+          <StatCard label="PHM tento měsíc" value={`${monthlyKpi.fuelCost.toLocaleString("cs-CZ")} Kč`} hint="pohonné hmoty" icon={Fuel} tone="warning" spark={phmSpark} delay={60} />
+          <StatCard label="Servis tento měsíc" value={`${monthlyKpi.serviceCost.toLocaleString("cs-CZ")} Kč`} hint="opravy a údržba" icon={Wrench} tone="destructive" spark={servisSpark} delay={120} />
+          <StatCard label="Počet jízd" value={monthlyKpi.tripCount} hint="záznamů v knize jízd" icon={TrendingUp} tone="success" delay={180} />
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <ChartCard
+            title="Náklady za posledních 6 měsíců"
+            subtitle="PHM a servis podle měsíců"
+            icon={DollarSign}
+            className="lg:col-span-2"
+          >
+            {monthlyCostTrend.length === 0 ? (
+              <EmptyState icon={DollarSign} title="Zatím žádné náklady" hint="Data se objeví po zápisu jízd a servisů." />
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={monthlyCostTrend} margin={{ top: 5, right: 8, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="gradPhm" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--chart-4))" stopOpacity={0.95} />
+                      <stop offset="100%" stopColor="hsl(var(--chart-4))" stopOpacity={0.45} />
+                    </linearGradient>
+                    <linearGradient id="gradServis" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--chart-1))" stopOpacity={0.95} />
+                      <stop offset="100%" stopColor="hsl(var(--chart-1))" stopOpacity={0.45} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid {...gridProps} />
+                  <XAxis dataKey="month" {...axisProps} />
+                  <YAxis {...axisProps} width={64} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)} tis.`} />
+                  <Tooltip cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }} content={<ChartTooltip formatter={formatCzk} />} />
+                  <Legend wrapperStyle={{ fontSize: "12px" }} iconType="circle" />
+                  <Bar dataKey="PHM" name="PHM" fill="url(#gradPhm)" radius={[6, 6, 0, 0]} maxBarSize={38} />
+                  <Bar dataKey="Servis" name="Servis" fill="url(#gradServis)" radius={[6, 6, 0, 0]} maxBarSize={38} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </ChartCard>
+
+          <ChartCard title="Aktivní rezervace podle vozidel" subtitle="Rozložení napříč vozovým parkem" icon={PieIcon} iconClass="text-info">
             {reservationsByVehicle.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">Žádné aktivní rezervace</p>
+              <EmptyState icon={CalendarDays} title="Žádné aktivní rezervace" />
             ) : (
-              <ResponsiveContainer width="100%" height={220}>
+              <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
-                  <Pie data={reservationsByVehicle} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ value }) => `${value}`}>
+                  <Pie
+                    data={reservationsByVehicle}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="45%"
+                    innerRadius={48}
+                    outerRadius={80}
+                    paddingAngle={2}
+                    stroke="hsl(var(--card))"
+                    strokeWidth={2}
+                  >
                     {reservationsByVehicle.map((_, i) => (
-                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: "12px" }} />
+                  <Tooltip content={<ChartTooltip />} />
+                  <Legend wrapperStyle={{ fontSize: "11px" }} iconType="circle" />
                 </PieChart>
               </ResponsiveContainer>
             )}
-          </CardContent>
-        </Card>
-      </div>
+          </ChartCard>
+        </div>
 
-      {/* Extra widgety */}
-      <DashboardExtraWidgets />
+        <DashboardExtraWidgets />
+      </section>
 
-      {/* Today's summary */}
+      {/* ---------- Termíny a rezervace ---------- */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Termíny a rezervace</h2>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+
+        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+          <DeadlinesCard groups={deadlineGroups} />
+          <PendingReservationsWidget />
+        </div>
+      </section>
+
       {reservationStats.today > 0 && (
-        <Card className="border-info/30 bg-info/5">
-          <CardContent className="py-4 flex items-center gap-3">
+        <Card className="border-info/30 bg-info/5 shadow-card">
+          <CardContent className="flex items-center gap-3 py-4">
             <CalendarDays className="h-5 w-5 text-info" />
             <span className="text-sm">
               Dnes je <strong>{reservationStats.today}</strong> {reservationStats.today === 1 ? "aktivní rezervace" : "aktivních rezervací"}.
             </span>
-            <button onClick={() => navigate("/rezervace")} className="text-sm text-info underline ml-auto hover:no-underline">
+            <button onClick={() => navigate("/rezervace")} className="ml-auto text-sm text-info underline hover:no-underline">
               Zobrazit rezervace →
             </button>
           </CardContent>

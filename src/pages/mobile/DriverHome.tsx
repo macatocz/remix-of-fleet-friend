@@ -100,7 +100,7 @@ function PendingApprovalsSection({
       const list = (data as PendingReservation[]) || [];
       const ids = Array.from(new Set(list.map(r => r.vehicle_id)));
       if (ids.length) {
-        const { data: vs } = await supabase.from("vehicles").select("id, rz, znacka").in("id", ids);
+        const { data: vs } = await supabase.from("vehicles").select("id, rz, znacka, nazev_vozu").in("id", ids);
         const map = new Map((vs || []).map((v: any) => [v.id, v]));
         list.forEach(r => { r.vehicle = map.get(r.vehicle_id); });
       }
@@ -161,7 +161,7 @@ function SpravceHome({ greeting, isPrivileged }: { greeting: string; isPrivilege
       const list = (data as UpcomingReservation[]) || [];
       const vIds = Array.from(new Set(list.map(r => r.vehicle_id)));
       if (vIds.length) {
-        const { data: vs } = await supabase.from("vehicles").select("id, rz, znacka").in("id", vIds);
+        const { data: vs } = await supabase.from("vehicles").select("id, rz, znacka, nazev_vozu").in("id", vIds);
         const map = new Map((vs || []).map((v: any) => [v.id, v]));
         list.forEach(r => { r.vehicle = map.get(r.vehicle_id); });
       }
@@ -316,7 +316,7 @@ function DriverOnlyHome({ greeting, isPrivileged }: { greeting: string; isPrivil
       const list = (data as UpcomingReservation[]) || [];
       const ids = Array.from(new Set(list.map(r => r.vehicle_id)));
       if (ids.length) {
-        const { data: vs } = await supabase.from("vehicles").select("id, rz, znacka").in("id", ids);
+        const { data: vs } = await supabase.from("vehicles").select("id, rz, znacka, nazev_vozu").in("id", ids);
         const map = new Map((vs || []).map((v: any) => [v.id, v]));
         list.forEach(r => { r.vehicle = map.get(r.vehicle_id); });
       }

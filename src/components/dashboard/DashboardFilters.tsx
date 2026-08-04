@@ -5,13 +5,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export type PeriodKey = "1" | "3" | "6" | "12";
+export type PeriodKey = "1" | "3" | "6" | "12" | "all";
 
 export const PERIODS: { key: PeriodKey; label: string; title: string }[] = [
   { key: "1", label: "Měsíc", title: "Tento měsíc" },
   { key: "3", label: "3M", title: "Poslední 3 měsíce" },
   { key: "6", label: "6M", title: "Posledních 6 měsíců" },
   { key: "12", label: "12M", title: "Posledních 12 měsíců" },
+  { key: "all", label: "Vše", title: "Celé období" },
 ];
 
 interface Props {

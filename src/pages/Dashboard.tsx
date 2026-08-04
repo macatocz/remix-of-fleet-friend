@@ -46,10 +46,12 @@ export default function Dashboard() {
   const [insuranceSoon, setInsuranceSoon] = useState<{ id: string; label: string; days: number; type: string }[]>([]);
   const [leasingSoon, setLeasingSoon] = useState<{ id: string; label: string; days: number }[]>([]);
   const [serviceSoon, setServiceSoon] = useState<{ id: string; vehicleId: string; label: string; type: string; daysOrKm: string; overdue: boolean }[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Fetch vehicles
     supabase.from("vehicles").select("id, znacka, rz, spravce, stk, status, datum_ukonceni_leasingu, typ_vlastnictvi").then(({ data }) => {
+      setLoading(false);
       if (!data) return;
       setVehicleStats({
         total: data.length,

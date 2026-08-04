@@ -22,7 +22,7 @@ interface UpcomingReservation {
   status: string;
   driver_name: string;
   vehicle_id: string;
-  vehicle?: { rz: string | null; znacka: string | null };
+  vehicle?: { rz: string | null; znacka: string | null; nazev_vozu?: string | null };
 }
 
 function daysUntil(date?: string | null): number | null {
@@ -194,8 +194,8 @@ function SpravceHome({ greeting, isPrivileged }: { greeting: string; isPrivilege
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs text-muted-foreground">Moje vozidlo</p>
-              <p className="font-semibold text-lg truncate">{primary.rz || "—"}</p>
-              <p className="text-sm text-muted-foreground truncate">{primary.znacka || "—"}</p>
+              <p className="font-semibold text-lg truncate">{(primary as any).nazev_vozu || primary.znacka || "—"}</p>
+              <p className="text-sm text-muted-foreground truncate">{primary.rz || "—"}</p>
             </div>
             <Badge variant="outline" className="shrink-0">{primary.status}</Badge>
           </CardContent>
@@ -375,7 +375,7 @@ function DriverOnlyHome({ greeting, isPrivileged }: { greeting: string; isPrivil
             >
               <div className="min-w-0">
                 <p className="text-sm font-medium truncate">
-                  {r.vehicle?.rz || "?"} – {r.vehicle?.znacka || "?"}
+                  {r.vehicle?.nazev_vozu || r.vehicle?.znacka || "?"} · {r.vehicle?.rz || "?"}
                 </p>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <CalendarDays className="h-3 w-3" />

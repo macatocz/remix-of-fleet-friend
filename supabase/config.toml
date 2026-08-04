@@ -8,3 +8,5 @@ verify_jwt = false
 
 [functions.notify-travel-orders]
 verify_jwt = false
+[functions.admin-invite-user]
+verify_jwt = true

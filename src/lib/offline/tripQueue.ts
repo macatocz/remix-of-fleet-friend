@@ -123,7 +123,6 @@ export function startOfflineSync() {
     window.dispatchEvent(new CustomEvent("offline-queue-changed"));
   };
   window.addEventListener("online", tryFlush);
-  window.addEventListener("offline-queue-changed", () => { void tryFlush(); });
   // Try once on startup
   setTimeout(tryFlush, 1500);
 }

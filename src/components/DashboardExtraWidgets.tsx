@@ -1,21 +1,15 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { TrendingUp, DollarSign, Route, MapPin } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
-
-const PIE_COLORS = [
-  "hsl(var(--primary))",
-  "hsl(var(--info))",
-  "hsl(var(--success))",
-  "hsl(var(--warning))",
-  "hsl(var(--destructive))",
-  "hsl(var(--accent))",
-];
+import ChartCard from "@/components/dashboard/ChartCard";
+import ChartTooltip from "@/components/dashboard/ChartTooltip";
+import EmptyState from "@/components/dashboard/EmptyState";
+import RankList from "@/components/dashboard/RankList";
+import { CHART_COLORS, axisProps, gridProps, formatCzk } from "@/components/dashboard/chartTheme";
 
 export default function DashboardExtraWidgets() {
   const [utilization, setUtilization] = useState<{ name: string; value: number }[]>([]);
@@ -97,119 +91,85 @@ export default function DashboardExtraWidgets() {
   }, []);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Vytíženost vozidel */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-primary" />
-            Vytíženost vozidel (30 dní)
-            {utilization.length > 0 && <Badge variant="secondary">{utilization.length}</Badge>}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {utilization.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">Žádná data za posledních 30 dní</p>
-          ) : (
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={utilization} layout="vertical" margin={{ left: 10, right: 20, top: 5, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" allowDecimals={false} />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  width={200}
-                  tick={{ fontSize: 10 }}
-                  tickFormatter={(value: string) => value.length > 30 ? value.slice(0, 27) + "…" : value}
-                />
-                <Tooltip />
-                <Bar dataKey="value" name="Rezervace" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </CardContent>
-      </Card>
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <ChartCard
+        title="Vytíženost vozidel"
+        subtitle="Počet rezervací za posledních 30 dní"
+        icon={TrendingUp}
+        count={utilization.length}
+      >
+        {utilization.length === 0 ? (
+          <EmptyState icon={TrendingUp} title="Žádná data za posledních 30 dní" />
+        ) : (
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={utilization} layout="vertical" margin={{ left: 0, right: 16, top: 5, bottom: 5 }}>
+              <defs>
+                <linearGradient id="gradUtil" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="hsl(var(--chart-1))" stopOpacity={0.5} />
+                  <stop offset="100%" stopColor="hsl(var(--chart-1))" stopOpacity={1} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid {...gridProps} vertical horizontal={false} />
+              <XAxis type="number" allowDecimals={false} {...axisProps} />
+              <YAxis
+                type="category"
+                dataKey="name"
+                width={170}
+                {...axisProps}
+                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                tickFormatter={(value: string) => (value.length > 26 ? value.slice(0, 24) + "…" : value)}
+              />
+              <Tooltip cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }} content={<ChartTooltip />} />
+              <Bar dataKey="value" name="Rezervace" fill="url(#gradUtil)" radius={[0, 6, 6, 0]} maxBarSize={22} />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </ChartCard>
 
-      {/* Rozložení po lokalitách */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-info" />
-            Rozložení po lokalitách
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {byLocation.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">Žádná data</p>
-          ) : (
-            <ResponsiveContainer width="100%" height={240}>
-              <PieChart>
-                <Pie data={byLocation} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={85} label={({ value }) => value}>
-                  {byLocation.map((_, i) => (
-                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend wrapperStyle={{ fontSize: "12px" }} />
-              </PieChart>
-            </ResponsiveContainer>
-          )}
-        </CardContent>
-      </Card>
+      <ChartCard title="Rozložení po lokalitách" subtitle="Počet vozidel podle lokality" icon={MapPin} iconClass="text-info">
+        {byLocation.length === 0 ? (
+          <EmptyState icon={MapPin} title="Žádná data" />
+        ) : (
+          <ResponsiveContainer width="100%" height={280}>
+            <PieChart>
+              <Pie
+                data={byLocation}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="45%"
+                innerRadius={48}
+                outerRadius={82}
+                paddingAngle={2}
+                stroke="hsl(var(--card))"
+                strokeWidth={2}
+              >
+                {byLocation.map((_, i) => (
+                  <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip content={<ChartTooltip />} />
+              <Legend wrapperStyle={{ fontSize: "11px" }} iconType="circle" />
+            </PieChart>
+          </ResponsiveContainer>
+        )}
+      </ChartCard>
 
-      {/* Top náklady */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <DollarSign className="h-5 w-5 text-destructive" />
-            Top 5 nákladů (servis + pojištění)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {topCosts.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">Žádná data</p>
-          ) : (
-            <div className="space-y-2">
-              {topCosts.map((r, i) => (
-                <div key={r.name + i} className="flex items-center justify-between p-2.5 rounded-md bg-muted/50">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="w-6 justify-center">{i + 1}</Badge>
-                    <span className="text-sm font-medium">{r.name}</span>
-                  </div>
-                  <span className="text-sm font-semibold">{r.value.toLocaleString("cs-CZ")} Kč</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <ChartCard title="Top 5 nákladů" subtitle="Servis a roční pojištění" icon={DollarSign} iconClass="text-destructive">
+        {topCosts.length === 0 ? (
+          <EmptyState icon={DollarSign} title="Žádná data" />
+        ) : (
+          <RankList items={topCosts} suffix="Kč" tone="destructive" />
+        )}
+      </ChartCard>
 
-      {/* Top nájezd */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Route className="h-5 w-5 text-success" />
-            Top 5 nájezdů (30 dní)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {topKm.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">Žádná data</p>
-          ) : (
-            <div className="space-y-2">
-              {topKm.map((r, i) => (
-                <div key={r.name + i} className="flex items-center justify-between p-2.5 rounded-md bg-muted/50">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="w-6 justify-center">{i + 1}</Badge>
-                    <span className="text-sm font-medium">{r.name}</span>
-                  </div>
-                  <span className="text-sm font-semibold">{r.value.toLocaleString("cs-CZ")} km</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <ChartCard title="Top 5 nájezdů" subtitle="Posledních 30 dní" icon={Route} iconClass="text-success">
+        {topKm.length === 0 ? (
+          <EmptyState icon={Route} title="Žádná data" />
+        ) : (
+          <RankList items={topKm} suffix="km" tone="success" />
+        )}
+      </ChartCard>
     </div>
   );
 }

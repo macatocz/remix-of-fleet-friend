@@ -1,16 +1,22 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Car, CheckCircle, Wrench, AlertTriangle, CalendarDays, Clock, Shield, DollarSign, Fuel, TrendingUp, Route } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Car, CheckCircle, Wrench, CalendarDays, DollarSign, Fuel, TrendingUp, Route, PieChart as PieIcon } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend, LineChart, Line
+  PieChart, Pie, Cell, Legend
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import VehicleNotifications from "@/components/VehicleNotifications";
 import DashboardExtraWidgets from "@/components/DashboardExtraWidgets";
 import PendingReservationsWidget from "@/components/PendingReservationsWidget";
+import StatCard from "@/components/dashboard/StatCard";
+import ChartCard from "@/components/dashboard/ChartCard";
+import ChartTooltip from "@/components/dashboard/ChartTooltip";
+import EmptyState from "@/components/dashboard/EmptyState";
+import DeadlinesCard, { DeadlineGroup } from "@/components/dashboard/DeadlinesCard";
+import { CHART_COLORS, axisProps, gridProps, formatCzk } from "@/components/dashboard/chartTheme";
 
 function parseDateString(s: string | null): Date | null {
   if (!s) return null;
@@ -28,8 +34,6 @@ function daysDiff(date: Date): number {
   target.setHours(0, 0, 0, 0);
   return Math.round((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
-
-const PIE_COLORS = ["hsl(142, 71%, 45%)", "hsl(38, 92%, 50%)", "hsl(0, 84%, 60%)", "hsl(217, 71%, 45%)", "hsl(280, 60%, 50%)", "hsl(190, 70%, 45%)"];
 
 export default function Dashboard() {
   const navigate = useNavigate();

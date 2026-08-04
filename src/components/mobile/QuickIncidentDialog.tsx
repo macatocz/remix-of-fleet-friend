@@ -12,6 +12,8 @@ import {
 import { useDriverContext } from "@/hooks/useDriverContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { insertOrQueue } from "@/lib/offline/tripQueue";
+import { WifiOff } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -34,7 +36,7 @@ export default function QuickIncidentDialog({ open, onOpenChange }: Props) {
       return;
     }
     setSaving(true);
-    const { error } = await supabase.from("incidents").insert({
+    const res = await insertOrQueue("incidents", {
       vehicle_id: vehicleId,
       driver_id: driver?.id || null,
       date: new Date().toISOString().split("T")[0],
@@ -44,8 +46,10 @@ export default function QuickIncidentDialog({ open, onOpenChange }: Props) {
       status: "nahlaseno",
     });
     setSaving(false);
-    if (error) { toast.error("Chyba: " + error.message); return; }
-    toast.success("Škoda nahlášena");
+    if (res.status === "error") { toast.error("Chyba: " + res.message); return; }
+    toast.success(res.status === "queued"
+      ? "Offline – uloženo, odešle se po obnovení sítě"
+      : "Škoda nahlášena");
     setVehicleId(""); setLocation(""); setDescription(""); setEstimatedCost("");
     onOpenChange(false);
   };
@@ -82,6 +86,11 @@ export default function QuickIncidentDialog({ open, onOpenChange }: Props) {
             <Label>Odhadovaná škoda (Kč)</Label>
             <Input className="h-12" type="number" inputMode="numeric" value={estimatedCost} onChange={e => setEstimatedCost(e.target.value)} />
           </div>
+          {typeof navigator !== "undefined" && !navigator.onLine && (
+            <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400 border border-amber-500/30 bg-amber-500/10 rounded p-2">
+              <WifiOff className="h-4 w-4" /> Offline – hlášení se uloží lokálně a odešle při obnovení sítě.
+            </div>
+          )}
         </div>
         <DrawerFooter className="pb-safe gap-2">
           <Button className="w-full h-12 text-base" onClick={submit} disabled={saving}>

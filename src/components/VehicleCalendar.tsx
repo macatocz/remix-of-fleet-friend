@@ -92,12 +92,13 @@ export default function VehicleCalendar({ vehicleId }: { vehicleId: string }) {
   useEffect(() => { fetchReservations(); }, [vehicleId]);
 
   useEffect(() => {
-    supabase
-      .from("drivers")
-      .select("id, first_name, last_name")
-      .eq("status", "aktivní")
-      .order("last_name")
-      .then(({ data }) => setDrivers(data || []));
+    supabase.rpc("list_drivers_public").then(({ data }) =>
+      setDrivers(
+        ((data || []) as any[])
+          .filter((d) => d.status === "aktivní")
+          .sort((a, b) => (a.last_name || "").localeCompare(b.last_name || ""))
+      )
+    );
   }, []);
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });

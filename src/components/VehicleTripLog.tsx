@@ -109,8 +109,10 @@ export default function VehicleTripLog({ vehicleId, readOnly = false }: Props) {
       supabase.from("vehicles").select("id, znacka, rz").eq("status", "aktivní")
         .then(({ data }) => setVehicles((data as any[]) || []));
     }
-    supabase.from("drivers").select("id, first_name, last_name").eq("status", "aktivní")
-      .then(({ data }) => setDrivers((data as any[]) || []));
+    supabase.rpc("list_drivers_public")
+      .then(({ data }) =>
+        setDrivers(((data as any[]) || []).filter((d) => d.status === "aktivní"))
+      );
   }, [vehicleId]);
 
   const openNew = () => {

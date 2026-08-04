@@ -1672,6 +1672,18 @@ export type Database = {
       }
       is_driver_id: { Args: { _driver_id: string }; Returns: boolean }
       is_driver_named: { Args: { _driver_name: string }; Returns: boolean }
+      is_staff: { Args: never; Returns: boolean }
+      list_drivers_public: {
+        Args: never
+        Returns: {
+          first_name: string
+          id: string
+          last_name: string
+          status: string
+          user_id: string
+          vehicle_id: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "dispatcer" | "ridic"

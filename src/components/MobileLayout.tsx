@@ -41,7 +41,6 @@ const adminNav: NavItem[] = [
 
 const moreItems = [
   { url: "/m/servis", label: "Servis", icon: Wrench },
-  { url: "/m/kniha-jizd", label: "Kniha jízd", icon: BookOpen },
   { url: "/m/skody", label: "Škody", icon: AlertTriangle },
   { url: "/m/naklady", label: "Náklady", icon: Coins },
   { url: "/m/tankovaci-karty", label: "Karty", icon: CreditCard },

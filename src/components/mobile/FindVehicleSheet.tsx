@@ -16,6 +16,7 @@ interface FreeVehicle {
   id: string;
   rz: string | null;
   znacka: string | null;
+  nazev_vozu?: string | null;
   kategorie: string | null;
 }
 
@@ -65,7 +66,7 @@ export default function FindVehicleSheet({ open, onOpenChange, onPick }: Props) 
 
     const { data: vs } = await supabase
       .from("vehicles")
-      .select("id, rz, znacka, kategorie")
+      .select("id, rz, znacka, nazev_vozu, kategorie")
       .eq("status", "aktivní")
       .order("rz", { ascending: true });
 
@@ -133,9 +134,9 @@ export default function FindVehicleSheet({ open, onOpenChange, onPick }: Props) 
                         <Car className="h-5 w-5 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold truncate">{v.rz || "—"}</p>
+                        <p className="font-semibold truncate">{v.nazev_vozu || v.znacka || "—"}</p>
                         <p className="text-xs text-muted-foreground truncate">
-                          {v.znacka || "—"}{v.kategorie ? ` · ${v.kategorie}` : ""}
+                          {v.rz || "—"}{v.kategorie ? ` · ${v.kategorie}` : ""}
                         </p>
                       </div>
                       <span className="text-xs text-primary font-medium">Vybrat</span>

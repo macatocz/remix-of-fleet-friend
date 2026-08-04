@@ -88,7 +88,7 @@ export default function MyVehicle() {
                 <Car className="h-6 w-6 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-base truncate">{v.znacka || "—"}</p>
+                <p className="font-semibold text-base truncate">{(v as any).nazev_vozu || v.znacka || "—"}</p>
                 <p className="text-sm text-muted-foreground">{v.rz || "bez RZ"}</p>
               </div>
               <Badge variant="outline" className="shrink-0">{v.status}</Badge>

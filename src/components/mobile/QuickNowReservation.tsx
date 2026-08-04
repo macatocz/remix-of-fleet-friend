@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useDriverContext } from "@/hooks/useDriverContext";
 import { toast } from "sonner";
 import { Zap } from "lucide-react";
+import { insertOrQueue } from "@/lib/offline/tripQueue";
 
 interface Props { open: boolean; onOpenChange: (o: boolean) => void; }
 
@@ -72,7 +73,7 @@ export default function QuickNowReservation({ open, onOpenChange }: Props) {
     if (!vehicleId) { toast.error("Žádné volné vozidlo"); return; }
     setSaving(true);
     const driverName = driver ? `${driver.first_name} ${driver.last_name}` : "Řidič";
-    const { error } = await supabase.from("reservations").insert({
+    const res = await insertOrQueue("reservations", {
       vehicle_id: vehicleId,
       driver_name: driverName,
       date_from: dateStr,
@@ -83,8 +84,8 @@ export default function QuickNowReservation({ open, onOpenChange }: Props) {
       status: "schváleno",
     });
     setSaving(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Rezervováno");
+    if (res.status === "error") { toast.error(res.message); return; }
+    toast.success(res.status === "queued" ? "Offline – rezervace se odešle po obnovení sítě" : "Rezervováno");
     setPurpose("");
     onOpenChange(false);
   };

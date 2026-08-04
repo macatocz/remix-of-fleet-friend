@@ -16,6 +16,7 @@ import ChartCard from "@/components/dashboard/ChartCard";
 import ChartTooltip from "@/components/dashboard/ChartTooltip";
 import EmptyState from "@/components/dashboard/EmptyState";
 import DeadlinesCard, { DeadlineGroup } from "@/components/dashboard/DeadlinesCard";
+import DashboardFilters, { PeriodKey, PERIODS } from "@/components/dashboard/DashboardFilters";
 import { CHART_COLORS, axisProps, gridProps, formatCzk } from "@/components/dashboard/chartTheme";
 
 function parseDateString(s: string | null): Date | null {
@@ -47,6 +48,11 @@ export default function Dashboard() {
   const [leasingSoon, setLeasingSoon] = useState<{ id: string; label: string; days: number }[]>([]);
   const [serviceSoon, setServiceSoon] = useState<{ id: string; vehicleId: string; label: string; type: string; daysOrKm: string; overdue: boolean }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState<PeriodKey>("6");
+  const [vehicleFilter, setVehicleFilter] = useState("all");
+  const [driverFilter, setDriverFilter] = useState("all");
+  const periodTitle = PERIODS.find((p) => p.key === period)?.title || "";
+  const months = Number(period);
 
   useEffect(() => {
     // Fetch vehicles
@@ -144,55 +150,92 @@ export default function Dashboard() {
       setInsuranceSoon(ins.sort((a, b) => a.days - b.days));
     });
 
-    // Fetch reservations
-    const todayStr = new Date().toISOString().split("T")[0];
-    supabase.from("reservations").select("id, status, date_from, date_to, vehicle_id, vehicles(znacka, rz)")
-      .in("status", ["čeká", "schváleno"])
-      .then(({ data }) => {
-        if (!data) return;
-        const active = data.filter(r => r.status === "schváleno").length;
-        const pending = data.filter(r => r.status === "čeká").length;
-        const today = data.filter(r => r.date_from <= todayStr && r.date_to >= todayStr && r.status === "schváleno").length;
-        setReservationStats({ active, pending, today });
-
-        const byVehicle: Record<string, { name: string; value: number }> = {};
-        data.forEach(r => {
-          const vid = r.vehicle_id;
-          const vLabel = r.vehicles ? `${(r.vehicles as any).znacka || "?"} (${(r.vehicles as any).rz || "?"})` : vid;
-          if (!byVehicle[vid]) byVehicle[vid] = { name: vLabel, value: 0 };
-          byVehicle[vid].value++;
-        });
-        setReservationsByVehicle(Object.values(byVehicle).sort((a, b) => b.value - a.value).slice(0, 6));
-      });
-
-    // This month KPIs from trip_logs
-    const now = new Date();
-    const thisMonthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-    const thisMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0];
-
-    supabase.from("trip_logs").select("km_total, fuel_price, other_price, fuel_quantity")
-      .gte("date", thisMonthStart).lte("date", thisMonthEnd)
-      .then(({ data }) => {
-        if (!data) return;
-        const fuelCost = data.reduce((s, r: any) => s + (Number(r.fuel_price) || 0), 0);
-        const totalKm = data.reduce((s, r: any) => s + (r.km_total || 0), 0);
-        const tripCount = data.filter((r: any) => r.km_total && r.km_total > 0).length;
-        setMonthlyKpi(prev => ({ ...prev, fuelCost: Math.round(fuelCost), totalKm, tripCount }));
-      });
-
-    supabase.from("service_records").select("cost")
-      .gte("date", thisMonthStart).lte("date", thisMonthEnd)
-      .then(({ data }) => {
-        if (!data) return;
-        const serviceCost = data.reduce((s, r: any) => s + (Number(r.cost) || 0), 0);
-        setMonthlyKpi(prev => ({ ...prev, serviceCost: Math.round(serviceCost) }));
-      });
-
-    // Monthly cost trend (last 6 months)
-    fetchCostTrend();
   }, []);
 
-  const fetchCostTrend = async () => {
+  // Period / vehicle / driver filtered data
+  useEffect(() => {
+    let cancelled = false;
+
+    const run = async () => {
+      let driverName: string | null = null;
+      if (driverFilter !== "all") {
+        const { data } = await supabase.from("drivers").select("first_name, last_name").eq("id", driverFilter).maybeSingle();
+        if (data) driverName = `${data.first_name || ""} ${data.last_name || ""}`.trim();
+      }
+
+      const now = new Date();
+      const rangeStart = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
+      const startStr = `${rangeStart.getFullYear()}-${String(rangeStart.getMonth() + 1).padStart(2, "0")}-01`;
+      const endStr = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0];
+
+      // trips in range
+      let tripQ = supabase.from("trip_logs").select("date, km_total, fuel_price, other_price, driver_id, vehicle_id")
+        .gte("date", startStr).lte("date", endStr);
+      if (vehicleFilter !== "all") tripQ = tripQ.eq("vehicle_id", vehicleFilter);
+      if (driverFilter !== "all") tripQ = tripQ.eq("driver_id", driverFilter);
+
+      let svcQ = supabase.from("service_records").select("date, cost, vehicle_id")
+        .gte("date", startStr).lte("date", endStr);
+      if (vehicleFilter !== "all") svcQ = svcQ.eq("vehicle_id", vehicleFilter);
+
+      let resQ = supabase.from("reservations").select("id, status, date_from, date_to, vehicle_id, driver_name, vehicles(znacka, rz, nazev_vozu)")
+        .in("status", ["čeká", "schváleno"]);
+      if (vehicleFilter !== "all") resQ = resQ.eq("vehicle_id", vehicleFilter);
+      if (driverName) resQ = resQ.eq("driver_name", driverName);
+
+      const [tripRes, svcRes, resRes] = await Promise.all([tripQ, svcQ, resQ]);
+      if (cancelled) return;
+
+      const trips = (tripRes.data || []) as any[];
+      const svcs = (svcRes.data || []) as any[];
+
+      setMonthlyKpi({
+        fuelCost: Math.round(trips.reduce((s, r) => s + (Number(r.fuel_price) || 0), 0)),
+        serviceCost: Math.round(svcs.reduce((s, r) => s + (Number(r.cost) || 0), 0)),
+        totalKm: trips.reduce((s, r) => s + (r.km_total || 0), 0),
+        tripCount: trips.filter((r) => r.km_total && r.km_total > 0).length,
+      });
+
+      // trend by month over the selected range (min 6 buckets for readability)
+      const buckets = Math.max(months, 6);
+      const results: any[] = [];
+      for (let i = buckets - 1; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        const inMonth = (rows: any[]) => rows.filter((r) => (r.date || "").startsWith(key));
+        const mt = inMonth(trips);
+        const ms = inMonth(svcs);
+        results.push({
+          month: `${d.getMonth() + 1}/${d.getFullYear()}`,
+          PHM: Math.round(mt.reduce((s, r) => s + (Number(r.fuel_price) || 0) + (Number(r.other_price) || 0), 0)),
+          Servis: Math.round(ms.reduce((s, r) => s + (Number(r.cost) || 0), 0)),
+          Km: mt.reduce((s, r) => s + (r.km_total || 0), 0),
+        });
+      }
+      setMonthlyCostTrend(results);
+
+      const reservations = (resRes.data || []) as any[];
+      const todayStr = new Date().toISOString().split("T")[0];
+      setReservationStats({
+        active: reservations.filter((r) => r.status === "schváleno").length,
+        pending: reservations.filter((r) => r.status === "čeká").length,
+        today: reservations.filter((r) => r.date_from <= todayStr && r.date_to >= todayStr && r.status === "schváleno").length,
+      });
+      const byVehicle: Record<string, { name: string; value: number }> = {};
+      reservations.forEach((r) => {
+        const v = r.vehicles;
+        const label = v ? (v.nazev_vozu || `${v.znacka || "?"} (${v.rz || "?"})`) : r.vehicle_id;
+        if (!byVehicle[r.vehicle_id]) byVehicle[r.vehicle_id] = { name: label, value: 0 };
+        byVehicle[r.vehicle_id].value++;
+      });
+      setReservationsByVehicle(Object.values(byVehicle).sort((a, b) => b.value - a.value).slice(0, 6));
+    };
+
+    run();
+    return () => { cancelled = true; };
+  }, [months, vehicleFilter, driverFilter]);
+
+  const unusedFetchCostTrend = async () => {
     const now = new Date();
     const results: any[] = [];
     for (let i = 5; i >= 0; i--) {

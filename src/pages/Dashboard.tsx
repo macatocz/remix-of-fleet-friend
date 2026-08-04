@@ -52,7 +52,7 @@ export default function Dashboard() {
   const [vehicleFilter, setVehicleFilter] = useState("all");
   const [driverFilter, setDriverFilter] = useState("all");
   const periodTitle = PERIODS.find((p) => p.key === period)?.title || "";
-  const months = Number(period);
+  const months = period === "all" ? 0 : Number(period);
 
   useEffect(() => {
     // Fetch vehicles
@@ -164,18 +164,19 @@ export default function Dashboard() {
       }
 
       const now = new Date();
-      const rangeStart = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
+      const allTime = months === 0;
+      const rangeStart = new Date(now.getFullYear(), now.getMonth() - (Math.max(months, 1) - 1), 1);
       const startStr = `${rangeStart.getFullYear()}-${String(rangeStart.getMonth() + 1).padStart(2, "0")}-01`;
       const endStr = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0];
 
       // trips in range
-      let tripQ = supabase.from("trip_logs").select("date, km_total, fuel_price, other_price, driver_id, vehicle_id")
-        .gte("date", startStr).lte("date", endStr);
+      let tripQ = supabase.from("trip_logs").select("date, km_total, fuel_price, other_price, driver_id, vehicle_id");
+      if (!allTime) tripQ = tripQ.gte("date", startStr).lte("date", endStr);
       if (vehicleFilter !== "all") tripQ = tripQ.eq("vehicle_id", vehicleFilter);
       if (driverFilter !== "all") tripQ = tripQ.eq("driver_id", driverFilter);
 
-      let svcQ = supabase.from("service_records").select("date, cost, vehicle_id")
-        .gte("date", startStr).lte("date", endStr);
+      let svcQ = supabase.from("service_records").select("date, cost, vehicle_id");
+      if (!allTime) svcQ = svcQ.gte("date", startStr).lte("date", endStr);
       if (vehicleFilter !== "all") svcQ = svcQ.eq("vehicle_id", vehicleFilter);
 
       let resQ = supabase.from("reservations").select("id, status, date_from, date_to, vehicle_id, driver_name, vehicles(znacka, rz, nazev_vozu)")
@@ -197,7 +198,15 @@ export default function Dashboard() {
       });
 
       // trend by month over the selected range (min 6 buckets for readability)
-      const buckets = Math.max(months, 6);
+      let buckets = Math.max(months, 6);
+      if (allTime) {
+        const dates = [...trips, ...svcs].map((r) => r.date).filter(Boolean).sort();
+        if (dates.length) {
+          const first = new Date(dates[0]);
+          const span = (now.getFullYear() - first.getFullYear()) * 12 + (now.getMonth() - first.getMonth()) + 1;
+          buckets = Math.min(Math.max(span, 6), 36);
+        }
+      }
       const results: any[] = [];
       for (let i = buckets - 1; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);

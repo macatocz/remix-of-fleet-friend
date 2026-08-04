@@ -54,16 +54,16 @@ export function useDriverContext() {
 
         const { data: mine } = await supabase
           .from("vehicles")
-          .select("id, znacka, rz, status, stk, zelena_karta")
+          .select("id, znacka, rz, nazev_vozu, status, stk, zelena_karta")
           .eq("spravce_id", drv.id);
         if (!cancelled) setMyVehicles((mine as DriverVehicle[]) || []);
       }
 
       const { data: all } = await supabase
         .from("vehicles")
-        .select("id, znacka, rz, status, stk, zelena_karta")
+        .select("id, znacka, rz, nazev_vozu, status, stk, zelena_karta")
         .eq("status", "aktivní")
-        .order("rz", { ascending: true });
+        .order("nazev_vozu", { ascending: true });
       if (!cancelled) setAllVehicles((all as DriverVehicle[]) || []);
 
       setLoading(false);

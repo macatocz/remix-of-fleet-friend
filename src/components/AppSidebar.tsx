@@ -16,7 +16,6 @@ const mainItems = [
   { title: "Rezervace", url: "/rezervace", icon: CalendarDays, description: "Plánování jízd a schvalování" },
   { title: "Servis", url: "/servis", icon: Wrench, description: "Servisní plány a záznamy" },
   { title: "Škody", url: "/skody", icon: AlertTriangle, description: "Nehody a pojistné události" },
-  { title: "Kniha jízd", url: "/kniha-jizd", icon: BookOpen, description: "Přehled jízd a export" },
   { title: "Náklady", url: "/naklady", icon: DollarSign, description: "Provozní a leasingové výdaje" },
   { title: "Tankovací karty", url: "/tankovaci-karty", icon: CreditCard, description: "Palivové karty a PINy" },
   { title: "Cestovní příkazy", url: "/cestovni-prikazy", icon: FileText, description: "Tuzemské i zahraniční CP" },

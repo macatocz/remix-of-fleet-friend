@@ -11,7 +11,13 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { AlertTriangle, Loader2, Search } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { AlertTriangle, Loader2, Search, Plus } from "lucide-react";
 
 interface Row {
   id: string;
@@ -35,17 +41,59 @@ export default function Incidents() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const emptyForm = {
+    vehicle_id: "",
+    date: new Date().toISOString().slice(0, 10),
+    location: "",
+    description: "",
+    estimated_cost: "",
+    status: "nahlaseno",
+  };
+  const [form, setForm] = useState(emptyForm);
+
+  const fetchRows = async () => {
+    const { data } = await supabase
+      .from("incidents")
+      .select("*, vehicles(znacka, rz)")
+      .order("date", { ascending: false });
+    setRows((data || []) as any);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from("incidents")
-        .select("*, vehicles(znacka, rz)")
-        .order("date", { ascending: false });
-      setRows((data || []) as any);
-      setLoading(false);
-    })();
+    fetchRows();
+    supabase
+      .from("vehicles")
+      .select("id, znacka, rz, nazev_vozu")
+      .eq("status", "aktivní")
+      .order("nazev_vozu")
+      .then(({ data }) => setVehicles(data || []));
   }, []);
+
+  const saveIncident = async () => {
+    if (!form.vehicle_id || !form.date) {
+      toast.error("Vyberte vozidlo a datum");
+      return;
+    }
+    setSaving(true);
+    const { error } = await supabase.from("incidents").insert({
+      vehicle_id: form.vehicle_id,
+      date: form.date,
+      location: form.location || null,
+      description: form.description || null,
+      estimated_cost: form.estimated_cost ? Number(form.estimated_cost) : null,
+      status: form.status,
+    });
+    setSaving(false);
+    if (error) { toast.error("Chyba: " + error.message); return; }
+    toast.success("Škoda zaznamenána");
+    setForm(emptyForm);
+    setDialogOpen(false);
+    fetchRows();
+  };
 
   const filtered = rows.filter((r) => {
     if (statusFilter !== "all" && r.status !== statusFilter) return false;
@@ -66,15 +114,79 @@ export default function Incidents() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start gap-2">
-        <AlertTriangle className="h-6 w-6 text-warning mt-1" />
-        <div>
-          <h1 className="text-2xl font-bold">Škody a pojistné události</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Evidence nehod a pojistných událostí včetně fotodokumentace.
-          </p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-2">
+          <AlertTriangle className="h-6 w-6 text-warning mt-1" />
+          <div>
+            <h1 className="text-2xl font-bold">Škody a pojistné události</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Evidence nehod a pojistných událostí včetně fotodokumentace.
+            </p>
+          </div>
         </div>
+        <Button onClick={() => setDialogOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" /> Nová škoda
+        </Button>
       </div>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Nová škoda</DialogTitle>
+            <DialogDescription>Zaznamenejte novou škodní / pojistnou událost.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div>
+              <Label>Vozidlo *</Label>
+              <Select value={form.vehicle_id} onValueChange={(v) => setForm((p) => ({ ...p, vehicle_id: v }))}>
+                <SelectTrigger><SelectValue placeholder="Vyberte vozidlo" /></SelectTrigger>
+                <SelectContent>
+                  {vehicles.map((v) => (
+                    <SelectItem key={v.id} value={v.id}>
+                      {v.nazev_vozu || v.znacka || "—"} · {v.rz || "—"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Datum *</Label>
+                <Input type="date" value={form.date} onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))} />
+              </div>
+              <div>
+                <Label>Odhad nákladů (Kč)</Label>
+                <Input type="number" value={form.estimated_cost} onChange={(e) => setForm((p) => ({ ...p, estimated_cost: e.target.value }))} />
+              </div>
+            </div>
+            <div>
+              <Label>Místo</Label>
+              <Input value={form.location} onChange={(e) => setForm((p) => ({ ...p, location: e.target.value }))} placeholder="Praha, parkoviště…" />
+            </div>
+            <div>
+              <Label>Popis</Label>
+              <Textarea value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} rows={3} />
+            </div>
+            <div>
+              <Label>Stav</Label>
+              <Select value={form.status} onValueChange={(v) => setForm((p) => ({ ...p, status: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="nahlaseno">Nahlášeno</SelectItem>
+                  <SelectItem value="v_reseni">V řešení</SelectItem>
+                  <SelectItem value="uzavreno">Uzavřeno</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Zrušit</Button>
+            <Button onClick={saveIncident} disabled={saving}>
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Uložit
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>

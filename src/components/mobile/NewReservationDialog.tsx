@@ -13,6 +13,10 @@ import {
 import { useDriverContext } from "@/hooks/useDriverContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  PURPOSE_TYPES, checkAdvanceLimit, checkPrivateLimit, getPrivateUsage,
+  PRIVATE_LIMIT_WEEKENDS, PRIVATE_LIMIT_WORKDAYS,
+} from "@/lib/reservationRules";
 
 interface Props {
   open: boolean;
@@ -38,6 +42,8 @@ export default function NewReservationDialog({
   const [timeFrom, setTimeFrom] = useState(initialTimeFrom || "08:00");
   const [timeTo, setTimeTo] = useState(initialTimeTo || "17:00");
   const [purpose, setPurpose] = useState("");
+  const [purposeType, setPurposeType] = useState("pracovne");
+  const [usage, setUsage] = useState<{ weekends: number; workdays: number } | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -50,11 +56,19 @@ export default function NewReservationDialog({
     }
   }, [open, initialVehicleId, initialDateFrom, initialDateTo, initialTimeFrom, initialTimeTo]);
 
+  useEffect(() => {
+    if (!open || purposeType !== "soukrome" || !driver?.fullName || !dateFrom) {
+      setUsage(null);
+      return;
+    }
+    getPrivateUsage(driver.fullName, dateFrom).then(setUsage).catch(() => setUsage(null));
+  }, [open, purposeType, driver?.fullName, dateFrom]);
+
   const vehicles = myVehicles.length ? [...myVehicles, ...allVehicles.filter(a => !myVehicles.find(m => m.id === a.id))] : allVehicles;
 
   const reset = () => {
     setVehicleId(""); setDateFrom(today); setDateTo(today);
-    setTimeFrom("08:00"); setTimeTo("17:00"); setPurpose("");
+    setTimeFrom("08:00"); setTimeTo("17:00"); setPurpose(""); setPurposeType("pracovne");
   };
 
   const submit = async () => {
@@ -65,7 +79,15 @@ export default function NewReservationDialog({
     if (dateTo < dateFrom) { toast.error("Datum do musí být ≥ datum od"); return; }
     if (!driver) { toast.error("Váš účet není propojen s řidičem"); return; }
 
+    const advanceErr = checkAdvanceLimit(dateFrom);
+    if (advanceErr) { toast.error(advanceErr); return; }
+
     setSaving(true);
+
+    if (purposeType === "soukrome") {
+      const limitErr = await checkPrivateLimit(driver.fullName, dateFrom, dateTo);
+      if (limitErr) { setSaving(false); toast.error(limitErr, { duration: 6000 }); return; }
+    }
 
     const { data: conflicts, error: confErr } = await supabase
       .from("reservations")
@@ -110,6 +132,7 @@ export default function NewReservationDialog({
       time_from: timeFrom,
       time_to: timeTo,
       purpose: purpose || null,
+      purpose_type: purposeType,
       status: "čeká",
     });
     setSaving(false);
@@ -134,7 +157,7 @@ export default function NewReservationDialog({
               <SelectContent>
                 {vehicles.map(v => (
                   <SelectItem key={v.id} value={v.id} className="py-3">
-                    {v.rz || "?"} – {v.znacka || "?"}
+                    {(v as any).nazev_vozu || v.znacka || "?"} · {v.rz || "?"}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -159,7 +182,23 @@ export default function NewReservationDialog({
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>Účel cesty</Label>
+            <Label>Účel cesty *</Label>
+            <Select value={purposeType} onValueChange={setPurposeType}>
+              <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PURPOSE_TYPES.map(p => (
+                  <SelectItem key={p.value} value={p.value} className="py-3">{p.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {purposeType === "soukrome" && usage && (
+              <p className="text-xs text-muted-foreground">
+                Čerpáno tento měsíc: {usage.weekends}/{PRIVATE_LIMIT_WEEKENDS} víkend, {usage.workdays}/{PRIVATE_LIMIT_WORKDAYS} pracovních dní.
+              </p>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <Label>Poznámka k účelu</Label>
             <Textarea value={purpose} onChange={e => setPurpose(e.target.value)} rows={3} placeholder="Služební jednání v Brně" className="text-base" />
           </div>
           <p className="text-xs text-muted-foreground">

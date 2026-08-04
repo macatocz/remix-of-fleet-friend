@@ -739,6 +739,7 @@ export type Database = {
           driver_name: string
           id: string
           purpose: string | null
+          purpose_type: string
           status: string
           time_from: string | null
           time_to: string | null
@@ -752,6 +753,7 @@ export type Database = {
           driver_name: string
           id?: string
           purpose?: string | null
+          purpose_type?: string
           status?: string
           time_from?: string | null
           time_to?: string | null
@@ -765,6 +767,7 @@ export type Database = {
           driver_name?: string
           id?: string
           purpose?: string | null
+          purpose_type?: string
           status?: string
           time_from?: string | null
           time_to?: string | null
@@ -1513,6 +1516,7 @@ export type Database = {
           datum_ukonceni_leasingu: string | null
           datum_zahajeni_leasingu: string | null
           doba_leasingu: string | null
+          hlavni_uzivatel: string | null
           id: string
           kategorie: string | null
           leasingova_spolecnost: string | null
@@ -1552,6 +1556,7 @@ export type Database = {
           datum_ukonceni_leasingu?: string | null
           datum_zahajeni_leasingu?: string | null
           doba_leasingu?: string | null
+          hlavni_uzivatel?: string | null
           id?: string
           kategorie?: string | null
           leasingova_spolecnost?: string | null
@@ -1591,6 +1596,7 @@ export type Database = {
           datum_ukonceni_leasingu?: string | null
           datum_zahajeni_leasingu?: string | null
           doba_leasingu?: string | null
+          hlavni_uzivatel?: string | null
           id?: string
           kategorie?: string | null
           leasingova_spolecnost?: string | null

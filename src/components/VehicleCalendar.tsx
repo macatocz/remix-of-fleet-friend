@@ -20,6 +20,7 @@ import {
 } from "date-fns";
 import { cs } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import { PURPOSE_TYPES } from "@/lib/reservationRules";
 
 interface Reservation {
   id: string;
@@ -70,6 +71,7 @@ export default function VehicleCalendar({ vehicleId }: { vehicleId: string }) {
   const [formTimeFrom, setFormTimeFrom] = useState("08:00");
   const [formTimeTo, setFormTimeTo] = useState("17:00");
   const [formPurpose, setFormPurpose] = useState("");
+  const [formPurposeType, setFormPurposeType] = useState("pracovne");
   const [saving, setSaving] = useState(false);
   const [detailRes, setDetailRes] = useState<Reservation | null>(null);
   const [drivers, setDrivers] = useState<{ id: string; first_name: string; last_name: string }[]>([]);
@@ -80,7 +82,7 @@ export default function VehicleCalendar({ vehicleId }: { vehicleId: string }) {
     setLoading(true);
     const { data } = await supabase
       .from("reservations")
-      .select("id, driver_name, date_from, date_to, time_from, time_to, purpose, status")
+      .select("id, driver_name, date_from, date_to, time_from, time_to, purpose, purpose_type, status")
       .eq("vehicle_id", vehicleId)
       .order("date_from");
     setReservations(data || []);
@@ -132,6 +134,7 @@ export default function VehicleCalendar({ vehicleId }: { vehicleId: string }) {
     setFormTimeTo(hour !== undefined ? `${String(hour + 1).padStart(2, "0")}:00` : "17:00");
     setFormDriver("");
     setFormPurpose("");
+    setFormPurposeType("pracovne");
     setDialogOpen(true);
   };
 
@@ -143,6 +146,7 @@ export default function VehicleCalendar({ vehicleId }: { vehicleId: string }) {
     setFormTimeFrom(r.time_from?.slice(0, 5) || "08:00");
     setFormTimeTo(r.time_to?.slice(0, 5) || "17:00");
     setFormPurpose(r.purpose || "");
+    setFormPurposeType((r as any).purpose_type || "pracovne");
     setDetailRes(null);
     setDialogOpen(true);
   };
@@ -186,6 +190,7 @@ export default function VehicleCalendar({ vehicleId }: { vehicleId: string }) {
       time_from: formTimeFrom,
       time_to: formTimeTo,
       purpose: formPurpose.trim() || null,
+      purpose_type: formPurposeType,
     };
     const { error } = editId
       ? await supabase.from("reservations").update(payload).eq("id", editId)
@@ -543,7 +548,18 @@ export default function VehicleCalendar({ vehicleId }: { vehicleId: string }) {
               </div>
             </div>
             <div>
-              <Label>Účel</Label>
+              <Label>Účel cesty *</Label>
+              <Select value={formPurposeType} onValueChange={setFormPurposeType}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PURPOSE_TYPES.map(p => (
+                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Poznámka k účelu</Label>
               <Textarea placeholder="Účel cesty..." value={formPurpose} onChange={e => setFormPurpose(e.target.value)} />
             </div>
           </div>

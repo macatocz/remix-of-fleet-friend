@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useDriverContext } from "@/hooks/useDriverContext";
 import { MobileUserMenu } from "@/components/mobile/MobileUserMenu";
 import { NotificationBell } from "@/components/NotificationBell";
+import { OfflineIndicator } from "@/components/mobile/OfflineIndicator";
 import {
   Drawer, DrawerContent, DrawerHeader, DrawerTitle,
 } from "@/components/ui/drawer";
@@ -83,6 +84,7 @@ export function MobileLayout() {
         <div className="h-16 flex items-center justify-between px-4">
           <h1 className="font-semibold text-base">🚗 Vozový park</h1>
           <div className="flex items-center gap-1">
+            <OfflineIndicator />
             <NotificationBell />
             <MobileUserMenu />
           </div>

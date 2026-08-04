@@ -116,11 +116,12 @@ export default function VehicleHandover({ vehicleId }: Props) {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from("drivers")
-        .select("id, first_name, last_name, status")
-        .order("last_name", { ascending: true });
-      setDrivers(((data || []) as any[]).filter((d) => (d.status || "aktivní") === "aktivní"));
+      const { data } = await supabase.rpc("list_drivers_public");
+      setDrivers(
+        ((data || []) as any[])
+          .filter((d) => (d.status || "aktivní") === "aktivní")
+          .sort((a, b) => (a.last_name || "").localeCompare(b.last_name || ""))
+      );
     })();
   }, []);
 

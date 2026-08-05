@@ -395,18 +395,50 @@ function FieldRow({ field, vehicle, editing, editData, onEdit }: {
   );
 }
 
-function EditableCard({ title, fields, vehicle, editing, editData, onEdit }: {
-  title: string; fields: FieldDef[]; vehicle: any; editing: boolean; editData: Record<string, string>; onEdit: (key: string, val: string) => void;
+function LeasingProgress({ vehicle }: { vehicle: any }) {
+  const from = vehicle.datum_zahajeni_leasingu;
+  const to = vehicle.datum_ukonceni_leasingu;
+  if (!isValidDateStr(from) || !isValidDateStr(to)) return null;
+  const start = parseISO(from);
+  const end = parseISO(to);
+  const totalMonths = differenceInMonths(end, start);
+  if (totalMonths <= 0) return null;
+  const elapsed = Math.max(0, Math.min(totalMonths, differenceInMonths(new Date(), start)));
+  const remaining = totalMonths - elapsed;
+
+  const najezd = parseFloat(String(vehicle.najezd_za_rok ?? "").replace(/[^\d.,-]/g, "").replace(",", "."));
+  const totalKm = najezd ? Math.round(najezd * totalMonths / 12) : 0;
+  const planKm = totalKm ? Math.round(totalKm * elapsed / totalMonths) : 0;
+
+  return (
+    <div className="space-y-3 rounded-lg bg-muted/40 p-3">
+      <MiniProgress
+        label="Doba leasingu"
+        valueText={`${elapsed} / ${totalMonths} měs. (zbývá ${remaining})`}
+        percent={(elapsed / totalMonths) * 100}
+      />
+      {totalKm > 0 && (
+        <MiniProgress
+          label="Plánovaný nájezd"
+          valueText={`${planKm.toLocaleString("cs-CZ")} / ${totalKm.toLocaleString("cs-CZ")} km`}
+          percent={(planKm / totalKm) * 100}
+          tone="muted"
+        />
+      )}
+    </div>
+  );
+}
+
+function EditableCard({ title, icon, accent, right, header, fields, vehicle, editing, editData, onEdit }: {
+  title: string; icon: React.ReactNode; accent?: "primary" | "neutral"; right?: React.ReactNode; header?: React.ReactNode;
+  fields: FieldDef[]; vehicle: any; editing: boolean; editData: Record<string, string>; onEdit: (key: string, val: string) => void;
 }) {
   const vignetteField = fields.find(f => f.type === "vignettes");
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <InfoCard title={title} icon={icon} accent={accent} right={editing ? undefined : right} className="h-full">
         <div className={editing ? "space-y-3" : ""}>
+          {!editing && header}
           {editing ? (
             <>
               {fields.filter(f => f.type !== "vignettes").map(f => <FieldRow key={f.key} field={f} vehicle={vehicle} editing editData={editData} onEdit={onEdit} />)}
@@ -418,10 +450,10 @@ function EditableCard({ title, fields, vehicle, editing, editData, onEdit }: {
               )}
             </>
           ) : (
-            <dl className="space-y-3 text-sm">
+            <dl className="space-y-1 text-sm">
               {fields.filter(f => f.type !== "vignettes").map(f => <FieldRow key={f.key} field={f} vehicle={vehicle} editing={false} editData={editData} onEdit={onEdit} />)}
               {vignetteField && (
-                <div className="flex justify-between">
+                <div className="flex justify-between rounded px-2 py-1.5 transition-colors hover:bg-muted/50">
                   <dt className="text-muted-foreground">{vignetteField.label}</dt>
                   <dd className="font-medium text-right">
                     <VehicleVignettes vehicleId={vehicle.id} editing={false} />
@@ -431,8 +463,7 @@ function EditableCard({ title, fields, vehicle, editing, editData, onEdit }: {
             </dl>
           )}
         </div>
-      </CardContent>
-    </Card>
+    </InfoCard>
   );
 }
 

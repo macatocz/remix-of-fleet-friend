@@ -243,11 +243,11 @@ export default function VehicleNotifications() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold">Notifikace</h2>
+      <div className="flex items-center justify-end mb-3">
         <span className="text-sm text-muted-foreground">{totalCount} upozornění</span>
       </div>
       <div className="flex flex-col lg:flex-row gap-4">
+
         {renderColumn("Kritické", critical, "critical",
           "bg-destructive/5", "border-destructive/20", "bg-destructive/20 text-destructive", "bg-destructive")}
         {renderColumn("Varování", warning, "warning",

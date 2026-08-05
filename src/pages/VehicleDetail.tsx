@@ -844,7 +844,7 @@ export default function VehicleDetail() {
           </div>
         </TabsContent>
 
-        <TabsContent value="calendar" className="mt-6">
+        <TabsContent value="calendar" className="mt-6 max-w-full overflow-x-auto">
           <Card>
             <CardContent className="pt-6">
               <VehicleCalendar vehicleId={vehicle.id} />
@@ -852,7 +852,7 @@ export default function VehicleDetail() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="documents" className="mt-6">
+        <TabsContent value="documents" className="mt-6 max-w-full overflow-x-auto">
           <Card>
             <CardContent className="pt-6">
               <VehicleDocuments vehicleId={vehicle.id} />
@@ -861,7 +861,7 @@ export default function VehicleDetail() {
         </TabsContent>
 
 
-        <TabsContent value="service" className="mt-6">
+        <TabsContent value="service" className="mt-6 max-w-full overflow-x-auto">
           <Tabs defaultValue="history">
             <TabsList>
               <TabsTrigger value="history">Historie servisu</TabsTrigger>
@@ -884,7 +884,7 @@ export default function VehicleDetail() {
           </Tabs>
         </TabsContent>
 
-        <TabsContent value="triplog" className="mt-6">
+        <TabsContent value="triplog" className="mt-6 max-w-full overflow-x-auto">
           <Card>
             <CardContent className="pt-6">
               <VehicleTripLogInline vehicleId={vehicle.id} />
@@ -892,7 +892,7 @@ export default function VehicleDetail() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="fuelcards" className="mt-6">
+        <TabsContent value="fuelcards" className="mt-6 max-w-full overflow-x-auto">
           <Card>
             <CardContent className="pt-6">
               <VehicleFuelCards vehicleId={vehicle.id} defaultOwner={vehicle.spravce} />
@@ -900,7 +900,7 @@ export default function VehicleDetail() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="handover" className="mt-6">
+        <TabsContent value="handover" className="mt-6 max-w-full overflow-x-auto">
           <Card>
             <CardContent className="pt-6">
               <VehicleHandover vehicleId={vehicle.id} />
@@ -908,7 +908,7 @@ export default function VehicleDetail() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="incidents" className="mt-6">
+        <TabsContent value="incidents" className="mt-6 max-w-full overflow-x-auto">
           <Card>
             <CardContent className="pt-6">
               <VehicleIncidents vehicleId={vehicle.id} />

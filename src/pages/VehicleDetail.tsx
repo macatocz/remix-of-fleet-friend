@@ -652,8 +652,11 @@ export default function VehicleDetail() {
   return (
     <div className="space-y-6">
       <Card className={cn("overflow-hidden border-l-4 transition-shadow hover:shadow-[var(--shadow-card-hover)]", headerAccentClass(vehicle.status))}>
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 pl-6">
-          <div className="flex items-start gap-4 min-w-0">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 pl-4">
+          <div className="flex items-start gap-3 min-w-0">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/vozidla")} className="shrink-0 mt-1">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
             <span className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-full border", headerIconClass(vehicle.status))}>
               <Car className="h-6 w-6" />
             </span>

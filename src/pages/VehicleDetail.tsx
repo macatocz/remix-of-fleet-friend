@@ -192,6 +192,26 @@ const statusBadge = (status: string) => {
   }
 };
 
+function headerAccentClass(status: string) {
+  switch (status) {
+    case "aktivní": return "border-l-primary";
+    case "objednáno": return "border-l-info";
+    case "v_servisu": return "border-l-warning";
+    case "vyřazeno": return "border-l-muted-foreground/60";
+    default: return "border-l-muted-foreground/60";
+  }
+}
+
+function headerIconClass(status: string) {
+  switch (status) {
+    case "aktivní": return "bg-primary/10 text-primary";
+    case "objednáno": return "bg-info/10 text-info";
+    case "v_servisu": return "bg-warning/10 text-warning";
+    case "vyřazeno": return "bg-muted text-muted-foreground";
+    default: return "bg-muted text-muted-foreground";
+  }
+}
+
 function isValidDateStr(val: string | null | undefined): boolean {
   if (!val) return false;
   try {

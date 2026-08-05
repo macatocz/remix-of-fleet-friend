@@ -1904,17 +1904,6 @@ export type Database = {
       }
     }
     Functions: {
-      can_access_vehicle: { Args: { _vehicle_id: string }; Returns: boolean }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
-      is_driver_id: { Args: { _driver_id: string }; Returns: boolean }
-      is_driver_named: { Args: { _driver_name: string }; Returns: boolean }
-      is_staff: { Args: never; Returns: boolean }
       list_drivers_public: {
         Args: never
         Returns: {

@@ -422,7 +422,8 @@ export default function Dashboard() {
             {monthlyCostTrend.length === 0 ? (
               <EmptyState icon={DollarSign} title="Zatím žádné náklady" hint="Data se objeví po zápisu jízd a servisů." />
             ) : (
-              <ResponsiveContainer width="100%" height={220}>
+              <div className="h-[180px] sm:h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={monthlyCostTrend} margin={{ top: 5, right: 8, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="gradPhm" x1="0" y1="0" x2="0" y2="1">
@@ -436,13 +437,14 @@ export default function Dashboard() {
                   </defs>
                   <CartesianGrid {...gridProps} />
                   <XAxis dataKey="month" {...axisProps} />
-                  <YAxis {...axisProps} width={64} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)} tis.`} />
+                  <YAxis {...axisProps} width={48} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)} tis.`} />
                   <Tooltip cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }} content={<ChartTooltip formatter={formatCzk} />} />
-                  <Legend wrapperStyle={{ fontSize: "12px" }} iconType="circle" />
+                  <Legend wrapperStyle={{ fontSize: "11px" }} iconType="circle" />
                   <Bar dataKey="PHM" name="PHM" fill="url(#gradPhm)" radius={[6, 6, 0, 0]} maxBarSize={38} />
                   <Bar dataKey="Servis" name="Servis" fill="url(#gradServis)" radius={[6, 6, 0, 0]} maxBarSize={38} />
                 </BarChart>
               </ResponsiveContainer>
+              </div>
             )}
           </ChartCard>
 
@@ -450,7 +452,8 @@ export default function Dashboard() {
             {reservationsByVehicle.length === 0 ? (
               <EmptyState icon={CalendarDays} title="Žádné aktivní rezervace" />
             ) : (
-              <ResponsiveContainer width="100%" height={220}>
+              <div className="h-[200px] sm:h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={reservationsByVehicle}
@@ -472,6 +475,7 @@ export default function Dashboard() {
                   <Legend wrapperStyle={{ fontSize: "11px" }} iconType="circle" />
                 </PieChart>
               </ResponsiveContainer>
+              </div>
             )}
           </ChartCard>
         </div>

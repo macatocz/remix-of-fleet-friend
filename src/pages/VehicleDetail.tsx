@@ -651,85 +651,97 @@ export default function VehicleDetail() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/vozidla")}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold">{vehicle.nazev_vozu || vehicle.znacka || "Vozidlo"}</h1>
-          <p className="text-muted-foreground">
-            {vehicle.rz || "—"} · {vehicle.spravce || "—"}
-            {vehicle.nazev_vozu && vehicle.znacka ? ` · ${vehicle.znacka}` : ""}
-          </p>
-          <div className="flex items-center gap-1.5 mt-1 text-sm text-muted-foreground">
-            <Gauge className="h-4 w-4" />
-            {mileageRecords.length > 0 ? (
-              <span>
-                <span className="font-medium text-foreground">{mileageRecords[0].km.toLocaleString("cs-CZ")} km</span>
-                {" "}· k {format(parseISO(mileageRecords[0].recorded_at), "d. M. yyyy", { locale: cs })}
-              </span>
+      <Card className={cn("overflow-hidden border-l-4 transition-shadow hover:shadow-[var(--shadow-card-hover)]", headerAccentClass(vehicle.status))}>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 pl-6">
+          <div className="flex items-start gap-4 min-w-0">
+            <span className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-full border", headerIconClass(vehicle.status))}>
+              <Car className="h-6 w-6" />
+            </span>
+            <div className="min-w-0 space-y-1.5">
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="text-2xl font-bold tracking-tight text-foreground">{vehicle.nazev_vozu || vehicle.znacka || "Vozidlo"}</h1>
+                {statusBadge(vehicle.status)}
+              </div>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-muted-foreground">
+                <PlateBadge rz={vehicle.rz} />
+                <span className="inline-flex items-center gap-1.5">
+                  <User className="h-3.5 w-3.5" />
+                  {vehicle.spravce || "—"}
+                </span>
+                {vehicle.znacka && (
+                  <span>{vehicle.znacka}</span>
+                )}
+                <span className="inline-flex items-center gap-1.5">
+                  <Gauge className="h-3.5 w-3.5" />
+                  {mileageRecords.length > 0 ? (
+                    <>
+                      <span className="font-medium text-foreground">{mileageRecords[0].km.toLocaleString("cs-CZ")} km</span>
+                      <span>· k {format(parseISO(mileageRecords[0].recorded_at), "d. M. yyyy", { locale: cs })}</span>
+                    </>
+                  ) : (
+                    <span>Žádný záznam</span>
+                  )}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {!editing ? (
+              <>
+                <Button variant="outline" size="sm" onClick={startEditing}>
+                  <Pencil className="mr-2 h-4 w-4" />Upravit
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                      <Trash2 className="mr-2 h-4 w-4" />Smazat
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Smazat vozidlo?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Opravdu chcete smazat vozidlo <strong>{vehicle.znacka}</strong> ({vehicle.rz})? Tato akce je nevratná a smaže i všechny přiložené dokumenty a rezervace.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Zrušit</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        Smazat
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </>
             ) : (
-              <span>Žádný záznam</span>
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const suggested = buildVehicleName({
+                      znacka: editData.znacka ?? vehicle.znacka,
+                      spravce: editData.spravce ?? vehicle.spravce,
+                      lokalita: editData.lokalita ?? vehicle.lokalita,
+                    });
+                    handleEdit("nazev_vozu", suggested);
+                  }}
+                  title="Vygenerovat z modelu a správce"
+                >
+                  <Sparkles className="mr-2 h-4 w-4" />Návrh názvu
+                </Button>
+                <Button variant="outline" size="sm" onClick={cancelEditing}>
+                  <X className="mr-2 h-4 w-4" />Zrušit
+                </Button>
+                <Button size="sm" onClick={handleSave} disabled={saving}>
+                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  Uložit
+                </Button>
+              </>
             )}
           </div>
         </div>
-        <div className="ml-auto flex items-center gap-2">
-          {statusBadge(vehicle.status)}
-          {!editing ? (
-            <>
-              <Button variant="outline" size="sm" onClick={startEditing}>
-                <Pencil className="mr-2 h-4 w-4" />Upravit
-              </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                    <Trash2 className="mr-2 h-4 w-4" />Smazat
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Smazat vozidlo?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Opravdu chcete smazat vozidlo <strong>{vehicle.znacka}</strong> ({vehicle.rz})? Tato akce je nevratná a smaže i všechny přiložené dokumenty a rezervace.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Zrušit</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                      Smazat
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </>
-          ) : (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const suggested = buildVehicleName({
-                    znacka: editData.znacka ?? vehicle.znacka,
-                    spravce: editData.spravce ?? vehicle.spravce,
-                    lokalita: editData.lokalita ?? vehicle.lokalita,
-                  });
-                  handleEdit("nazev_vozu", suggested);
-                }}
-                title="Vygenerovat z modelu a správce"
-              >
-                <Sparkles className="mr-2 h-4 w-4" />Návrh názvu
-              </Button>
-              <Button variant="outline" size="sm" onClick={cancelEditing}>
-                <X className="mr-2 h-4 w-4" />Zrušit
-              </Button>
-              <Button size="sm" onClick={handleSave} disabled={saving}>
-                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                Uložit
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
+      </Card>
 
       <VehicleAlerts
         vehicle={vehicle}

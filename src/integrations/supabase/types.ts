@@ -159,6 +159,13 @@ export type Database = {
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "document_folders_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_basic"
+            referencedColumns: ["id"]
+          },
         ]
       }
       drivers: {
@@ -219,6 +226,13 @@ export type Database = {
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "drivers_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_basic"
+            referencedColumns: ["id"]
+          },
         ]
       }
       fuel_cards: {
@@ -274,6 +288,13 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fuel_cards_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_basic"
             referencedColumns: ["id"]
           },
         ]
@@ -476,6 +497,13 @@ export type Database = {
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "incidents_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_basic"
+            referencedColumns: ["id"]
+          },
         ]
       }
       inspections: {
@@ -525,6 +553,13 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspections_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_basic"
             referencedColumns: ["id"]
           },
         ]
@@ -584,6 +619,13 @@ export type Database = {
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "insurance_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_basic"
+            referencedColumns: ["id"]
+          },
         ]
       }
       key_handovers: {
@@ -633,6 +675,13 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "key_handovers_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_basic"
             referencedColumns: ["id"]
           },
         ]
@@ -818,6 +867,13 @@ export type Database = {
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "reservations_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_basic"
+            referencedColumns: ["id"]
+          },
         ]
       }
       service_plans: {
@@ -912,6 +968,13 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_records_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_basic"
             referencedColumns: ["id"]
           },
         ]
@@ -1197,6 +1260,13 @@ export type Database = {
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "travel_orders_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_basic"
+            referencedColumns: ["id"]
+          },
         ]
       }
       trip_logs: {
@@ -1283,6 +1353,13 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_logs_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_basic"
             referencedColumns: ["id"]
           },
         ]
@@ -1405,6 +1482,13 @@ export type Database = {
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "vehicle_checklists_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_basic"
+            referencedColumns: ["id"]
+          },
         ]
       }
       vehicle_documents: {
@@ -1453,6 +1537,13 @@ export type Database = {
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "vehicle_documents_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_basic"
+            referencedColumns: ["id"]
+          },
         ]
       }
       vehicle_mileage: {
@@ -1495,6 +1586,13 @@ export type Database = {
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "vehicle_mileage_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_basic"
+            referencedColumns: ["id"]
+          },
         ]
       }
       vehicle_vignettes: {
@@ -1532,6 +1630,13 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_vignettes_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_basic"
             referencedColumns: ["id"]
           },
         ]
@@ -1669,6 +1774,48 @@ export type Database = {
       }
     }
     Views: {
+      company_public: {
+        Row: {
+          address: string | null
+          city: string | null
+          dic: string | null
+          foreign_meal_rates_override: Json | null
+          fuel_price_override: Json | null
+          ico: string | null
+          id: string | null
+          km_rate_override: Json | null
+          meal_rates_override: Json | null
+          name: string | null
+          zip: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          dic?: string | null
+          foreign_meal_rates_override?: Json | null
+          fuel_price_override?: Json | null
+          ico?: string | null
+          id?: string | null
+          km_rate_override?: Json | null
+          meal_rates_override?: Json | null
+          name?: string | null
+          zip?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          dic?: string | null
+          foreign_meal_rates_override?: Json | null
+          fuel_price_override?: Json | null
+          ico?: string | null
+          id?: string | null
+          km_rate_override?: Json | null
+          meal_rates_override?: Json | null
+          name?: string | null
+          zip?: string | null
+        }
+        Relationships: []
+      }
       vehicle_key_status: {
         Row: {
           last_handover_id: string | null
@@ -1689,6 +1836,71 @@ export type Database = {
           vehicle_id?: string | null
         }
         Relationships: []
+      }
+      vehicles_basic: {
+        Row: {
+          created_at: string | null
+          dalnicni_znamka: string | null
+          hlavni_uzivatel: string | null
+          id: string | null
+          kategorie: string | null
+          lokalita: string | null
+          nazev_vozu: string | null
+          parkovaci_stani: string | null
+          rz: string | null
+          spravce: string | null
+          spravce_id: string | null
+          status: string | null
+          stk: string | null
+          updated_at: string | null
+          zelena_karta: string | null
+          znacka: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dalnicni_znamka?: string | null
+          hlavni_uzivatel?: string | null
+          id?: string | null
+          kategorie?: string | null
+          lokalita?: string | null
+          nazev_vozu?: string | null
+          parkovaci_stani?: string | null
+          rz?: string | null
+          spravce?: string | null
+          spravce_id?: string | null
+          status?: string | null
+          stk?: string | null
+          updated_at?: string | null
+          zelena_karta?: string | null
+          znacka?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dalnicni_znamka?: string | null
+          hlavni_uzivatel?: string | null
+          id?: string | null
+          kategorie?: string | null
+          lokalita?: string | null
+          nazev_vozu?: string | null
+          parkovaci_stani?: string | null
+          rz?: string | null
+          spravce?: string | null
+          spravce_id?: string | null
+          status?: string | null
+          stk?: string | null
+          updated_at?: string | null
+          zelena_karta?: string | null
+          znacka?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_spravce_id_fkey"
+            columns: ["spravce_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {

@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Plus, Trash2, Save, FileDown, RefreshCw, CheckCircle2, Banknote, Send, XCircle, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -92,17 +93,23 @@ export default function TravelOrderDetail() {
     queryFn: async () => (await supabase.from("company_public").select("*").maybeSingle()).data,
   });
 
-  const { data: existing } = useQuery({
+  const { data: existing, isLoading: existingLoading, error: existingError } = useQuery({
     queryKey: ["travel_order", orderId],
     enabled: !!orderId,
     queryFn: async () => {
-      const [{ data: order }, { data: l }, { data: m }, { data: e }] = await Promise.all([
+      const [orderResult, legsResult, mealsResult, expensesResult] = await Promise.all([
         supabase.from("travel_orders").select("*").eq("id", orderId!).single(),
         supabase.from("travel_order_legs").select("*").eq("travel_order_id", orderId!).order("sort_order"),
         supabase.from("travel_order_meals").select("*").eq("travel_order_id", orderId!).order("date"),
         supabase.from("travel_order_expenses").select("*").eq("travel_order_id", orderId!).order("created_at"),
       ]);
-      return { order, legs: l || [], meals: m || [], expenses: e || [] };
+      if (orderResult.error) throw orderResult.error;
+      return {
+        order: orderResult.data,
+        legs: legsResult.data || [],
+        meals: mealsResult.data || [],
+        expenses: expensesResult.data || [],
+      };
     },
   });
 
@@ -382,6 +389,32 @@ export default function TravelOrderDetail() {
     const fname = `CP-${number || "novy"}-${driver?.last_name || ""}.pdf`;
     doc.save(fname);
   };
+
+  if (!isNew && existingLoading) {
+    return (
+      <div className="space-y-4 max-w-5xl">
+        <Skeleton className="h-10 w-64 max-w-full" />
+        <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
+
+  if (!isNew && (existingError || !existing?.order)) {
+    return (
+      <div className="space-y-4 max-w-5xl">
+        <Button variant="ghost" onClick={() => navigate(base)}>
+          <ArrowLeft className="h-4 w-4" />Zpět na cestovní příkazy
+        </Button>
+        <Card>
+          <CardHeader><CardTitle>Příkaz nelze zobrazit</CardTitle></CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            Cestovní příkaz nebyl nalezen nebo k němu nemáte přístup.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 max-w-5xl">

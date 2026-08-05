@@ -31,6 +31,13 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   const onMobileRoute = location.pathname.startsWith("/m");
 
+  // Zachovej konkrétní cestovní příkaz i tehdy, když některý starší odkaz
+  // nebo uložená PWA otevře jeho desktopovou adresu na telefonu.
+  const mobileTravelOrderPath = location.pathname.match(/^\/cestovni-prikazy\/([^/]+)$/);
+  if (isMobile && !preferDesktop && mobileTravelOrderPath) {
+    return <Navigate to={`/m/cestovni-prikazy/${mobileTravelOrderPath[1]}`} replace />;
+  }
+
   // Driver-only: vždy mobilní UI (kromě detailu vozidla)
   if (isDriverOnly && !onMobileRoute && !location.pathname.startsWith("/vozidla/")) {
     return <Navigate to="/m" replace />;

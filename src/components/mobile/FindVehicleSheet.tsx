@@ -65,7 +65,7 @@ export default function FindVehicleSheet({ open, onOpenChange, onPick }: Props) 
     });
 
     const { data: vs } = await supabase
-      .from("vehicles")
+      .from("vehicles_basic")
       .select("id, rz, znacka, nazev_vozu, kategorie")
       .eq("status", "aktivní")
       .order("rz", { ascending: true });

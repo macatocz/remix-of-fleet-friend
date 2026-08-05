@@ -180,81 +180,68 @@ export default function VehicleNotifications() {
   const info = alerts.filter(a => a.type === "info");
   const totalCount = alerts.length;
 
-  const INITIAL_SHOW = 3;
+  const SEGMENTS = [
+    { key: "critical", title: "Kritické", items: critical, dot: "bg-destructive", active: "border-destructive/40 bg-destructive/10", count: "text-destructive" },
+    { key: "warning", title: "Varování", items: warning, dot: "bg-warning", active: "border-warning/40 bg-warning/10", count: "text-warning" },
+    { key: "info", title: "Informace", items: info, dot: "bg-info", active: "border-info/40 bg-info/10", count: "text-info" },
+  ] as const;
 
-  const renderColumn = (
-    title: string,
-    items: Alert[],
-    key: string,
-    bgClass: string,
-    borderClass: string,
-    badgeBg: string,
-    dotColor: string,
-  ) => {
-    const showAll = expanded[key];
-    const visible = showAll ? items : items.slice(0, INITIAL_SHOW);
-    const remaining = items.length - INITIAL_SHOW;
+  const openSegment = SEGMENTS.find((s) => expanded[s.key]);
 
-    return (
-      <div className={`rounded-lg border ${borderClass} ${bgClass} p-4 flex-1 min-w-[280px]`}>
-        <div className="flex items-center gap-2 mb-3">
-          <h3 className="font-semibold text-sm">{title}</h3>
-          <Badge variant="secondary" className={badgeBg}>{items.length}</Badge>
-        </div>
-        <div className="space-y-2">
-          {visible.map((a, i) => (
-            <div key={i} className="flex items-start gap-2 bg-background/60 rounded-md p-2.5 cursor-pointer hover:bg-background/90 transition-colors" onClick={() => navigate(`/vozidla/${a.vehicleId}`)}>
-              <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${dotColor}`} />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-xs font-medium truncate flex items-center gap-1">
-                    <Car className="h-3 w-3 shrink-0" />
-                    {a.vehicleLabel}
-                  </p>
-                  {a.daysLeft < 0 ? (
-                    <Badge variant="destructive" className="text-[10px] shrink-0">Expirováno</Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-[10px] shrink-0">{a.daysLeft} dní</Badge>
-                  )}
-                </div>
-                <p className="text-[11px] text-muted-foreground mt-0.5">{a.message}</p>
-              </div>
-            </div>
-          ))}
-          {items.length === 0 && (
-            <p className="text-xs text-muted-foreground text-center py-4">Žádná upozornění</p>
-          )}
-        </div>
-        {remaining > 0 && (
-          <button
-            onClick={() => setExpanded(prev => ({ ...prev, [key]: !prev[key] }))}
-            className="text-xs text-muted-foreground hover:text-foreground mt-2 flex items-center gap-1"
-          >
-            {showAll ? (
-              <><ChevronUp className="h-3 w-3" />Skrýt</>
-            ) : (
-              <><ChevronDown className="h-3 w-3" />+ Zobrazit dalších {remaining}</>
-            )}
-          </button>
-        )}
-      </div>
-    );
-  };
+  const toggle = (key: string) =>
+    setExpanded((prev) => ({ critical: false, warning: false, info: false, [key]: !prev[key] }));
 
   return (
-    <div>
-      <div className="flex items-center justify-end mb-3">
-        <span className="text-sm text-muted-foreground">{totalCount} upozornění</span>
+    <div className="rounded-lg border bg-card shadow-card">
+      <div className="grid grid-cols-3 divide-x divide-border">
+        {SEGMENTS.map((s) => (
+          <button
+            key={s.key}
+            onClick={() => toggle(s.key)}
+            disabled={s.items.length === 0}
+            className={`flex items-center justify-center gap-2 border-b px-3 py-2.5 text-left transition-colors ${
+              expanded[s.key] ? s.active : "border-transparent hover:bg-muted/50"
+            } ${s.items.length === 0 ? "opacity-50" : ""}`}
+          >
+            <span className={`h-2 w-2 shrink-0 rounded-full ${s.dot}`} />
+            <span className={`text-base font-bold tabular-nums ${s.count}`}>{s.items.length}</span>
+            <span className="truncate text-xs text-muted-foreground">{s.title}</span>
+            {s.items.length > 0 &&
+              (expanded[s.key] ? (
+                <ChevronUp className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              ))}
+          </button>
+        ))}
       </div>
-      <div className="flex flex-col lg:flex-row gap-4">
 
-        {renderColumn("Kritické", critical, "critical",
-          "bg-destructive/5", "border-destructive/20", "bg-destructive/20 text-destructive", "bg-destructive")}
-        {renderColumn("Varování", warning, "warning",
-          "bg-warning/5", "border-warning/20", "bg-warning/20 text-warning", "bg-warning")}
-        {renderColumn("Informace", info, "info",
-          "bg-info/5", "border-info/20", "bg-info/20 text-info", "bg-info")}
-      </div>
+      {openSegment ? (
+        <div className="max-h-[260px] space-y-1 overflow-y-auto p-2">
+          {openSegment.items.map((a, i) => (
+            <div
+              key={i}
+              onClick={() => navigate(`/vozidla/${a.vehicleId}`)}
+              className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-muted/60"
+            >
+              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${openSegment.dot}`} />
+              <Car className="h-3 w-3 shrink-0 text-muted-foreground" />
+              <span className="shrink-0 truncate text-xs font-medium">{a.vehicleLabel}</span>
+              <span className="truncate text-[11px] text-muted-foreground">{a.message}</span>
+              <Badge
+                variant={a.daysLeft < 0 ? "destructive" : "outline"}
+                className="ml-auto shrink-0 text-[10px] tabular-nums"
+              >
+                {a.daysLeft < 0 ? "Expirováno" : `${a.daysLeft} dní`}
+              </Badge>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="px-3 py-1.5 text-center text-[11px] text-muted-foreground">
+          {totalCount === 0 ? "Žádná upozornění" : `Celkem ${totalCount} upozornění – klikněte pro detail`}
+        </div>
+      )}
     </div>
   );
 }

@@ -40,19 +40,18 @@ export default function DeadlinesCard({ groups }: { groups: DeadlineGroup[] }) {
 
   return (
     <Card className="shadow-card">
-      <CardHeader className="border-b border-border/60 bg-muted/30 py-3">
-        <CardTitle className="flex items-center gap-2 text-base">
+      <CardHeader className="border-b border-border/60 bg-muted/30 px-4 py-2.5">
+        <CardTitle className="flex items-center gap-2 text-sm">
           <CalendarClock className="h-4 w-4 text-warning" />
           Blížící se termíny
-          {total > 0 && <Badge variant="secondary">{total}</Badge>}
+          {total > 0 && <Badge variant="secondary" className="text-[10px]">{total}</Badge>}
         </CardTitle>
-        <p className="text-xs text-muted-foreground">STK, pojištění, leasing a plánovaný servis na jednom místě.</p>
       </CardHeader>
-      <CardContent className="pt-4">
+      <CardContent className="p-3">
         <Tabs defaultValue={first}>
-          <TabsList className="mb-3 flex h-auto w-full flex-wrap justify-start gap-1">
+          <TabsList className="mb-2 flex h-auto w-full flex-wrap justify-start gap-1 p-0.5">
             {groups.map((g) => (
-              <TabsTrigger key={g.key} value={g.key} className="gap-1.5 text-xs">
+              <TabsTrigger key={g.key} value={g.key} className="gap-1 px-2 py-1 text-[11px]">
                 {g.label}
                 <span className="rounded-full bg-muted px-1.5 text-[10px] font-semibold tabular-nums">
                   {g.items.length}
@@ -63,9 +62,9 @@ export default function DeadlinesCard({ groups }: { groups: DeadlineGroup[] }) {
           {groups.map((g) => (
             <TabsContent key={g.key} value={g.key} className="mt-0">
               {g.items.length === 0 ? (
-                <EmptyState icon={CheckCircle2} title={g.emptyText} hint="Nic nevyžaduje pozornost." />
+                <p className="py-4 text-center text-xs text-muted-foreground">{g.emptyText}</p>
               ) : (
-                <div className="max-h-[280px] space-y-2 overflow-y-auto pr-1">
+                <div className="max-h-[220px] space-y-1 overflow-y-auto pr-1">
                   {g.items.map((item) => {
                     const u = urgency(item);
                     return (
@@ -73,18 +72,18 @@ export default function DeadlinesCard({ groups }: { groups: DeadlineGroup[] }) {
                         key={item.id}
                         onClick={item.onClick}
                         className={cn(
-                          "relative flex items-center justify-between gap-2 overflow-hidden rounded-md bg-muted/40 py-2 pl-4 pr-2.5 transition-colors",
+                          "relative flex items-center justify-between gap-2 overflow-hidden rounded-md bg-muted/40 py-1.5 pl-3 pr-2 transition-colors",
                           item.onClick && "cursor-pointer hover:bg-muted"
                         )}
                       >
                         <span className={cn("absolute inset-y-0 left-0 w-1", STRIPE[u])} />
                         <div className="flex min-w-0 items-center gap-2">
-                          <span className="truncate text-sm font-medium">{item.label}</span>
+                          <span className="truncate text-xs font-medium">{item.label}</span>
                           {item.tag && <Badge variant="outline" className="shrink-0 text-[10px]">{item.tag}</Badge>}
                         </div>
                         <Badge
                           variant={u === "destructive" ? "destructive" : "secondary"}
-                          className="shrink-0 text-xs tabular-nums"
+                          className="shrink-0 text-[10px] tabular-nums"
                         >
                           {item.badge}
                         </Badge>

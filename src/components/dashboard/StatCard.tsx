@@ -40,18 +40,18 @@ export default function StatCard({ label, value, hint, icon: Icon, tone = "prima
         onClick && "cursor-pointer hover:-translate-y-0.5 hover:shadow-card-hover"
       )}
     >
-      <div className="flex items-start gap-3 p-4">
-        <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full", t.ring)}>
-          <Icon className={cn("h-5 w-5", t.icon)} />
+      <div className="flex items-center gap-2.5 p-3">
+        <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full", t.ring)}>
+          <Icon className={cn("h-4 w-4", t.icon)} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-xs font-medium text-muted-foreground">{label}</p>
-          <p className="mt-0.5 text-2xl font-bold leading-tight tracking-tight">{value}</p>
-          {hint && <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{hint}</p>}
+          <p className="truncate text-[11px] font-medium text-muted-foreground">{label}</p>
+          <p className="text-xl font-bold leading-tight tracking-tight">{value}</p>
+          {hint && <p className="truncate text-[10px] text-muted-foreground">{hint}</p>}
         </div>
       </div>
       {sparkData.length > 1 && (
-        <div className="h-10 w-full opacity-80">
+        <div className="h-6 w-full opacity-80">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={sparkData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
               <defs>

@@ -750,27 +750,55 @@ export default function VehicleDetail() {
         </TabsList>
 
         <TabsContent value="info" className="mt-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <EditableCard title="Základní informace" fields={BASIC_FIELDS} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit} />
+          <div className="grid gap-6 md:grid-cols-2 items-start">
+            <EditableCard
+              title="Základní informace"
+              icon={<Car className="h-4 w-4" />}
+              accent="primary"
+              right={<PlateBadge rz={vehicle.rz} />}
+              header={
+                <div className="mb-3 pb-3 border-b">
+                  <p className="text-lg font-bold leading-tight">{vehicle.nazev_vozu || vehicle.znacka || "—"}</p>
+                  {vehicle.znacka && vehicle.nazev_vozu && (
+                    <p className="text-sm text-muted-foreground">{vehicle.znacka}</p>
+                  )}
+                </div>
+              }
+              fields={BASIC_FIELDS} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit}
+            />
             {showLeasing && (
-              <EditableCard title="Leasing" fields={LEASING_FIELDS} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit} />
+              <EditableCard
+                title="Leasing"
+                icon={<FileSignature className="h-4 w-4" />}
+                header={<div className="mb-3"><LeasingProgress vehicle={vehicle} /></div>}
+                fields={LEASING_FIELDS} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit}
+              />
             )}
-            <EditableCard title="Dokumenty a kontroly" fields={DOC_FIELDS} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit} />
-            <EditableCard title="Provozní údaje" fields={getOpsFields(branchOptions)} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit} />
-            <Card>
-              <CardHeader><CardTitle className="text-base">QR kód vozidla</CardTitle></CardHeader>
-              <CardContent>
+            <EditableCard title="Dokumenty a kontroly" icon={<ShieldCheck className="h-4 w-4" />} fields={DOC_FIELDS} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit} />
+            <EditableCard title="Provozní údaje" icon={<Settings2 className="h-4 w-4" />} fields={getOpsFields(branchOptions)} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit} />
+            <Card className="md:col-span-2 overflow-hidden border-l-4 border-l-muted-foreground/60">
+              <div className="flex items-center gap-2.5 border-b px-5 py-3">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                  <QrCode className="h-4 w-4" />
+                </span>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-foreground/80">QR kód vozidla</h3>
+              </div>
+              <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center gap-6">
+                <div className="shrink-0">
                 <VehicleQRCode vehicleId={vehicle.id} label={`${vehicle.znacka || ""} ${vehicle.rz || ""}`.trim()} />
-                <p className="text-xs text-muted-foreground mt-3">
+                </div>
+                <div className="flex-1">
+                <p className="text-xs text-muted-foreground">
                   Vytiskněte a nalepte do vozu — řidič nascanováním ihned otevře kartu vozidla.
                 </p>
-                <div className="mt-4 pt-4 border-t">
-                  <Button variant="outline" className="w-full" onClick={printVehicleCard} disabled={cardPrinting}>
+                <div className="mt-4">
+                  <Button variant="outline" className="w-full sm:w-auto" onClick={printVehicleCard} disabled={cardPrinting}>
                     {cardPrinting ? "Připravuji PDF…" : "Tisk karty vozidla (PDF)"}
                   </Button>
                   <p className="text-xs text-muted-foreground mt-2">
                     Jednostránkový přehled vozu včetně QR kódu, správce, platností a výbavy.
                   </p>
+                </div>
                 </div>
               </CardContent>
             </Card>

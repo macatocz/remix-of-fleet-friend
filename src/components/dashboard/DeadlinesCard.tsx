@@ -1,8 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarClock, CheckCircle2 } from "lucide-react";
-import EmptyState from "./EmptyState";
+import { CalendarClock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface DeadlineItem {

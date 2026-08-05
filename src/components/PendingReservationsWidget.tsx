@@ -80,41 +80,41 @@ export default function PendingReservationsWidget() {
 
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
+      <CardHeader className="border-b border-border/60 bg-muted/30 px-4 py-2.5">
+        <CardTitle className="text-sm flex items-center gap-2">
           <CalendarDays className="h-4 w-4" />
           Čekající rezervace
-          {rows.length > 0 && <Badge variant="secondary">{rows.length}</Badge>}
+          {rows.length > 0 && <Badge variant="secondary" className="text-[10px]">{rows.length}</Badge>}
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-3">
         {loading ? (
-          <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+          <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
         ) : rows.length === 0 ? (
-          <div className="text-sm text-muted-foreground py-4 text-center">Žádné čekající rezervace.</div>
+          <div className="text-xs text-muted-foreground py-2 text-center">Žádné čekající rezervace.</div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {rows.map((r) => (
-              <div key={r.id} className="flex items-center justify-between gap-2 p-2 border rounded-md">
+              <div key={r.id} className="flex items-center justify-between gap-2 p-1.5 border rounded-md">
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">
+                  <div className="text-xs font-medium truncate">
                     {r.vehicles?.znacka || "—"} ({r.vehicles?.rz || "—"}) • {r.driver_name}
                   </div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-[10px] text-muted-foreground truncate">
                     {new Date(r.date_from).toLocaleDateString("cs-CZ")} {r.time_from?.slice(0, 5) || ""}
                     {" – "}
                     {new Date(r.date_to).toLocaleDateString("cs-CZ")} {r.time_to?.slice(0, 5) || ""}
                     {r.purpose && ` • ${r.purpose}`}
                   </div>
                 </div>
-                <div className="flex gap-1">
-                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => update(r.id, "schváleno")}>Schválit</Button>
-                  <Button size="sm" variant="outline" className="h-7 text-xs text-destructive" onClick={() => update(r.id, "zamítnuto")}>Zamítnout</Button>
+                <div className="flex shrink-0 gap-1">
+                  <Button size="sm" variant="outline" className="h-6 px-2 text-[11px]" onClick={() => update(r.id, "schváleno")}>Schválit</Button>
+                  <Button size="sm" variant="outline" className="h-6 px-2 text-[11px] text-destructive" onClick={() => update(r.id, "zamítnuto")}>Zamítnout</Button>
                 </div>
               </div>
             ))}
-            <div className="pt-2">
-              <Link to="/rezervace" className="text-xs text-primary hover:underline">Všechny rezervace →</Link>
+            <div className="pt-1">
+              <Link to="/rezervace" className="text-[11px] text-primary hover:underline">Všechny rezervace →</Link>
             </div>
           </div>
         )}

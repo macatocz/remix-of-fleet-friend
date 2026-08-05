@@ -153,7 +153,7 @@ export function computeLeasingMileage(
     };
   }
 
-  const totalMonths = Math.max(1, (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth()));
+  const totalMonths = Math.max(1, (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth()) + 1);
   const elapsedDays = Math.max(0, differenceInDays(referenceDate, from));
   const totalDays = Math.max(1, differenceInDays(to, from));
   const elapsedMonths = elapsedDays / 30.44;

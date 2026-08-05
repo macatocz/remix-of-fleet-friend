@@ -1,12 +1,14 @@
 # Grafické vylepšení karty vozidla (tab Údaje)
 
+Zvolený směr: **Barevný pruh + alert bloky** — karty s barevným levým pruhem, RZ jako registrační štítek, kritické termíny jako barevné alert bloky, ANO/NE jako badge.
+
 Cíl: přehledy na detailu vozidla udělat vizuálně přitažlivější a čitelnější. Jen prezentační vrstva — data, pole ani ukládání se nemění.
 
 ## Co se změní
 
 **1. Hlavička karet**
 - Každá sekce dostane ikonu v jemném barevném kroužku (Základní informace = auto, Leasing = smlouva, Dokumenty a kontroly = štít, Provozní údaje = nastavení, QR = kód).
-- Tenký barevný pruh nahoře karty podle sekce (červená / antracit) místo dnešní ploché bílé.
+- Barevný levý pruh karty (Základní informace červená, ostatní antracitová) místo dnešní ploché bílé.
 - Nadpis větší, s jemným oddělovačem pod ním.
 
 **2. Řádky s údaji**
@@ -15,9 +17,10 @@ Cíl: přehledy na detailu vozidla udělat vizuálně přitažlivější a čite
 - Prázdné hodnoty jednotně jako "—" ve slabé šedi.
 
 **3. Zvýraznění klíčových údajů**
-- RZ jako výrazný "štítek" (monospace, rámeček) — je to nejhledanější údaj.
+- RZ jako registrační štítek vpravo nahoře v Základních informacích (monospace, rámeček).
+- Název vozu jako velký titulek, pod ním značka/model drobně.
 - ANO/NE hodnoty (Malý TP, Tankovací karty, Lékárnička…) jako zelený/šedý badge místo textu.
-- Datumy platnosti (STK, zelená karta, leasing do, v užívání do) barevně podle zbývající doby: po termínu = červená, do 30 dní = jantarová, jinak neutrální — vč. drobného textu „za 4 měsíce“.
+- Kritické termíny (STK, zelená karta) jako samostatné alert bloky s podbarvením a štítkem PROŠLÉ / KONČÍ BRZY; ostatní datumy neutrálně v řádku, s drobným textem „za 4 měsíce“.
 - Kategorie A–D jako barevný badge s popiskem role (A – Ředitel atd.).
 - Ceny a km zarovnané a formátované jednotně (mezera po tisících, „Kč“ / „km“ menším písmem).
 

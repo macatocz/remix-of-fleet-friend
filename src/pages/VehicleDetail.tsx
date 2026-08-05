@@ -302,17 +302,55 @@ function EditableField({ field, value, onChange, onEdit }: { field: FieldDef; va
 function FieldRow({ field, vehicle, editing, editData, onEdit }: {
   field: FieldDef; vehicle: any; editing: boolean; editData: Record<string, string>; onEdit: (key: string, val: string) => void;
 }) {
+  const YESNO_KEYS = ["maly_tp", "tankovaci_karty", "lekarnicka"];
+  const CRITICAL_DATE_KEYS = ["stk", "zelena_karta"];
+
   const renderValue = (key: string, val: any) => {
     if (key === "status") return statusBadge(val || "aktivní");
     if (key === "typ_vlastnictvi") return typVlastnictviLabel[val] || val || "—";
-    if (field.type === "date") return formatDateDisplay(val);
-    if (field.type === "currency") return val ? `${val} ${field.suffix || "Kč"}` : "—";
+    if (key === "kategorie") {
+      if (!val) return <span className="text-muted-foreground">—</span>;
+      return <Badge variant="secondary" className="font-semibold">{kategorieLabel[val] || val}</Badge>;
+    }
+    if (YESNO_KEYS.includes(key)) return <YesNoBadge value={val} />;
+    if (field.type === "date") {
+      if (!isValidDateStr(val)) return <span className="text-muted-foreground">—</span>;
+      const lvl = deadlineLevel(val);
+      const rel = relativeDeadline(val);
+      return (
+        <span className="inline-flex items-baseline gap-1.5">
+          <span className={cn(lvl === "expired" && "text-destructive", lvl === "soon" && "text-warning")}>
+            {formatDateDisplay(val)}
+          </span>
+          {rel && <span className="text-[11px] font-normal text-muted-foreground">{rel}</span>}
+        </span>
+      );
+    }
+    if (field.type === "currency") {
+      if (val === null || val === undefined || val === "") return <span className="text-muted-foreground">—</span>;
+      const num = Number(val);
+      const text = isNaN(num) ? String(val) : num.toLocaleString("cs-CZ", { maximumFractionDigits: 2 });
+      return <span>{text} <span className="text-xs font-normal text-muted-foreground">{field.suffix || "Kč"}</span></span>;
+    }
     if (field.type === "computed" && field.computeFn) return field.computeFn(vehicle, editData);
-    return val || "—";
+    if (field.suffix && val) {
+      const num = Number(String(val).replace(/\s/g, "").replace(",", "."));
+      const text = isNaN(num) ? String(val) : num.toLocaleString("cs-CZ");
+      return <span>{text} <span className="text-xs font-normal text-muted-foreground">{field.suffix}</span></span>;
+    }
+    return val || <span className="text-muted-foreground">—</span>;
   };
 
   // Skip vignettes in regular FieldRow — handled separately
   if (field.type === "vignettes") return null;
+
+  // Kritické termíny jako zvýrazněný blok
+  if (!editing && CRITICAL_DATE_KEYS.includes(field.key)) {
+    const lvl = deadlineLevel(vehicle[field.key]);
+    if (lvl === "expired" || lvl === "soon") {
+      return <DeadlineAlert label={field.label} dateText={formatDateDisplay(vehicle[field.key])} level={lvl} />;
+    }
+  }
 
   if (field.type === "computed") {
     const computed = field.computeFn ? field.computeFn(vehicle, editData) : "—";
@@ -325,7 +363,7 @@ function FieldRow({ field, vehicle, editing, editData, onEdit }: {
       );
     }
     return (
-      <div className="flex justify-between">
+      <div className="flex justify-between rounded px-2 py-1.5 transition-colors hover:bg-muted/50">
         <dt className="text-muted-foreground">{field.label}</dt>
         <dd className="font-medium text-right max-w-[200px] truncate">{computed}</dd>
       </div>
@@ -342,9 +380,9 @@ function FieldRow({ field, vehicle, editing, editData, onEdit }: {
   }
 
   return (
-    <div className="flex justify-between">
+    <div className="flex justify-between rounded px-2 py-1.5 transition-colors hover:bg-muted/50">
       <dt className="text-muted-foreground">{field.label}</dt>
-      <dd className="font-medium text-right max-w-[200px] truncate">{renderValue(field.key, vehicle[field.key])}</dd>
+      <dd className="font-semibold text-right max-w-[230px] truncate">{renderValue(field.key, vehicle[field.key])}</dd>
     </div>
   );
 }

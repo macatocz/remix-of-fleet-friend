@@ -650,7 +650,7 @@ export default function VehicleDetail() {
     : vehicle.typ_vlastnictvi === "operativni_leasing" || vehicle.typ_vlastnictvi === "financni_leasing";
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-full space-y-6 overflow-x-hidden">
       <Card className={cn("overflow-hidden border-l-4 transition-shadow hover:shadow-[var(--shadow-card-hover)]", headerAccentClass(vehicle.status))}>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 pl-4">
           <div className="flex items-start gap-3 min-w-0">
@@ -688,7 +688,7 @@ export default function VehicleDetail() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 lg:shrink-0">
             {!editing ? (
               <>
                 <Button variant="outline" size="sm" onClick={startEditing}>
@@ -758,8 +758,9 @@ export default function VehicleDetail() {
         <LeasingMileagePanel vehicleId={vehicle.id} vehicle={vehicle} />
       )}
 
-      <Tabs defaultValue="info">
-        <TabsList>
+      <Tabs defaultValue="info" className="w-full max-w-full">
+        <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
+        <TabsList className="w-max min-w-full justify-start">
           <TabsTrigger value="info">
             <Info className="mr-2 h-4 w-4" />Údaje
           </TabsTrigger>
@@ -785,6 +786,7 @@ export default function VehicleDetail() {
             <AlertTriangle className="mr-2 h-4 w-4" />Škody
           </TabsTrigger>
         </TabsList>
+        </div>
 
         <TabsContent value="info" className="mt-6">
           <div className="grid gap-6 md:grid-cols-2 items-start">

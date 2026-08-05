@@ -20,7 +20,14 @@ import { Fuel, Receipt, TrendingUp, DollarSign, Route } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { vehicleLabel } from "@/lib/vehicleName";
 
-const PIE_COLORS = ["hsl(38, 92%, 50%)", "hsl(0, 84%, 60%)", "hsl(217, 71%, 45%)", "hsl(142, 71%, 45%)", "hsl(280, 60%, 50%)"];
+const PIE_COLORS = [
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-5))",
+  "hsl(var(--chart-6))",
+];
 
 interface MonthData {
   month: string;
@@ -188,8 +195,8 @@ export default function Costs() {
                 <YAxis />
                 <Tooltip formatter={(v: number) => `${v.toLocaleString("cs-CZ")} Kč`} />
                 <Legend />
-                <Bar dataKey="phm" name="PHM" fill="hsl(38, 92%, 50%)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="servis" name="Servis" fill="hsl(0, 84%, 60%)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="phm" name="PHM" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="servis" name="Servis" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -225,7 +232,7 @@ export default function Costs() {
                 <XAxis type="number" />
                 <YAxis dataKey="name" type="category" width={180} tick={{ fontSize: 12 }} />
                 <Tooltip formatter={(v: number) => `${v.toLocaleString("cs-CZ")} Kč`} />
-                <Bar dataKey="cost" name="Náklady" fill="hsl(217, 71%, 45%)" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="cost" name="Náklady" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

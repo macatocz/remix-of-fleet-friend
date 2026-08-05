@@ -253,8 +253,8 @@ export default function FleetReport() {
                   <YAxis fontSize={12} />
                   <Tooltip formatter={(v: number) => czk(v)} />
                   <Legend />
-                  <Bar dataKey="PHM" fill="hsl(217, 71%, 45%)" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="Servis" fill="hsl(38, 92%, 50%)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="PHM" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Servis" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

@@ -427,12 +427,12 @@ export default function Dashboard() {
                 <BarChart data={monthlyCostTrend} margin={{ top: 5, right: 8, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="gradPhm" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--chart-4))" stopOpacity={0.95} />
-                      <stop offset="100%" stopColor="hsl(var(--chart-4))" stopOpacity={0.45} />
+                      <stop offset="0%" stopColor="hsl(var(--chart-2))" stopOpacity={1} />
+                      <stop offset="100%" stopColor="hsl(var(--chart-2))" stopOpacity={0.8} />
                     </linearGradient>
                     <linearGradient id="gradServis" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--chart-1))" stopOpacity={0.95} />
-                      <stop offset="100%" stopColor="hsl(var(--chart-1))" stopOpacity={0.45} />
+                      <stop offset="0%" stopColor="hsl(var(--chart-1))" stopOpacity={1} />
+                      <stop offset="100%" stopColor="hsl(var(--chart-1))" stopOpacity={0.8} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid {...gridProps} />

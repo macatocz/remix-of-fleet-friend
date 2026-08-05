@@ -22,6 +22,8 @@ import FuelCards from "@/pages/FuelCards";
 import MobileFuelCards from "@/pages/mobile/MobileFuelCards";
 import MobileCosts from "@/pages/mobile/MobileCosts";
 import MobileVehicles from "@/pages/mobile/MobileVehicles";
+import MobileService from "@/pages/mobile/MobileService";
+import MobileIncidents from "@/pages/mobile/MobileIncidents";
 import TravelOrders from "@/pages/TravelOrders";
 import TravelOrderDetail from "@/pages/TravelOrderDetail";
 import MobileTravelOrders from "@/pages/mobile/MobileTravelOrders";
@@ -82,9 +84,9 @@ const App = () => (
               {/* Admin/dispečer mobilní routy – znovupoužívají desktop stránky */}
               <Route path="vozidla" element={<MobileVehicles />} />
               <Route path="vozidla/:id" element={<VehicleDetail />} />
-              <Route path="servis" element={<Service />} />
+              <Route path="servis" element={<MobileService />} />
               <Route path="kniha-jizd" element={<TripLog />} />
-              <Route path="skody" element={<Incidents />} />
+              <Route path="skody" element={<MobileIncidents />} />
               <Route path="naklady" element={<MobileCosts />} />
               <Route path="tankovaci-karty" element={<MobileFuelCards />} />
               <Route path="cestovni-prikazy" element={<MobileTravelOrders />} />

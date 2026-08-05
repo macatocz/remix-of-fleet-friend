@@ -398,6 +398,7 @@ export default function VehicleDetail() {
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [cardPrinting, setCardPrinting] = useState(false);
   const [mileageRecords, setMileageRecords] = useState<{ vehicle_id: string; km: number; recorded_at: string; source: "vehicle_mileage" | "trip_log" }[]>([]);
   const [branchOptions, setBranchOptions] = useState<{ value: string; label: string }[]>([
     { value: "Praha", label: "Praha" },
@@ -430,6 +431,38 @@ export default function VehicleDetail() {
   };
 
   useEffect(() => { fetchVehicle(); }, [id]);
+
+  const printVehicleCard = async () => {
+    if (!vehicle) return;
+    setCardPrinting(true);
+    try {
+      const [{ generateVehicleCardPdf }, stkRes, insRes, spravceRes] = await Promise.all([
+        import("@/lib/vehicle/cardPdf"),
+        supabase.from("inspections").select("valid_until").eq("vehicle_id", vehicle.id)
+          .order("valid_until", { ascending: false }).limit(1),
+        supabase.from("insurance").select("insurer, type, valid_until").eq("vehicle_id", vehicle.id)
+          .order("valid_until", { ascending: false }),
+        vehicle.spravce_id
+          ? supabase.from("drivers").select("phone, email").eq("id", vehicle.spravce_id).maybeSingle()
+          : Promise.resolve({ data: null } as any),
+      ]);
+      const contact = spravceRes?.data
+        ? [spravceRes.data.phone, spravceRes.data.email].filter(Boolean).join(" · ")
+        : null;
+      const currentKm = mileageRecords.length
+        ? Math.max(...mileageRecords.map(m => m.km))
+        : Number(vehicle.vychozi_stav_tachometru) || null;
+      await generateVehicleCardPdf(vehicle, {
+        spravceContact: contact,
+        stkValidUntil: (stkRes.data?.[0] as any)?.valid_until ?? null,
+        insurance: (insRes.data as any) || [],
+        currentKm,
+      });
+    } catch (e: any) {
+      toast({ title: "Chyba tisku", description: e.message, variant: "destructive" });
+    }
+    setCardPrinting(false);
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -654,6 +687,14 @@ export default function VehicleDetail() {
                 <p className="text-xs text-muted-foreground mt-3">
                   Vytiskněte a nalepte do vozu — řidič nascanováním ihned otevře kartu vozidla.
                 </p>
+                <div className="mt-4 pt-4 border-t">
+                  <Button variant="outline" className="w-full" onClick={printVehicleCard} disabled={cardPrinting}>
+                    {cardPrinting ? "Připravuji PDF…" : "Tisk karty vozidla (PDF)"}
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Jednostránkový přehled vozu včetně QR kódu, správce, platností a výbavy.
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </div>

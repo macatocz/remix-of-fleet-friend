@@ -28,7 +28,7 @@ import {
   getPrivateUsage, PRIVATE_LIMIT_WEEKENDS, PRIVATE_LIMIT_WORKDAYS,
   reservationHours, TRAVEL_ORDER_HOURS_THRESHOLD,
 } from "@/lib/reservationRules";
-import { notify } from "@/lib/notify";
+import { notify, notifyReservationStatus } from "@/lib/notify";
 
 const statusBadge = (status: string) => {
   switch (status) {
@@ -292,6 +292,19 @@ export default function Reservations() {
     if (error) {
       toast({ title: "Chyba", description: error.message, variant: "destructive" });
     } else {
+      const row: any = reservations.find((r: any) => r.id === id);
+      if (row) {
+        await notifyReservationStatus(status, {
+          id,
+          driver_name: row.driver_name,
+          vehicle_id: row.vehicle_id,
+          vehicleLabel: row.vehicles?.nazev_vozu || row.vehicles?.znacka || null,
+          date_from: row.date_from,
+          date_to: row.date_to,
+          time_from: row.time_from,
+          time_to: row.time_to,
+        });
+      }
       fetchData();
     }
   };

@@ -10,3 +10,6 @@ verify_jwt = false
 verify_jwt = false
 [functions.admin-invite-user]
 verify_jwt = true
+
+[functions.notify-reservation-start]
+verify_jwt = false

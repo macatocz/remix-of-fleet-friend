@@ -22,7 +22,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Search, Columns3, Loader2, Save, Bookmark, Trash2, Star, Download, X } from "lucide-react";
+import { Plus, Search, Columns3, Loader2, Save, Bookmark, Trash2, Star, Download, X, QrCode } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import VehicleImport from "@/components/VehicleImport";
@@ -149,7 +149,8 @@ export default function Vehicles() {
   const [driversList, setDriversList] = useState<{ id: string; name: string }[]>([]);
   const [companyName, setCompanyName] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [bulkDialog, setBulkDialog] = useState<null | "status" | "spravce" | "kategorie">(null);
+  const [qrExporting, setQrExporting] = useState(false);
+  const [bulkDialog, setBulkDialog] = useState<null | "status" | "spravce" | "kategorie" | "lokalita">(null);
   const [bulkValue, setBulkValue] = useState("");
   const [bulkSpravceId, setBulkSpravceId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -299,6 +300,20 @@ export default function Vehicles() {
     toast({ title: "Export hotov", description: `Exportováno ${rows.length} vozidel.` });
   };
 
+  const exportSelectedQr = async () => {
+    const list = vehicles.filter(v => selectedIds.has(v.id));
+    if (!list.length) return;
+    setQrExporting(true);
+    try {
+      const { generateQrSheetPdf } = await import("@/lib/vehicle/cardPdf");
+      await generateQrSheetPdf(list.map((v: any) => ({ id: v.id, nazev_vozu: v.nazev_vozu, znacka: v.znacka, rz: v.rz })));
+      toast({ title: "QR kódy vygenerovány", description: `${list.length} vozidel v PDF.` });
+    } catch (e: any) {
+      toast({ title: "Chyba exportu", description: e.message, variant: "destructive" });
+    }
+    setQrExporting(false);
+  };
+
   const applyBulk = async () => {
     if (!bulkDialog) return;
     const ids = Array.from(selectedIds);
@@ -306,6 +321,7 @@ export default function Vehicles() {
     let payload: Record<string, any> = {};
     if (bulkDialog === "status") payload = { status: bulkValue };
     if (bulkDialog === "kategorie") payload = { kategorie: bulkValue };
+    if (bulkDialog === "lokalita") payload = { lokalita: bulkValue };
     if (bulkDialog === "spravce") {
       if (bulkSpravceId === "__pool__") payload = { spravce: "POOL", spravce_id: null };
       else {
@@ -571,6 +587,10 @@ export default function Vehicles() {
               <Button size="sm" variant="outline" onClick={() => { setBulkDialog("status"); setBulkValue(""); }}>Změnit stav</Button>
               <Button size="sm" variant="outline" onClick={() => { setBulkDialog("spravce"); setBulkSpravceId(null); }}>Změnit správce</Button>
               <Button size="sm" variant="outline" onClick={() => { setBulkDialog("kategorie"); setBulkValue(""); }}>Změnit kategorii</Button>
+              <Button size="sm" variant="outline" onClick={() => { setBulkDialog("lokalita"); setBulkValue(""); }}>Změnit lokalitu</Button>
+              <Button size="sm" variant="outline" onClick={exportSelectedQr} disabled={qrExporting}>
+                <QrCode className="h-3.5 w-3.5 mr-1" />{qrExporting ? "Generuji…" : "QR kódy PDF"}
+              </Button>
               <Button size="sm" variant="outline" onClick={exportSelected}><Download className="h-3.5 w-3.5 mr-1" />Export XLSX</Button>
               <Button size="sm" variant="ghost" onClick={clearSelection}><X className="h-3.5 w-3.5" /></Button>
             </div>
@@ -664,6 +684,7 @@ export default function Vehicles() {
               {bulkDialog === "status" && "Hromadná změna stavu"}
               {bulkDialog === "spravce" && "Hromadná změna správce"}
               {bulkDialog === "kategorie" && "Hromadná změna kategorie"}
+              {bulkDialog === "lokalita" && "Hromadná změna lokality"}
             </DialogTitle>
             <DialogDescription>Změna se aplikuje na {selectedIds.size} vybraných vozidel.</DialogDescription>
           </DialogHeader>
@@ -690,6 +711,18 @@ export default function Vehicles() {
                 </SelectContent>
               </Select>
             )}
+            {bulkDialog === "lokalita" && (
+              <Select value={bulkValue} onValueChange={setBulkValue}>
+                <SelectTrigger><SelectValue placeholder="Vyberte lokalitu" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Praha">Praha</SelectItem>
+                  <SelectItem value="Liberec">Liberec</SelectItem>
+                  {lokality.filter(l => l !== "Praha" && l !== "Liberec").map(l => (
+                    <SelectItem key={l} value={l as string}>{l}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             {bulkDialog === "spravce" && (
               <Select value={bulkSpravceId || ""} onValueChange={setBulkSpravceId}>
                 <SelectTrigger><SelectValue placeholder="Vyberte správce" /></SelectTrigger>
@@ -709,6 +742,7 @@ export default function Vehicles() {
               disabled={
                 (bulkDialog === "status" && !bulkValue) ||
                 (bulkDialog === "kategorie" && !bulkValue) ||
+                (bulkDialog === "lokalita" && !bulkValue) ||
                 (bulkDialog === "spravce" && !bulkSpravceId)
               }
             >

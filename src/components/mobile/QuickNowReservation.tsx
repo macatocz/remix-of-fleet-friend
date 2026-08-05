@@ -9,6 +9,7 @@ import { useDriverContext } from "@/hooks/useDriverContext";
 import { toast } from "sonner";
 import { Zap } from "lucide-react";
 import { insertOrQueue } from "@/lib/offline/tripQueue";
+import { PURPOSE_TYPES, checkPrivateLimit } from "@/lib/reservationRules";
 
 interface Props { open: boolean; onOpenChange: (o: boolean) => void; }
 
@@ -27,6 +28,7 @@ export default function QuickNowReservation({ open, onOpenChange }: Props) {
   const { driver, myVehicles, allVehicles } = useDriverContext();
   const [duration, setDuration] = useState(60); // minutes
   const [purpose, setPurpose] = useState("");
+  const [purposeType, setPurposeType] = useState("pracovne");
   const [vehicleId, setVehicleId] = useState("");
   const [free, setFree] = useState<{ id: string; rz: string | null; znacka: string | null; nazev_vozu?: string | null }[]>([]);
   const [loading, setLoading] = useState(false);
@@ -71,8 +73,20 @@ export default function QuickNowReservation({ open, onOpenChange }: Props) {
 
   const submit = async () => {
     if (!vehicleId) { toast.error("Žádné volné vozidlo"); return; }
+    if (purposeType === "jine" && !purpose.trim()) {
+      toast.error("U účelu „Jiné“ prosím doplňte popis.");
+      return;
+    }
     setSaving(true);
     const driverName = driver ? `${driver.first_name} ${driver.last_name}` : "Řidič";
+    if (purposeType === "soukrome") {
+      const limitErr = await checkPrivateLimit(driverName, dateStr, dateStr);
+      if (limitErr) {
+        setSaving(false);
+        toast.error(limitErr);
+        return;
+      }
+    }
     const res = await insertOrQueue("reservations", {
       vehicle_id: vehicleId,
       driver_name: driverName,
@@ -81,12 +95,14 @@ export default function QuickNowReservation({ open, onOpenChange }: Props) {
       time_from: `${startStr}:00`,
       time_to: `${endStr}:00`,
       purpose: purpose || "Okamžitá rezervace",
+      purpose_type: purposeType,
       status: "schváleno",
     });
     setSaving(false);
     if (res.status === "error") { toast.error(res.message); return; }
     toast.success(res.status === "queued" ? "Offline – rezervace se odešle po obnovení sítě" : "Rezervováno");
     setPurpose("");
+    setPurposeType("pracovne");
     onOpenChange(false);
   };
 
@@ -125,7 +141,18 @@ export default function QuickNowReservation({ open, onOpenChange }: Props) {
             )}
           </div>
           <div className="space-y-1.5">
-            <Label>Účel (nepovinné)</Label>
+            <Label>Účel jízdy</Label>
+            <Select value={purposeType} onValueChange={setPurposeType}>
+              <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PURPOSE_TYPES.map((p) => (
+                  <SelectItem key={p.value} value={p.value} className="py-3">{p.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>{purposeType === "jine" ? "Upřesnění účelu" : "Poznámka (nepovinné)"}</Label>
             <Input className="h-12" value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder="Krátká cesta…" />
           </div>
         </div>

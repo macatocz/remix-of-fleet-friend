@@ -24,6 +24,7 @@ import {
 import { Plus, Wrench, Shield, FileCheck, Loader2, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { vehicleLabel } from "@/lib/vehicleName";
 
 export default function Service() {
   const [activeTab, setActiveTab] = useState("service");
@@ -49,10 +50,10 @@ export default function Service() {
   const fetchData = async () => {
     setLoading(true);
     const [vRes, sRes, iRes, insRes] = await Promise.all([
-      supabase.from("vehicles").select("id, znacka, rz").order("znacka"),
-      supabase.from("service_records").select("*, vehicles(znacka, rz)").order("date", { ascending: false }),
-      supabase.from("inspections").select("*, vehicles(znacka, rz)").order("valid_until", { ascending: true }),
-      supabase.from("insurance").select("*, vehicles(znacka, rz)").order("valid_until", { ascending: true }),
+      supabase.from("vehicles").select("id, znacka, rz, nazev_vozu").order("znacka"),
+      supabase.from("service_records").select("*, vehicles(znacka, rz, nazev_vozu)").order("date", { ascending: false }),
+      supabase.from("inspections").select("*, vehicles(znacka, rz, nazev_vozu)").order("valid_until", { ascending: true }),
+      supabase.from("insurance").select("*, vehicles(znacka, rz, nazev_vozu)").order("valid_until", { ascending: true }),
     ]);
     setVehicles(vRes.data || []);
     setServiceRecords(sRes.data || []);
@@ -63,7 +64,7 @@ export default function Service() {
 
   useEffect(() => { fetchData(); }, []);
 
-  const vLabel = (v: any) => v ? `${v.znacka || "?"} (${v.rz || "?"})` : "—";
+  const vLabel = (v: any) => vehicleLabel(v);
 
   const openCreate = (type: "service" | "inspection" | "insurance") => {
     setDialogType(type);
@@ -167,7 +168,7 @@ export default function Service() {
         <SelectTrigger><SelectValue placeholder="Vyberte vozidlo" /></SelectTrigger>
         <SelectContent>
           {vehicles.map(v => (
-            <SelectItem key={v.id} value={v.id}>{v.znacka || "?"} ({v.rz || "?"})</SelectItem>
+            <SelectItem key={v.id} value={v.id}>{vehicleLabel(v)}</SelectItem>
           ))}
         </SelectContent>
       </Select>
@@ -343,7 +344,7 @@ export default function Service() {
                   </TableHeader>
                   <TableBody>
                     {serviceSort.sortData(serviceRecords, (item: any, key: string) => {
-                      if (key === "vehicle") return item.vehicles?.znacka || "";
+                      if (key === "vehicle") return item.vehicles?.nazev_vozu || item.vehicles?.znacka || "";
                       return item[key];
                     }).map(s => (
                       <TableRow key={s.id}>
@@ -394,7 +395,7 @@ export default function Service() {
                   </TableHeader>
                   <TableBody>
                     {inspectionSort.sortData(inspections, (item: any, key: string) => {
-                      if (key === "vehicle") return item.vehicles?.znacka || "";
+                      if (key === "vehicle") return item.vehicles?.nazev_vozu || item.vehicles?.znacka || "";
                       return item[key];
                     }).map(i => (
                       <TableRow key={i.id}>
@@ -442,7 +443,7 @@ export default function Service() {
                   </TableHeader>
                   <TableBody>
                     {insuranceSort.sortData(insurances, (item: any, key: string) => {
-                      if (key === "vehicle") return item.vehicles?.znacka || "";
+                      if (key === "vehicle") return item.vehicles?.nazev_vozu || item.vehicles?.znacka || "";
                       return item[key];
                     }).map(ins => (
                       <TableRow key={ins.id}>

@@ -1,10 +1,12 @@
 import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, CheckCircle, Info } from "lucide-react";
+import { computeLeasingMileage, deriveCurrentMileage, LeasingMileageInput } from "@/lib/leasing/mileage";
 
 interface Props {
   vehicle: any;
-  mileageRecords?: { km: number; recorded_at: string }[];
+  mileageRecords?: { vehicle_id: string; km: number; recorded_at: string; source: "vehicle_mileage" | "trip_log" }[];
+  tripLogs?: { vehicle_id: string; km_end: number | null; date: string | null }[];
 }
 
 function parseDateString(s: string | null): Date | null {
@@ -29,7 +31,7 @@ interface Alert {
   type: "critical" | "warning" | "info";
 }
 
-export default function VehicleAlerts({ vehicle, mileageRecords = [] }: Props) {
+export default function VehicleAlerts({ vehicle, mileageRecords = [], tripLogs = [] }: Props) {
   const alerts = useMemo(() => {
     const result: Alert[] = [];
     const v = vehicle;
@@ -78,36 +80,28 @@ export default function VehicleAlerts({ vehicle, mileageRecords = [] }: Props) {
       }
 
       // Mileage
-      const contractKm = v.najezd_za_rok ? parseInt((v.najezd_za_rok || "").replace(/\D/g, "")) : 0;
-      if (contractKm > 0 && mileageRecords.length >= 2 && v.datum_zahajeni_leasingu) {
-        const sorted = [...mileageRecords].sort((a, b) => a.recorded_at.localeCompare(b.recorded_at));
-        const oldest = sorted[0];
-        const latest = sorted[sorted.length - 1];
-        const totalDriven = latest.km - oldest.km;
-        const startDate = parseDateString(v.datum_zahajeni_leasingu);
-        const endDate = parseDateString(v.datum_ukonceni_leasingu);
-        if (startDate) {
-          const now = new Date();
-          const elapsedDays = (now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
-          const totalLeasingDays = endDate ? (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24) : 365;
-          const totalContractKm = (contractKm / 365) * totalLeasingDays;
-          const expectedKmNow = (elapsedDays / totalLeasingDays) * totalContractKm;
-          const percentage = expectedKmNow > 0 ? Math.round((totalDriven / expectedKmNow) * 100) : 0;
+      const input: LeasingMileageInput = {
+        typ_vlastnictvi: v.typ_vlastnictvi ?? null,
+        najezd_za_rok: v.najezd_za_rok ?? null,
+        datum_zahajeni_leasingu: v.datum_zahajeni_leasingu ?? null,
+        datum_ukonceni_leasingu: v.datum_ukonceni_leasingu ?? null,
+        vychozi_stav_tachometru: v.vychozi_stav_tachometru ?? null,
+      };
+      const current = deriveCurrentMileage(v.id, input, mileageRecords, tripLogs);
+      const m = computeLeasingMileage(input, current);
 
-          if (percentage >= 70) {
-            result.push({
-              message: percentage > 95
-                ? `Překročení smluvního nájezdu! (${percentage}% – ${totalDriven.toLocaleString("cs-CZ")} km)`
-                : `Čerpání nájezdu ${percentage}% (${totalDriven.toLocaleString("cs-CZ")} km)`,
-              type: percentage > 95 ? "critical" : percentage >= 80 ? "warning" : "info",
-            });
-          }
-        }
+      if (m.percentageUsed !== null && m.percentageUsed >= 70) {
+        result.push({
+          message: m.percentageUsed > 95
+            ? `Překročení smluvního nájezdu! (${m.percentageUsed}% – ${(m.currentKm! - m.startKm!).toLocaleString("cs-CZ")} km)`
+            : `Čerpání nájezdu ${m.percentageUsed}% (${(m.currentKm! - m.startKm!).toLocaleString("cs-CZ")} km)`,
+          type: m.percentageUsed > 95 ? "critical" : m.percentageUsed >= 80 ? "warning" : "info",
+        });
       }
     }
 
     return result;
-  }, [vehicle, mileageRecords]);
+  }, [vehicle, mileageRecords, tripLogs]);
 
   if (alerts.length === 0) return null;
 

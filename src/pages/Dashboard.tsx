@@ -9,6 +9,7 @@ import {
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import VehicleNotifications from "@/components/VehicleNotifications";
+import LeasingMileageWidget from "@/components/leasing/LeasingMileageWidget";
 import DashboardExtraWidgets from "@/components/DashboardExtraWidgets";
 import PendingReservationsWidget from "@/components/PendingReservationsWidget";
 import StatCard from "@/components/dashboard/StatCard";
@@ -459,12 +460,13 @@ export default function Dashboard() {
       {/* ---------- Termíny a rezervace ---------- */}
       <section className="space-y-3">
         <div className="flex items-center gap-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Termíny a rezervace</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Termíny, leasing a rezervace</h2>
           <div className="h-px flex-1 bg-border" />
         </div>
 
-        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
           <DeadlinesCard groups={deadlineGroups} />
+          <LeasingMileageWidget />
           <PendingReservationsWidget />
         </div>
       </section>

@@ -3,9 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Car, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  computeLeasingMileage,
+  deriveCurrentMileage,
+  LeasingMileageInput,
+  MileageSource,
+  TripLogMileage,
+} from "@/lib/leasing/mileage";
 
 interface Vehicle {
   id: string;
+  nazev_vozu: string | null;
   znacka: string | null;
   rz: string | null;
   spravce: string | null;
@@ -15,13 +23,8 @@ interface Vehicle {
   datum_zahajeni_leasingu: string | null;
   typ_vlastnictvi: string | null;
   najezd_za_rok: string | null;
+  vychozi_stav_tachometru: string | null;
   status: string;
-}
-
-interface MileageRecord {
-  vehicle_id: string;
-  km: number;
-  recorded_at: string;
 }
 
 interface Alert {
@@ -35,16 +38,10 @@ interface Alert {
 
 function parseDateString(s: string | null): Date | null {
   if (!s) return null;
-  // Try common formats: "do 19.02.2027", "19.02.2027", "2027-02-19", "1.1.2026"
   const cleaned = s.replace(/^do\s+/i, "").trim();
-
-  // ISO format
   if (/^\d{4}-\d{2}-\d{2}/.test(cleaned)) return new Date(cleaned);
-
-  // Czech format d.m.yyyy or dd.mm.yyyy
   const match = cleaned.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/);
   if (match) return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
-
   return null;
 }
 
@@ -62,21 +59,25 @@ function formatDate(d: Date): string {
 
 export default function VehicleNotifications() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [mileageData, setMileageData] = useState<MileageRecord[]>([]);
+  const [mileageRecords, setMileageRecords] = useState<MileageSource[]>([]);
+  const [tripLogs, setTripLogs] = useState<TripLogMileage[]>([]);
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({
     critical: false, warning: false, info: false,
   });
 
   useEffect(() => {
-    supabase.from("vehicles").select("id, znacka, rz, spravce, stk, zelena_karta, datum_ukonceni_leasingu, datum_zahajeni_leasingu, typ_vlastnictvi, najezd_za_rok, status")
+    supabase.from("vehicles").select("id, nazev_vozu, znacka, rz, spravce, stk, zelena_karta, datum_ukonceni_leasingu, datum_zahajeni_leasingu, typ_vlastnictvi, najezd_za_rok, vychozi_stav_tachometru, status")
       .eq("status", "aktivní")
       .then(({ data }) => setVehicles((data as Vehicle[]) || []));
+    supabase.from("vehicle_mileage").select("vehicle_id, km, recorded_at")
+      .then(({ data }) => setMileageRecords(
+        ((data as any[]) || []).map(r => ({ vehicle_id: r.vehicle_id, km: r.km, recorded_at: r.recorded_at, source: "vehicle_mileage" as const }))
+      ));
     supabase.from("trip_logs").select("vehicle_id, km_end, date")
       .not("km_end", "is", null)
-      .order("date", { ascending: false })
-      .then(({ data }) => setMileageData(
-        ((data as any[]) || []).map(r => ({ vehicle_id: r.vehicle_id, km: r.km_end, recorded_at: r.date }))
+      .then(({ data }) => setTripLogs(
+        ((data as any[]) || []).map(r => ({ vehicle_id: r.vehicle_id, km_end: r.km_end, date: r.date }))
       ));
   }, []);
 
@@ -85,7 +86,7 @@ export default function VehicleNotifications() {
     const today = new Date();
 
     for (const v of vehicles) {
-      const label = `${v.rz || "?"} – ${v.znacka || "?"} (${v.spravce || "?"})`;
+      const label = v.nazev_vozu || `${v.rz || "?"} – ${v.znacka || "?"} (${v.spravce || "?"})`;
 
       // STK check
       const stkDate = parseDateString(v.stk);
@@ -117,7 +118,7 @@ export default function VehicleNotifications() {
               ? `Zelená karta expirovala před ${Math.abs(days)} dny!`
               : `Zelená karta vyprší za ${days} dní (${formatDate(zkDate)})`,
             daysLeft: days,
-            type: days <= 30 ? "critical" : days <= 60 ? "warning" : "info",
+            type: days <= 60 ? "critical" : days <= 90 ? "warning" : "info",
             date: formatDate(zkDate),
           });
         }
@@ -144,45 +145,35 @@ export default function VehicleNotifications() {
       }
 
       // Mileage check for leasing vehicles
-      if (v.typ_vlastnictvi && v.typ_vlastnictvi !== "majetek" && v.najezd_za_rok && v.datum_zahajeni_leasingu) {
-        const contractKm = parseInt((v.najezd_za_rok || "").replace(/\D/g, ""));
-        if (contractKm > 0) {
-          const vMileage = mileageData.filter(m => m.vehicle_id === v.id);
-          if (vMileage.length >= 2) {
-            const latest = vMileage[0];
-            const oldest = vMileage[vMileage.length - 1];
-            const totalDriven = latest.km - oldest.km;
-            const startDate = parseDateString(v.datum_zahajeni_leasingu);
-            const endDate = parseDateString(v.datum_ukonceni_leasingu);
-            if (startDate) {
-              const now = new Date();
-              const elapsedDays = (now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
-              const totalLeasingDays = endDate ? (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24) : 365;
-              const totalContractKm = (contractKm / 365) * totalLeasingDays;
-              const expectedKmNow = (elapsedDays / totalLeasingDays) * totalContractKm;
-              const percentage = expectedKmNow > 0 ? Math.round((totalDriven / expectedKmNow) * 100) : 0;
+      if (v.typ_vlastnictvi && v.typ_vlastnictvi !== "majetek") {
+        const input: LeasingMileageInput = {
+          typ_vlastnictvi: v.typ_vlastnictvi ?? null,
+          najezd_za_rok: v.najezd_za_rok ?? null,
+          datum_zahajeni_leasingu: v.datum_zahajeni_leasingu ?? null,
+          datum_ukonceni_leasingu: v.datum_ukonceni_leasingu ?? null,
+          vychozi_stav_tachometru: v.vychozi_stav_tachometru ?? null,
+        };
+        const current = deriveCurrentMileage(v.id, input, mileageRecords, tripLogs);
+        const m = computeLeasingMileage(input, current);
 
-              if (percentage >= 70) {
-                const priorityDays = percentage > 95 ? -1 : percentage >= 80 ? 30 : 90;
-                result.push({
-                  vehicleId: v.id,
-                  vehicleLabel: label,
-                  message: percentage > 95
-                    ? `Překročení smluvního nájezdu! (${percentage}% – ${totalDriven.toLocaleString("cs-CZ")} km)`
-                    : `Čerpání nájezdu ${percentage}% (${totalDriven.toLocaleString("cs-CZ")} km)`,
-                  daysLeft: priorityDays,
-                  type: percentage > 95 ? "critical" : percentage >= 80 ? "warning" : "info",
-                  date: formatDate(now),
-                });
-              }
-            }
-          }
+        if (m.percentageUsed !== null && m.percentageUsed >= 70) {
+          const priorityDays = m.percentageUsed > 95 ? -1 : m.percentageUsed >= 80 ? 30 : 90;
+          result.push({
+            vehicleId: v.id,
+            vehicleLabel: label,
+            message: m.percentageUsed > 95
+              ? `Překročení smluvního nájezdu! (${m.percentageUsed}% – ${(m.currentKm! - m.startKm!).toLocaleString("cs-CZ")} km)`
+              : `Čerpání nájezdu ${m.percentageUsed}% (${(m.currentKm! - m.startKm!).toLocaleString("cs-CZ")} km)`,
+            daysLeft: priorityDays,
+            type: m.percentageUsed > 95 ? "critical" : m.percentageUsed >= 80 ? "warning" : "info",
+            date: formatDate(today),
+          });
         }
       }
     }
 
     return result.sort((a, b) => a.daysLeft - b.daysLeft);
-  }, [vehicles, mileageData]);
+  }, [vehicles, mileageRecords, tripLogs]);
 
   const critical = alerts.filter(a => a.type === "critical");
   const warning = alerts.filter(a => a.type === "warning");

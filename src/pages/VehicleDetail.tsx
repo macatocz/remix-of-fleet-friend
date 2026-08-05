@@ -26,6 +26,7 @@ import VehicleDocuments from "@/components/VehicleDocuments";
 import VehicleCalendar from "@/components/VehicleCalendar";
 
 import VehicleAlerts from "@/components/VehicleAlerts";
+import LeasingMileagePanel from "@/components/leasing/LeasingMileagePanel";
 import VehicleService from "@/components/VehicleService";
 import VehicleTripLogInline from "@/components/VehicleTripLogInline";
 import VehicleFuelCards from "@/components/VehicleFuelCards";
@@ -397,7 +398,7 @@ export default function VehicleDetail() {
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
-  const [mileageRecords, setMileageRecords] = useState<{ km: number; recorded_at: string }[]>([]);
+  const [mileageRecords, setMileageRecords] = useState<{ vehicle_id: string; km: number; recorded_at: string; source: "vehicle_mileage" | "trip_log" }[]>([]);
   const [branchOptions, setBranchOptions] = useState<{ value: string; label: string }[]>([
     { value: "Praha", label: "Praha" },
     { value: "Brno", label: "Brno" },
@@ -432,10 +433,10 @@ export default function VehicleDetail() {
 
   useEffect(() => {
     if (!id) return;
-    supabase.from("trip_logs").select("km_end, date")
+    supabase.from("trip_logs").select("vehicle_id, km_end, date")
       .eq("vehicle_id", id).not("km_end", "is", null).order("date", { ascending: false })
       .then(({ data }) => setMileageRecords(
-        ((data as any[]) || []).map(r => ({ km: r.km_end, recorded_at: r.date }))
+        ((data as any[]) || []).map(r => ({ vehicle_id: id, km: r.km_end, recorded_at: r.date, source: "trip_log" as const }))
       ));
   }, [id]);
 
@@ -598,7 +599,17 @@ export default function VehicleDetail() {
         </div>
       </div>
 
-      <VehicleAlerts vehicle={vehicle} mileageRecords={mileageRecords} />
+      <VehicleAlerts
+        vehicle={vehicle}
+        mileageRecords={mileageRecords}
+        tripLogs={mileageRecords
+          .filter(r => r.source === "trip_log")
+          .map(r => ({ vehicle_id: r.vehicle_id, km_end: r.km, date: r.recorded_at }))}
+      />
+
+      {showLeasing && (
+        <LeasingMileagePanel vehicleId={vehicle.id} vehicle={vehicle} />
+      )}
 
       <Tabs defaultValue="info">
         <TabsList>

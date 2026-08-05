@@ -312,6 +312,7 @@ function FieldRow({ field, vehicle, editing, editData, onEdit }: {
 }) {
   const YESNO_KEYS = ["maly_tp", "tankovaci_karty", "lekarnicka"];
   const CRITICAL_DATE_KEYS = ["stk", "zelena_karta"];
+  const DEADLINE_KEYS = ["stk", "zelena_karta", "datum_ukonceni_leasingu", "v_uzivani_do", "leasing_do"];
 
   const renderValue = (key: string, val: any) => {
     if (key === "status") return statusBadge(val || "aktivní");
@@ -323,8 +324,9 @@ function FieldRow({ field, vehicle, editing, editData, onEdit }: {
     if (YESNO_KEYS.includes(key)) return <YesNoBadge value={val} />;
     if (field.type === "date") {
       if (!isValidDateStr(val)) return <span className="text-muted-foreground">—</span>;
-      const lvl = deadlineLevel(val);
-      const rel = relativeDeadline(val);
+      const isDeadline = DEADLINE_KEYS.includes(key);
+      const lvl = isDeadline ? deadlineLevel(val) : "none";
+      const rel = isDeadline ? relativeDeadline(val) : null;
       return (
         <span className="inline-flex items-baseline gap-1.5">
           <span className={cn(lvl === "expired" && "text-destructive", lvl === "soon" && "text-warning")}>

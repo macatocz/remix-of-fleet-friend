@@ -305,16 +305,16 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="text-xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-sm text-muted-foreground">
           Přehled vozového parku, statistiky a notifikace.
         </p>
       </div>
 
       {/* ---------- Notifikace ---------- */}
-      <section className="space-y-3">
+      <section className="space-y-2">
         <div className="flex items-center gap-3">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Notifikace</h2>
           <div className="h-px flex-1 bg-border" />
@@ -323,13 +323,13 @@ export default function Dashboard() {
       </section>
 
       {/* ---------- Termíny, leasing a rezervace ---------- */}
-      <section className="space-y-3">
+      <section className="space-y-2">
         <div className="flex items-center gap-3">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Termíny, leasing a rezervace</h2>
           <div className="h-px flex-1 bg-border" />
         </div>
 
-        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
+        <div className="grid grid-cols-1 items-start gap-3 md:grid-cols-2 lg:grid-cols-3">
           <DeadlinesCard groups={deadlineGroups} />
           <LeasingMileageWidget />
           <PendingReservationsWidget />
@@ -346,7 +346,7 @@ export default function Dashboard() {
       />
 
       {/* ---------- Přehled ---------- */}
-      <section className="space-y-3">
+      <section className="space-y-2">
 
         <div className="flex items-center gap-3">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Přehled</h2>
@@ -354,11 +354,11 @@ export default function Dashboard() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-[104px] rounded-lg" />)}
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-[72px] rounded-lg" />)}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <StatCard
               label="Celkem vozidel"
               value={vehicleStats.total}

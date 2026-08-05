@@ -91,7 +91,7 @@ export default function DashboardExtraWidgets() {
   }, []);
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
       <ChartCard
         title="Vytíženost vozidel"
         subtitle="Počet rezervací za posledních 30 dní"
@@ -101,7 +101,8 @@ export default function DashboardExtraWidgets() {
         {utilization.length === 0 ? (
           <EmptyState icon={TrendingUp} title="Žádná data za posledních 30 dní" />
         ) : (
-          <ResponsiveContainer width="100%" height={280}>
+          <div className="h-[220px] sm:h-[260px]">
+          <ResponsiveContainer width="100%" height="100%">
             <BarChart data={utilization} layout="vertical" margin={{ left: 0, right: 16, top: 5, bottom: 5 }}>
               <defs>
                 <linearGradient id="gradUtil" x1="0" y1="0" x2="1" y2="0">
@@ -114,15 +115,16 @@ export default function DashboardExtraWidgets() {
               <YAxis
                 type="category"
                 dataKey="name"
-                width={170}
+                width={120}
                 {...axisProps}
                 tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-                tickFormatter={(value: string) => (value.length > 26 ? value.slice(0, 24) + "…" : value)}
+                tickFormatter={(value: string) => (value.length > 18 ? value.slice(0, 16) + "…" : value)}
               />
               <Tooltip cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }} content={<ChartTooltip />} />
               <Bar dataKey="value" name="Rezervace" fill="url(#gradUtil)" radius={[0, 6, 6, 0]} maxBarSize={22} />
             </BarChart>
           </ResponsiveContainer>
+          </div>
         )}
       </ChartCard>
 
@@ -130,7 +132,8 @@ export default function DashboardExtraWidgets() {
         {byLocation.length === 0 ? (
           <EmptyState icon={MapPin} title="Žádná data" />
         ) : (
-          <ResponsiveContainer width="100%" height={280}>
+          <div className="h-[220px] sm:h-[260px]">
+          <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={byLocation}
@@ -138,8 +141,8 @@ export default function DashboardExtraWidgets() {
                 nameKey="name"
                 cx="50%"
                 cy="45%"
-                innerRadius={48}
-                outerRadius={82}
+                innerRadius={42}
+                outerRadius={70}
                 paddingAngle={2}
                 stroke="hsl(var(--card))"
                 strokeWidth={2}
@@ -152,6 +155,7 @@ export default function DashboardExtraWidgets() {
               <Legend wrapperStyle={{ fontSize: "11px" }} iconType="circle" />
             </PieChart>
           </ResponsiveContainer>
+          </div>
         )}
       </ChartCard>
 

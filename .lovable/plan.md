@@ -1,32 +1,38 @@
-# Otestování dashboardu a responzivity
+# Otestování celé aplikace
 
 ## Cíl
-Ověřit, že po optimalizaci dashboardu (kompaktní notifikace, menší KPI karty, sloučené sekce) vše funguje na desktopu, tabletu i mobilu a nic se nerozbilo.
+Projít aplikaci od začátku do konce a ověřit, že klíčové moduly fungují — od přihlášení přes vozidla, rezervace, knihu jízd, cesťáky až po mobilní zobrazení. Výstupem bude přehled "funguje / nefunguje" s konkrétními nálezy.
 
-## Rozsah testů
+## Co se bude testovat
 
-### 1. Existující automatické testy
-Spustit stávající sadu (pravidla rezervací, výpočet nájezdu leasingu, výpočty cesťáku) a ověřit, že po úpravách UI stále procházejí.
+### 1. Automatické testy a stabilita kódu
+- Spuštění stávající sady testů (pravidla rezervací, nájezd leasingu, výpočty stravného).
+- Typová kontrola a produkční build — odhalí rozbité importy a chyby, které nejsou na první pohled vidět.
 
-### 2. Nové komponentové testy (Vitest + Testing Library)
-- **Notifikační lišta** — zobrazí správné počty ve 3 segmentech, rozbalení/sbalení detailu po kliknutí, prázdný segment je neaktivní, text "Žádná upozornění" při nule.
-- **KPI karta** — vykreslí popisek, hodnotu a hint; kliknutí spustí akci; sparkline se nevykreslí, pokud není dost dat.
-- **Filtry dashboardu** — přepnutí období, tlačítko "Zrušit filtry" se zobrazí jen při aktivním filtru a vrátí výchozí stav.
-- **Karta termínů / leasing widget / čekající rezervace** — vykreslení seznamu, rozbalení "Zobrazit vše", prázdný stav.
+### 2. Průchod aplikací v prohlížeči (desktop)
+Postupně otevřít a proklikat každou položku levého menu a zaznamenat chyby v konzoli i chybějící data:
+- Dashboard — notifikace, filtry období/vozidlo/řidič, KPI dlaždice, grafy, termíny, leasing, rezervace
+- Vozidla — seznam, filtry, detail vozidla a jeho záložky (leasing, servis, dokumenty, karty, kniha jízd, předání, incidenty)
+- Kalendář a rezervace — vytvoření rezervace, výběr řidiče z databáze, editace neschválené rezervace, schválení
+- Kniha jízd — report, filtr vozidla, export CSV; zápis přes detail vozidla včetně vkládání z Excelu a generátoru měsíce
+- Cestovní příkazy — založení, načtení z knihy jízd, přepočet stravného, uložení, workflow stavů, export PDF včetně diakritiky
+- Karty, náklady, incidenty, servis, řidiči, notifikace, nastavení (sazby, uživatelé, firma)
 
-### 3. Vizuální a funkční kontrola v prohlížeči
-Projít dashboard ve třech šířkách — mobil (390 px), tablet (834 px), desktop (1440 px) — a zkontrolovat:
-- karty se skládají do sloupců, nic nepřetéká a nevzniká vodorovný scroll,
-- grafy mají správnou výšku a jsou čitelné,
-- notifikační lišta se dá rozbalit a proklik vede na detail vozidla,
-- v konzoli nejsou chyby.
-Ke každé šířce pořídit snímek obrazovky jako důkaz.
+### 3. Mobilní zobrazení
+Ve zúžené šířce projít domovskou obrazovku řidiče, moje rezervace, moje vozidlo, mobilní přehled vozidel a karet, rychlé akce (zápis jízdy, rezervace, incident) a ověřit, že se karta paliva zobrazuje jen během aktivní rezervace.
 
-### 4. Kontrola typů a buildu
-Ověřit typovou kontrolu a produkční build.
+### 4. Backend a data
+- Kontrola stavu backendu a nedávných chyb v logu funkcí (upozornění na expirace, cesťáky, pozvánky uživatelů, kurzy ČNB).
+- Bezpečnostní sken — RLS a přístupová práva.
+- Kontrola, zda klíčové tabulky obsahují data (prázdná tabulka často vypadá jako rozbitá funkce).
+
+### 5. Responzivita a chyby v konzoli
+U každého kroku sledovat chyby v konzoli a neúspěšné síťové požadavky; snímky obrazovky u problémových míst.
+
+## Výstup
+Souhrnná zpráva rozdělená na: funguje bez výhrad / drobné nedostatky / chyby k opravě. Opravy navrhnu jako samostatný krok — v rámci tohoto testování se nic neupravuje.
 
 ## Technické detaily
-- Testy budou v `src/components/dashboard/__tests__/` a `src/components/__tests__/`, spouštěné přes Vitest (`jsdom`, setup už existuje).
-- Volání do backendu (`supabase.from(...)`) se v komponentových testech mockují přes `vi.mock("@/integrations/supabase/client")`, takže testy neběží proti reálným datům.
-- Prohlížečová kontrola přes Playwright proti běžícímu dev serveru, snímky do `/tmp/browser/`.
-- Žádné změny v datovém modelu ani v produkční logice — pokud test odhalí chybu, opravu navrhnu zvlášť.
+- Prohlížečové průchody přes Playwright proti běžícímu dev serveru, s obnovenou přihlášenou relací; snímky do `/tmp/browser/`.
+- Testy přes Vitest, dotazy na data přes read-only SQL, logy funkcí přes nástroj pro logy.
+- Testování je pouze pro čtení. Kde je nutné vytvořit záznam (rezervace, cesťák), použije se zřetelně označený testovací záznam, který se na konci smaže.

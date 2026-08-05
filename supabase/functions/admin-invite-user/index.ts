@@ -33,12 +33,14 @@ Deno.serve(async (req) => {
 
     const admin = createClient(url, service, { auth: { persistSession: false } });
 
-    const { data: isAdmin, error: roleError } = await admin.rpc("has_role", {
-      _user_id: callerId,
-      _role: "admin",
-    });
-    if (roleError) return json({ error: roleError.message }, 500);
-    if (!isAdmin) return json({ error: "Forbidden" }, 403);
+    const { data: adminRole, error: roleError } = await admin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", callerId)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (roleError) return json({ error: "Nepodařilo se ověřit oprávnění" }, 500);
+    if (!adminRole) return json({ error: "Forbidden" }, 403);
 
     const body = await req.json().catch(() => ({}));
     const action: string = body.action ?? "invite";

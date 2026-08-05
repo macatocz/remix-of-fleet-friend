@@ -313,7 +313,28 @@ export default function Dashboard() {
         </p>
       </div>
 
-      <VehicleNotifications />
+      {/* ---------- Notifikace ---------- */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Notifikace</h2>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+        <VehicleNotifications />
+      </section>
+
+      {/* ---------- Termíny, leasing a rezervace ---------- */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Termíny, leasing a rezervace</h2>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+
+        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
+          <DeadlinesCard groups={deadlineGroups} />
+          <LeasingMileageWidget />
+          <PendingReservationsWidget />
+        </div>
+      </section>
 
       <DashboardFilters
         period={period}
@@ -326,6 +347,7 @@ export default function Dashboard() {
 
       {/* ---------- Přehled ---------- */}
       <section className="space-y-3">
+
         <div className="flex items-center gap-3">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Přehled</h2>
           <div className="h-px flex-1 bg-border" />
@@ -457,19 +479,6 @@ export default function Dashboard() {
         <DashboardExtraWidgets />
       </section>
 
-      {/* ---------- Termíny a rezervace ---------- */}
-      <section className="space-y-3">
-        <div className="flex items-center gap-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Termíny, leasing a rezervace</h2>
-          <div className="h-px flex-1 bg-border" />
-        </div>
-
-        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
-          <DeadlinesCard groups={deadlineGroups} />
-          <LeasingMileageWidget />
-          <PendingReservationsWidget />
-        </div>
-      </section>
 
       {reservationStats.today > 0 && (
         <Card className="border-info/30 bg-info/5 shadow-card">

@@ -173,7 +173,7 @@ export default function MobileIncidents() {
               <Card
                 key={r.id}
                 className="p-3 min-w-0 active:bg-accent/40 transition-colors"
-                onClick={() => navigate(`/vozidla/${r.vehicle_id}`)}
+                onClick={() => navigate(`/m/skody/${r.id}`)}
               >
                 <div className="flex items-start justify-between gap-2 min-w-0">
                   <div className="min-w-0 flex-1">

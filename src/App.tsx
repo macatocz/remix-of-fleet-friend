@@ -24,6 +24,7 @@ import MobileCosts from "@/pages/mobile/MobileCosts";
 import MobileVehicles from "@/pages/mobile/MobileVehicles";
 import MobileService from "@/pages/mobile/MobileService";
 import MobileIncidents from "@/pages/mobile/MobileIncidents";
+import MobileIncidentDetail from "@/pages/mobile/MobileIncidentDetail";
 import TravelOrders from "@/pages/TravelOrders";
 import TravelOrderDetail from "@/pages/TravelOrderDetail";
 import MobileTravelOrders from "@/pages/mobile/MobileTravelOrders";
@@ -87,6 +88,7 @@ const App = () => (
               <Route path="servis" element={<MobileService />} />
               <Route path="kniha-jizd" element={<TripLog />} />
               <Route path="skody" element={<MobileIncidents />} />
+              <Route path="skody/:id" element={<MobileIncidentDetail />} />
               <Route path="naklady" element={<MobileCosts />} />
               <Route path="tankovaci-karty" element={<MobileFuelCards />} />
               <Route path="cestovni-prikazy" element={<MobileTravelOrders />} />

@@ -25,6 +25,7 @@ import { Plus, Search, X, Pencil, Trash2, Loader2, Users, Car, CalendarDays, Dow
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
+import { vehicleLabel } from "@/lib/vehicleName";
 
 interface DriverForm {
   first_name: string;
@@ -68,8 +69,8 @@ export default function Drivers() {
   const fetchData = async () => {
     setLoading(true);
     const [driversRes, vehiclesRes] = await Promise.all([
-      supabase.from("drivers").select("*, vehicles!drivers_vehicle_id_fkey(znacka, rz)").order("last_name"),
-      supabase.from("vehicles").select("id, znacka, rz").eq("status", "aktivní").order("znacka"),
+      supabase.from("drivers").select("*, vehicles!drivers_vehicle_id_fkey(znacka, rz, nazev_vozu)").order("last_name"),
+      supabase.from("vehicles").select("id, znacka, rz, nazev_vozu").eq("status", "aktivní").order("znacka"),
     ]);
     if (driversRes.error) {
       toast({ title: "Chyba", description: driversRes.error.message, variant: "destructive" });
@@ -89,7 +90,7 @@ export default function Drivers() {
       "Telefon": d.phone || "",
       "Email": d.email || "",
       "Oddělení": d.department || "",
-      "Vozidlo": d.vehicles ? `${d.vehicles.znacka || ""} (${d.vehicles.rz || ""})` : "",
+      "Vozidlo": d.vehicles ? vehicleLabel(d.vehicles) : "",
       "Stav": d.status,
       "Poznámky": d.notes || "",
     }));
@@ -249,7 +250,7 @@ export default function Drivers() {
     const fullName = `${d.first_name} ${d.last_name}`;
     const { data } = await supabase
       .from("reservations")
-      .select("*, vehicles(znacka, rz)")
+      .select("*, vehicles(znacka, rz, nazev_vozu)")
       .eq("driver_name", fullName)
       .order("date_from", { ascending: false })
       .limit(20);
@@ -266,14 +267,14 @@ export default function Drivers() {
         || (d.email || "").toLowerCase().includes(s)
         || (d.phone || "").toLowerCase().includes(s)
         || (d.department || "").toLowerCase().includes(s)
-        || (d.vehicles?.znacka || "").toLowerCase().includes(s)
+        || (`${d.vehicles?.nazev_vozu || ""} ${d.vehicles?.znacka || ""}`).toLowerCase().includes(s)
         || (d.vehicles?.rz || "").toLowerCase().includes(s);
       if (!match) return false;
     }
     return true;
   }), (item: any, key: string) => {
     if (key === "name") return `${item.last_name} ${item.first_name}`;
-    if (key === "vehicle") return item.vehicles?.znacka || "";
+    if (key === "vehicle") return item.vehicles?.nazev_vozu || item.vehicles?.znacka || "";
     return item[key];
   });
 
@@ -356,7 +357,7 @@ export default function Drivers() {
                 <SelectContent>
                   <SelectItem value="none">Žádné</SelectItem>
                   {vehicles.map(v => (
-                    <SelectItem key={v.id} value={v.id}>{v.znacka || "—"} ({v.rz || "—"})</SelectItem>
+                    <SelectItem key={v.id} value={v.id}>{vehicleLabel(v)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -409,7 +410,7 @@ export default function Drivers() {
                       className="text-primary underline hover:no-underline"
                       onClick={() => { setDetailDriver(null); navigate(`/vozidla/${detailDriver.vehicle_id}`); }}
                     >
-                      {detailDriver.vehicles.znacka} ({detailDriver.vehicles.rz})
+                      {vehicleLabel(detailDriver.vehicles)}
                     </button>
                   ) : "—"}
                 </div>
@@ -440,7 +441,7 @@ export default function Drivers() {
                       <TableBody>
                         {driverReservations.map(r => (
                           <TableRow key={r.id}>
-                            <TableCell className="text-xs">{r.vehicles?.znacka || "?"} ({r.vehicles?.rz || "?"})</TableCell>
+                            <TableCell className="text-xs">{vehicleLabel(r.vehicles)}</TableCell>
                             <TableCell className="text-xs">{new Date(r.date_from).toLocaleDateString("cs-CZ")}</TableCell>
                             <TableCell className="text-xs">{new Date(r.date_to).toLocaleDateString("cs-CZ")}</TableCell>
                             <TableCell className="text-xs">{r.purpose || "—"}</TableCell>
@@ -528,7 +529,7 @@ export default function Drivers() {
                     <TableCell>{d.email || "—"}</TableCell>
                     <TableCell>{d.department || "—"}</TableCell>
                     <TableCell>
-                      {d.vehicles ? `${d.vehicles.znacka || "?"} (${d.vehicles.rz || "?"})` : "—"}
+                      {vehicleLabel(d.vehicles)}
                     </TableCell>
                     <TableCell>{statusBadge(d.status)}</TableCell>
                     <TableCell>

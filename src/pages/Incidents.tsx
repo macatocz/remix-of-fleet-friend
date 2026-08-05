@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { AlertTriangle, Loader2, Search, Plus } from "lucide-react";
+import { vehicleLabel } from "@/lib/vehicleName";
 
 interface Row {
   id: string;
@@ -27,7 +28,7 @@ interface Row {
   description: string | null;
   estimated_cost: number | null;
   status: string;
-  vehicles?: { znacka: string | null; rz: string | null };
+  vehicles?: { znacka: string | null; rz: string | null; nazev_vozu?: string | null };
 }
 
 const STATUS_LABEL: Record<string, { label: string; variant: any }> = {
@@ -57,7 +58,7 @@ export default function Incidents() {
   const fetchRows = async () => {
     const { data } = await supabase
       .from("incidents")
-      .select("*, vehicles(znacka, rz)")
+      .select("*, vehicles(znacka, rz, nazev_vozu)")
       .order("date", { ascending: false });
     setRows((data || []) as any);
     setLoading(false);
@@ -102,7 +103,7 @@ export default function Incidents() {
       if (
         !(r.location || "").toLowerCase().includes(s) &&
         !(r.description || "").toLowerCase().includes(s) &&
-        !(r.vehicles?.znacka || "").toLowerCase().includes(s) &&
+        !(`${r.vehicles?.nazev_vozu || ""} ${r.vehicles?.znacka || ""}`).toLowerCase().includes(s) &&
         !(r.vehicles?.rz || "").toLowerCase().includes(s)
       )
         return false;
@@ -143,7 +144,7 @@ export default function Incidents() {
                 <SelectContent>
                   {vehicles.map((v) => (
                     <SelectItem key={v.id} value={v.id}>
-                      {v.nazev_vozu || v.znacka || "—"} · {v.rz || "—"}
+                      {vehicleLabel(v)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -249,7 +250,7 @@ export default function Incidents() {
                   return (
                     <TableRow key={r.id}>
                       <TableCell>{new Date(r.date).toLocaleDateString("cs-CZ")}</TableCell>
-                      <TableCell className="font-medium">{r.vehicles?.znacka || "—"} ({r.vehicles?.rz || "—"})</TableCell>
+                      <TableCell className="font-medium">{vehicleLabel(r.vehicles)}</TableCell>
                       <TableCell>{r.location || "—"}</TableCell>
                       <TableCell className="max-w-xs truncate">{r.description || "—"}</TableCell>
                       <TableCell>{r.estimated_cost ? Number(r.estimated_cost).toLocaleString("cs-CZ") : "—"}</TableCell>

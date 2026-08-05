@@ -93,3 +93,12 @@ export function buildVehicleName(v: VehicleNameInput, opts?: { poolIndex?: numbe
   const sn = lastName(spravce);
   return sn ? `${sn} ${model}`.trim() : model;
 }
+
+/** Jednotný popisek vozidla ve výběrech a tabulkách: „Název vozu · RZ“. */
+export function vehicleLabel(
+  v?: { nazev_vozu?: string | null; znacka?: string | null; rz?: string | null } | null
+): string {
+  if (!v) return "—";
+  const name = (v.nazev_vozu || v.znacka || "").trim() || "—";
+  return v.rz ? `${name} · ${v.rz}` : name;
+}

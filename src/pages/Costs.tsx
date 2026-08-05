@@ -18,6 +18,7 @@ import {
 } from "recharts";
 import { Fuel, Receipt, TrendingUp, DollarSign, Route } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { vehicleLabel } from "@/lib/vehicleName";
 
 const PIE_COLORS = ["hsl(38, 92%, 50%)", "hsl(0, 84%, 60%)", "hsl(217, 71%, 45%)", "hsl(142, 71%, 45%)", "hsl(280, 60%, 50%)"];
 
@@ -30,7 +31,7 @@ interface MonthData {
 }
 
 export default function Costs() {
-  const [vehicles, setVehicles] = useState<{ id: string; znacka: string; rz: string }[]>([]);
+  const [vehicles, setVehicles] = useState<{ id: string; znacka: string; rz: string; nazev_vozu?: string | null }[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState("all");
   const [year, setYear] = useState(new Date().getFullYear());
   const [monthlyData, setMonthlyData] = useState<MonthData[]>([]);
@@ -41,7 +42,7 @@ export default function Costs() {
   const serviceLogSort = useSortableTable("date", "desc");
 
   useEffect(() => {
-    supabase.from("vehicles").select("id, znacka, rz").order("znacka")
+    supabase.from("vehicles").select("id, znacka, rz, nazev_vozu").order("znacka")
       .then(({ data }) => setVehicles(data || []));
   }, []);
 
@@ -55,12 +56,12 @@ export default function Costs() {
     const endDate = `${year}-12-31`;
 
     let tripQ = supabase.from("trip_logs")
-      .select("*, vehicles(znacka, rz), drivers(first_name, last_name)")
+      .select("*, vehicles(znacka, rz, nazev_vozu), drivers(first_name, last_name)")
       .gte("date", startDate).lte("date", endDate)
       .order("date", { ascending: false });
 
     let serviceQ = supabase.from("service_records")
-      .select("*, vehicles(znacka, rz)")
+      .select("*, vehicles(znacka, rz, nazev_vozu)")
       .gte("date", startDate).lte("date", endDate)
       .order("date", { ascending: false });
 
@@ -116,13 +117,13 @@ export default function Costs() {
   const vehicleCostMap: Record<string, { name: string; cost: number }> = {};
   fuelLogs.forEach(l => {
     const vid = l.vehicle_id;
-    const label = l.vehicles ? `${l.vehicles.znacka} (${l.vehicles.rz})` : vid;
+    const label = l.vehicles ? vehicleLabel(l.vehicles) : vid;
     if (!vehicleCostMap[vid]) vehicleCostMap[vid] = { name: label, cost: 0 };
     vehicleCostMap[vid].cost += (Number(l.fuel_price) || 0) + (Number(l.other_price) || 0);
   });
   serviceLogs.forEach(s => {
     const vid = s.vehicle_id;
-    const label = s.vehicles ? `${s.vehicles.znacka} (${s.vehicles.rz})` : vid;
+    const label = s.vehicles ? vehicleLabel(s.vehicles) : vid;
     if (!vehicleCostMap[vid]) vehicleCostMap[vid] = { name: label, cost: 0 };
     vehicleCostMap[vid].cost += Number(s.cost) || 0;
   });
@@ -148,7 +149,7 @@ export default function Costs() {
               <SelectTrigger className="w-52"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Všechna vozidla</SelectItem>
-                {vehicles.map(v => <SelectItem key={v.id} value={v.id}>{v.znacka} ({v.rz})</SelectItem>)}
+                {vehicles.map(v => <SelectItem key={v.id} value={v.id}>{vehicleLabel(v)}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -274,13 +275,13 @@ export default function Costs() {
                     </TableHeader>
                     <TableBody>
                       {fuelSort.sortData(fuelLogs, (item: any, key: string) => {
-                        if (key === "vehicle") return item.vehicles?.znacka || "";
+                        if (key === "vehicle") return item.vehicles?.nazev_vozu || item.vehicles?.znacka || "";
                         if (key === "driver") return item.drivers ? `${item.drivers.last_name} ${item.drivers.first_name}` : "";
                         return item[key];
                       }).slice(0, 50).map((f: any) => (
                         <TableRow key={f.id}>
                           <TableCell className="whitespace-nowrap">{new Date(f.date).toLocaleDateString("cs-CZ")}</TableCell>
-                          {selectedVehicle === "all" && <TableCell className="whitespace-nowrap">{f.vehicles ? `${f.vehicles.znacka} (${f.vehicles.rz})` : "—"}</TableCell>}
+                          {selectedVehicle === "all" && <TableCell className="whitespace-nowrap">{vehicleLabel(f.vehicles)}</TableCell>}
                           <TableCell>{f.drivers ? `${f.drivers.first_name} ${f.drivers.last_name}` : "—"}</TableCell>
                           <TableCell>{f.route_from && f.route_to ? `${f.route_from} → ${f.route_to}` : "—"}</TableCell>
                           <TableCell className="text-right">{f.fuel_quantity ? Number(f.fuel_quantity).toLocaleString("cs-CZ", { minimumFractionDigits: 1 }) : "—"} l</TableCell>
@@ -317,12 +318,12 @@ export default function Costs() {
                     </TableHeader>
                     <TableBody>
                       {serviceLogSort.sortData(serviceLogs, (item: any, key: string) => {
-                        if (key === "vehicle") return item.vehicles?.znacka || "";
+                        if (key === "vehicle") return item.vehicles?.nazev_vozu || item.vehicles?.znacka || "";
                         return item[key];
                       }).map((s: any) => (
                         <TableRow key={s.id}>
                           <TableCell className="whitespace-nowrap">{new Date(s.date).toLocaleDateString("cs-CZ")}</TableCell>
-                          {selectedVehicle === "all" && <TableCell className="whitespace-nowrap">{s.vehicles ? `${s.vehicles.znacka} (${s.vehicles.rz})` : "—"}</TableCell>}
+                          {selectedVehicle === "all" && <TableCell className="whitespace-nowrap">{vehicleLabel(s.vehicles)}</TableCell>}
                           <TableCell>{s.type}</TableCell>
                           <TableCell>{s.description || "—"}</TableCell>
                           <TableCell><Badge variant={s.status === "dokončeno" ? "default" : "secondary"}>{s.status}</Badge></TableCell>

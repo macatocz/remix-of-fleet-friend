@@ -13,6 +13,8 @@ const TYPES: Array<{ key: string; label: string }> = [
   { key: "reservation_approved", label: "Rezervace schválena" },
   { key: "reservation_rejected", label: "Rezervace zamítnuta" },
   { key: "reservation_pending", label: "Nová rezervace ke schválení" },
+  { key: "reservation_starting", label: "Připomenutí – rezervace začíná dnes" },
+  { key: "travel_order_required", label: "Vyplňte cestovní příkaz" },
   { key: "incident_new", label: "Nové hlášení škody" },
   { key: "expiration_stk", label: "Konec STK" },
   { key: "expiration_insurance", label: "Konec pojištění" },

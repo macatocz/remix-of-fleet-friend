@@ -50,7 +50,7 @@ export function computeTotalContractKm(input: LeasingMileageInput): number | nul
   const from = parseDate(input.datum_zahajeni_leasingu);
   const to = parseDate(input.datum_ukonceni_leasingu);
   if (!najezdRocni || !from || !to) return null;
-  const months = (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth());
+  const months = (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth()) + 1;
   if (months <= 0) return null;
   return Math.round((najezdRocni * months) / 12);
 }

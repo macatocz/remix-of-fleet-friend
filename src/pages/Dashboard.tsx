@@ -305,16 +305,16 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="text-xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-sm text-muted-foreground">
           Přehled vozového parku, statistiky a notifikace.
         </p>
       </div>
 
       {/* ---------- Notifikace ---------- */}
-      <section className="space-y-3">
+      <section className="space-y-2">
         <div className="flex items-center gap-3">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Notifikace</h2>
           <div className="h-px flex-1 bg-border" />
@@ -323,13 +323,13 @@ export default function Dashboard() {
       </section>
 
       {/* ---------- Termíny, leasing a rezervace ---------- */}
-      <section className="space-y-3">
+      <section className="space-y-2">
         <div className="flex items-center gap-3">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Termíny, leasing a rezervace</h2>
           <div className="h-px flex-1 bg-border" />
         </div>
 
-        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
+        <div className="grid grid-cols-1 items-start gap-3 md:grid-cols-2 lg:grid-cols-3">
           <DeadlinesCard groups={deadlineGroups} />
           <LeasingMileageWidget />
           <PendingReservationsWidget />
@@ -346,7 +346,7 @@ export default function Dashboard() {
       />
 
       {/* ---------- Přehled ---------- */}
-      <section className="space-y-3">
+      <section className="space-y-2">
 
         <div className="flex items-center gap-3">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Přehled</h2>
@@ -354,11 +354,11 @@ export default function Dashboard() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-[104px] rounded-lg" />)}
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-[72px] rounded-lg" />)}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <StatCard
               label="Celkem vozidel"
               value={vehicleStats.total}
@@ -398,21 +398,21 @@ export default function Dashboard() {
       </section>
 
       {/* ---------- Náklady a provoz ---------- */}
-      <section className="space-y-3">
+      <section className="space-y-2">
         <div className="flex items-center gap-3">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Náklady a provoz</h2>
           <span className="text-xs text-muted-foreground">{periodTitle}</span>
           <div className="h-px flex-1 bg-border" />
         </div>
 
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard label="Najeté km" value={monthlyKpi.totalKm.toLocaleString("cs-CZ")} hint={periodTitle} icon={Route} tone="primary" spark={kmSpark} />
           <StatCard label="PHM" value={`${monthlyKpi.fuelCost.toLocaleString("cs-CZ")} Kč`} hint={periodTitle} icon={Fuel} tone="warning" spark={phmSpark} delay={60} />
           <StatCard label="Servis" value={`${monthlyKpi.serviceCost.toLocaleString("cs-CZ")} Kč`} hint={driverFilter !== "all" ? "bez filtru řidiče" : periodTitle} icon={Wrench} tone="destructive" spark={servisSpark} delay={120} />
           <StatCard label="Počet jízd" value={monthlyKpi.tripCount} hint="záznamů v knize jízd" icon={TrendingUp} tone="success" delay={180} />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
           <ChartCard
             title="Vývoj nákladů"
             subtitle="PHM a servis podle měsíců"
@@ -422,7 +422,7 @@ export default function Dashboard() {
             {monthlyCostTrend.length === 0 ? (
               <EmptyState icon={DollarSign} title="Zatím žádné náklady" hint="Data se objeví po zápisu jízd a servisů." />
             ) : (
-              <ResponsiveContainer width="100%" height={280}>
+              <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={monthlyCostTrend} margin={{ top: 5, right: 8, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="gradPhm" x1="0" y1="0" x2="0" y2="1">
@@ -450,7 +450,7 @@ export default function Dashboard() {
             {reservationsByVehicle.length === 0 ? (
               <EmptyState icon={CalendarDays} title="Žádné aktivní rezervace" />
             ) : (
-              <ResponsiveContainer width="100%" height={280}>
+              <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
                   <Pie
                     data={reservationsByVehicle}
@@ -458,8 +458,8 @@ export default function Dashboard() {
                     nameKey="name"
                     cx="50%"
                     cy="45%"
-                    innerRadius={48}
-                    outerRadius={80}
+                    innerRadius={40}
+                    outerRadius={68}
                     paddingAngle={2}
                     stroke="hsl(var(--card))"
                     strokeWidth={2}
@@ -482,12 +482,12 @@ export default function Dashboard() {
 
       {reservationStats.today > 0 && (
         <Card className="border-info/30 bg-info/5 shadow-card">
-          <CardContent className="flex items-center gap-3 py-4">
-            <CalendarDays className="h-5 w-5 text-info" />
-            <span className="text-sm">
+          <CardContent className="flex items-center gap-2 px-3 py-2">
+            <CalendarDays className="h-4 w-4 text-info" />
+            <span className="text-xs">
               Dnes je <strong>{reservationStats.today}</strong> {reservationStats.today === 1 ? "aktivní rezervace" : "aktivních rezervací"}.
             </span>
-            <button onClick={() => navigate("/rezervace")} className="ml-auto text-sm text-info underline hover:no-underline">
+            <button onClick={() => navigate("/rezervace")} className="ml-auto text-xs text-info underline hover:no-underline">
               Zobrazit rezervace →
             </button>
           </CardContent>

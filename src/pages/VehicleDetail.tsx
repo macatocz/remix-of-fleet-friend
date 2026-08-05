@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { ArrowLeft, FileText, CalendarDays, Info, Loader2, Pencil, Save, X, Trash2, Wrench, BookOpen, CreditCard, CalendarIcon, Gauge, ClipboardCheck, AlertTriangle, Sparkles } from "lucide-react";
+import { ArrowLeft, FileText, CalendarDays, Info, Loader2, Pencil, Save, X, Trash2, Wrench, BookOpen, CreditCard, CalendarIcon, Gauge, ClipboardCheck, AlertTriangle, Sparkles, Car, FileSignature, ShieldCheck, Settings2, QrCode } from "lucide-react";
+import { InfoCard, PlateBadge, YesNoBadge, DeadlineAlert, MiniProgress, deadlineLevel, relativeDeadline } from "@/components/vehicle/InfoCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format, parseISO, differenceInMonths } from "date-fns";
@@ -174,6 +175,13 @@ const typVlastnictviLabel: Record<string, string> = {
   financni_leasing: "Finanční leasing",
 };
 
+const kategorieLabel: Record<string, string> = {
+  A: "A – Ředitel",
+  B: "B – Management",
+  C: "C – Konzultant",
+  D: "D – Referent",
+};
+
 const statusBadge = (status: string) => {
   switch (status) {
     case "aktivní": return <Badge className="bg-success text-success-foreground">Aktivní</Badge>;
@@ -302,17 +310,57 @@ function EditableField({ field, value, onChange, onEdit }: { field: FieldDef; va
 function FieldRow({ field, vehicle, editing, editData, onEdit }: {
   field: FieldDef; vehicle: any; editing: boolean; editData: Record<string, string>; onEdit: (key: string, val: string) => void;
 }) {
+  const YESNO_KEYS = ["maly_tp", "tankovaci_karty", "lekarnicka"];
+  const CRITICAL_DATE_KEYS = ["stk", "zelena_karta"];
+  const DEADLINE_KEYS = ["stk", "zelena_karta", "datum_ukonceni_leasingu", "v_uzivani_do", "leasing_do"];
+
   const renderValue = (key: string, val: any) => {
     if (key === "status") return statusBadge(val || "aktivní");
     if (key === "typ_vlastnictvi") return typVlastnictviLabel[val] || val || "—";
-    if (field.type === "date") return formatDateDisplay(val);
-    if (field.type === "currency") return val ? `${val} ${field.suffix || "Kč"}` : "—";
+    if (key === "kategorie") {
+      if (!val) return <span className="text-muted-foreground">—</span>;
+      return <Badge variant="secondary" className="font-semibold">{kategorieLabel[val] || val}</Badge>;
+    }
+    if (YESNO_KEYS.includes(key)) return <YesNoBadge value={val} />;
+    if (field.type === "date") {
+      if (!isValidDateStr(val)) return <span className="text-muted-foreground">—</span>;
+      const isDeadline = DEADLINE_KEYS.includes(key);
+      const lvl = isDeadline ? deadlineLevel(val) : "none";
+      const rel = isDeadline ? relativeDeadline(val) : null;
+      return (
+        <span className="inline-flex items-baseline gap-1.5">
+          <span className={cn(lvl === "expired" && "text-destructive", lvl === "soon" && "text-warning")}>
+            {formatDateDisplay(val)}
+          </span>
+          {rel && <span className="text-[11px] font-normal text-muted-foreground">{rel}</span>}
+        </span>
+      );
+    }
+    if (field.type === "currency") {
+      if (val === null || val === undefined || val === "") return <span className="text-muted-foreground">—</span>;
+      const num = Number(val);
+      const text = isNaN(num) ? String(val) : num.toLocaleString("cs-CZ", { maximumFractionDigits: 2 });
+      return <span>{text} <span className="text-xs font-normal text-muted-foreground">{field.suffix || "Kč"}</span></span>;
+    }
     if (field.type === "computed" && field.computeFn) return field.computeFn(vehicle, editData);
-    return val || "—";
+    if (field.suffix && val) {
+      const num = Number(String(val).replace(/\s/g, "").replace(",", "."));
+      const text = isNaN(num) ? String(val) : num.toLocaleString("cs-CZ");
+      return <span>{text} <span className="text-xs font-normal text-muted-foreground">{field.suffix}</span></span>;
+    }
+    return val || <span className="text-muted-foreground">—</span>;
   };
 
   // Skip vignettes in regular FieldRow — handled separately
   if (field.type === "vignettes") return null;
+
+  // Kritické termíny jako zvýrazněný blok
+  if (!editing && CRITICAL_DATE_KEYS.includes(field.key)) {
+    const lvl = deadlineLevel(vehicle[field.key]);
+    if (lvl === "expired" || lvl === "soon") {
+      return <DeadlineAlert label={field.label} dateText={formatDateDisplay(vehicle[field.key])} level={lvl} />;
+    }
+  }
 
   if (field.type === "computed") {
     const computed = field.computeFn ? field.computeFn(vehicle, editData) : "—";
@@ -325,7 +373,7 @@ function FieldRow({ field, vehicle, editing, editData, onEdit }: {
       );
     }
     return (
-      <div className="flex justify-between">
+      <div className="flex justify-between rounded px-2 py-1.5 transition-colors hover:bg-muted/50">
         <dt className="text-muted-foreground">{field.label}</dt>
         <dd className="font-medium text-right max-w-[200px] truncate">{computed}</dd>
       </div>
@@ -342,25 +390,57 @@ function FieldRow({ field, vehicle, editing, editData, onEdit }: {
   }
 
   return (
-    <div className="flex justify-between">
+    <div className="flex justify-between rounded px-2 py-1.5 transition-colors hover:bg-muted/50">
       <dt className="text-muted-foreground">{field.label}</dt>
-      <dd className="font-medium text-right max-w-[200px] truncate">{renderValue(field.key, vehicle[field.key])}</dd>
+      <dd className="font-semibold text-right max-w-[230px] truncate">{renderValue(field.key, vehicle[field.key])}</dd>
     </div>
   );
 }
 
-function EditableCard({ title, fields, vehicle, editing, editData, onEdit }: {
-  title: string; fields: FieldDef[]; vehicle: any; editing: boolean; editData: Record<string, string>; onEdit: (key: string, val: string) => void;
+function LeasingProgress({ vehicle }: { vehicle: any }) {
+  const from = vehicle.datum_zahajeni_leasingu;
+  const to = vehicle.datum_ukonceni_leasingu;
+  if (!isValidDateStr(from) || !isValidDateStr(to)) return null;
+  const start = parseISO(from);
+  const end = parseISO(to);
+  const totalMonths = differenceInMonths(end, start);
+  if (totalMonths <= 0) return null;
+  const elapsed = Math.max(0, Math.min(totalMonths, differenceInMonths(new Date(), start)));
+  const remaining = totalMonths - elapsed;
+
+  const najezd = parseFloat(String(vehicle.najezd_za_rok ?? "").replace(/[^\d.,-]/g, "").replace(",", "."));
+  const totalKm = najezd ? Math.round(najezd * totalMonths / 12) : 0;
+  const planKm = totalKm ? Math.round(totalKm * elapsed / totalMonths) : 0;
+
+  return (
+    <div className="space-y-3 rounded-lg bg-muted/40 p-3">
+      <MiniProgress
+        label="Doba leasingu"
+        valueText={`${elapsed} / ${totalMonths} měs. (zbývá ${remaining})`}
+        percent={(elapsed / totalMonths) * 100}
+      />
+      {totalKm > 0 && (
+        <MiniProgress
+          label="Plánovaný nájezd"
+          valueText={`${planKm.toLocaleString("cs-CZ")} / ${totalKm.toLocaleString("cs-CZ")} km`}
+          percent={(planKm / totalKm) * 100}
+          tone="muted"
+        />
+      )}
+    </div>
+  );
+}
+
+function EditableCard({ title, icon, accent, right, header, fields, vehicle, editing, editData, onEdit }: {
+  title: string; icon: React.ReactNode; accent?: "primary" | "neutral"; right?: React.ReactNode; header?: React.ReactNode;
+  fields: FieldDef[]; vehicle: any; editing: boolean; editData: Record<string, string>; onEdit: (key: string, val: string) => void;
 }) {
   const vignetteField = fields.find(f => f.type === "vignettes");
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <InfoCard title={title} icon={icon} accent={accent} right={editing ? undefined : right} className="h-full">
         <div className={editing ? "space-y-3" : ""}>
+          {!editing && header}
           {editing ? (
             <>
               {fields.filter(f => f.type !== "vignettes").map(f => <FieldRow key={f.key} field={f} vehicle={vehicle} editing editData={editData} onEdit={onEdit} />)}
@@ -372,10 +452,10 @@ function EditableCard({ title, fields, vehicle, editing, editData, onEdit }: {
               )}
             </>
           ) : (
-            <dl className="space-y-3 text-sm">
+            <dl className="space-y-1 text-sm">
               {fields.filter(f => f.type !== "vignettes").map(f => <FieldRow key={f.key} field={f} vehicle={vehicle} editing={false} editData={editData} onEdit={onEdit} />)}
               {vignetteField && (
-                <div className="flex justify-between">
+                <div className="flex justify-between rounded px-2 py-1.5 transition-colors hover:bg-muted/50">
                   <dt className="text-muted-foreground">{vignetteField.label}</dt>
                   <dd className="font-medium text-right">
                     <VehicleVignettes vehicleId={vehicle.id} editing={false} />
@@ -385,8 +465,7 @@ function EditableCard({ title, fields, vehicle, editing, editData, onEdit }: {
             </dl>
           )}
         </div>
-      </CardContent>
-    </Card>
+    </InfoCard>
   );
 }
 
@@ -673,27 +752,55 @@ export default function VehicleDetail() {
         </TabsList>
 
         <TabsContent value="info" className="mt-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <EditableCard title="Základní informace" fields={BASIC_FIELDS} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit} />
+          <div className="grid gap-6 md:grid-cols-2 items-start">
+            <EditableCard
+              title="Základní informace"
+              icon={<Car className="h-4 w-4" />}
+              accent="primary"
+              right={<PlateBadge rz={vehicle.rz} />}
+              header={
+                <div className="mb-3 pb-3 border-b">
+                  <p className="text-lg font-bold leading-tight">{vehicle.nazev_vozu || vehicle.znacka || "—"}</p>
+                  {vehicle.znacka && vehicle.nazev_vozu && (
+                    <p className="text-sm text-muted-foreground">{vehicle.znacka}</p>
+                  )}
+                </div>
+              }
+              fields={BASIC_FIELDS} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit}
+            />
             {showLeasing && (
-              <EditableCard title="Leasing" fields={LEASING_FIELDS} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit} />
+              <EditableCard
+                title="Leasing"
+                icon={<FileSignature className="h-4 w-4" />}
+                header={<div className="mb-3"><LeasingProgress vehicle={vehicle} /></div>}
+                fields={LEASING_FIELDS} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit}
+              />
             )}
-            <EditableCard title="Dokumenty a kontroly" fields={DOC_FIELDS} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit} />
-            <EditableCard title="Provozní údaje" fields={getOpsFields(branchOptions)} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit} />
-            <Card>
-              <CardHeader><CardTitle className="text-base">QR kód vozidla</CardTitle></CardHeader>
-              <CardContent>
+            <EditableCard title="Dokumenty a kontroly" icon={<ShieldCheck className="h-4 w-4" />} fields={DOC_FIELDS} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit} />
+            <EditableCard title="Provozní údaje" icon={<Settings2 className="h-4 w-4" />} fields={getOpsFields(branchOptions)} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit} />
+            <Card className="md:col-span-2 overflow-hidden border-l-4 border-l-muted-foreground/60">
+              <div className="flex items-center gap-2.5 border-b px-5 py-3">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                  <QrCode className="h-4 w-4" />
+                </span>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-foreground/80">QR kód vozidla</h3>
+              </div>
+              <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center gap-6">
+                <div className="shrink-0">
                 <VehicleQRCode vehicleId={vehicle.id} label={`${vehicle.znacka || ""} ${vehicle.rz || ""}`.trim()} />
-                <p className="text-xs text-muted-foreground mt-3">
+                </div>
+                <div className="flex-1">
+                <p className="text-xs text-muted-foreground">
                   Vytiskněte a nalepte do vozu — řidič nascanováním ihned otevře kartu vozidla.
                 </p>
-                <div className="mt-4 pt-4 border-t">
-                  <Button variant="outline" className="w-full" onClick={printVehicleCard} disabled={cardPrinting}>
+                <div className="mt-4">
+                  <Button variant="outline" className="w-full sm:w-auto" onClick={printVehicleCard} disabled={cardPrinting}>
                     {cardPrinting ? "Připravuji PDF…" : "Tisk karty vozidla (PDF)"}
                   </Button>
                   <p className="text-xs text-muted-foreground mt-2">
                     Jednostránkový přehled vozu včetně QR kódu, správce, platností a výbavy.
                   </p>
+                </div>
                 </div>
               </CardContent>
             </Card>

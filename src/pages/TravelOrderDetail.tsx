@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Plus, Trash2, Save, FileDown, RefreshCw, CheckCircle2, Banknote, Send, XCircle, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +34,8 @@ export default function TravelOrderDetail() {
   const { id } = useParams();
   const isNew = !id || id === "novy";
   const navigate = useNavigate();
+  const location = useLocation();
+  const base = location.pathname.startsWith("/m/") ? "/m/cestovni-prikazy" : "/cestovni-prikazy";
   const qc = useQueryClient();
   const { toast } = useToast();
   const { data: companyOv } = useCompanySettings();
@@ -315,7 +317,7 @@ export default function TravelOrderDetail() {
     qc.invalidateQueries({ queryKey: ["travel_orders"] });
     qc.invalidateQueries({ queryKey: ["travel_order", saveId] });
     toast({ title: "Uloženo" });
-    if (isNew) navigate(`/cestovni-prikazy/${saveId}`, { replace: true });
+    if (isNew) navigate(`${base}/${saveId}`, { replace: true });
     return saveId;
   };
 
@@ -385,7 +387,7 @@ export default function TravelOrderDetail() {
     <div className="space-y-4 max-w-5xl">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/cestovni-prikazy")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(base)}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <h1 className="text-2xl font-bold">{isNew ? "Nový cestovní příkaz" : number}</h1>

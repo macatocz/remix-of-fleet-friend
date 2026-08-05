@@ -29,7 +29,7 @@ export default function MobileTravelOrders() {
           <h1 className="font-semibold text-lg">Cestovní příkazy</h1>
           {data && <span className="text-muted-foreground text-sm">({data.length})</span>}
         </div>
-        <Button size="sm" onClick={() => navigate("/cestovni-prikazy/novy")}>
+        <Button size="sm" onClick={() => navigate("/m/cestovni-prikazy/novy")}>
           <Plus className="h-4 w-4" />Nový
         </Button>
       </div>
@@ -45,7 +45,7 @@ export default function MobileTravelOrders() {
         data?.map((o: any) => (
           <Card
             key={o.id}
-            onClick={() => navigate(`/cestovni-prikazy/${o.id}`)}
+            onClick={() => navigate(`/m/cestovni-prikazy/${o.id}`)}
             className="p-3 active:bg-accent cursor-pointer"
           >
             <div className="flex items-start justify-between gap-2">

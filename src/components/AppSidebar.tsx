@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Car, Users, CalendarDays, Wrench, DollarSign, Settings, BookOpen, CreditCard, AlertTriangle, FileText
+  LayoutDashboard, Car, Users, CalendarDays, Wrench, DollarSign, Settings, BookOpen, CreditCard, AlertTriangle, FileText, BarChart3
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -19,6 +19,7 @@ const mainItems = [
   { title: "Náklady", url: "/naklady", icon: DollarSign, description: "Provozní a leasingové výdaje" },
   { title: "Tankovací karty", url: "/tankovaci-karty", icon: CreditCard, description: "Palivové karty a PINy" },
   { title: "Cestovní příkazy", url: "/cestovni-prikazy", icon: FileText, description: "Tuzemské i zahraniční CP" },
+  { title: "Report", url: "/report", icon: BarChart3, description: "Kvartální souhrn nákladů a vytížení" },
 ];
 
 const settingsItems = [

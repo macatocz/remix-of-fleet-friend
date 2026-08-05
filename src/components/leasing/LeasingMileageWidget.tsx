@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Gauge, ArrowRight } from "lucide-react";
+import { Gauge, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   computeLeasingMileage,
@@ -13,12 +14,16 @@ import {
   TripLogMileage,
 } from "@/lib/leasing/mileage";
 
+const PREVIEW_COUNT = 5;
+
 export default function LeasingMileageWidget() {
   const navigate = useNavigate();
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [records, setRecords] = useState<MileageSource[]>([]);
   const [tripLogs, setTripLogs] = useState<TripLogMileage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(false);
+
 
   useEffect(() => {
     Promise.all([
@@ -69,12 +74,23 @@ export default function LeasingMileageWidget() {
       .sort((a, b) => b.percentage - a.percentage);
   }, [vehicles, records, tripLogs]);
 
+  const visibleRows = expanded ? rows : rows.slice(0, PREVIEW_COUNT);
+  const hasMore = rows.length > PREVIEW_COUNT;
+
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <Gauge className="h-4 w-4" />
-          Čerpání nájezdu leasingových vozů
+        <CardTitle className="text-base flex items-center justify-between gap-2">
+          <span className="flex items-center gap-2">
+            <Gauge className="h-4 w-4" />
+            Čerpání nájezdu leasingových vozů
+          </span>
+          {!loading && rows.length > 0 && (
+            <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+              {rows.length}
+            </span>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -84,7 +100,7 @@ export default function LeasingMileageWidget() {
           <div className="text-sm text-muted-foreground">Žádná aktivní leasingová vozidla s údaji o nájezdu.</div>
         ) : (
           <div className="space-y-3">
-            {rows.map((row) => (
+            {visibleRows.map((row) => (
               <div
                 key={row.id}
                 className="group cursor-pointer rounded-lg border p-3 hover:bg-muted/50 transition-colors"
@@ -117,9 +133,30 @@ export default function LeasingMileageWidget() {
                 </div>
               </div>
             ))}
+            {hasMore && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full h-8 text-xs"
+                onClick={() => setExpanded((e) => !e)}
+              >
+                {expanded ? (
+                  <>
+                    <ChevronUp className="h-3.5 w-3.5 mr-1" />
+                    Zobrazit méně
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-3.5 w-3.5 mr-1" />
+                    Zobrazit vše ({rows.length})
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         )}
       </CardContent>
     </Card>
   );
 }
+

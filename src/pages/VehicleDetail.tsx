@@ -650,7 +650,7 @@ export default function VehicleDetail() {
     : vehicle.typ_vlastnictvi === "operativni_leasing" || vehicle.typ_vlastnictvi === "financni_leasing";
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-full space-y-6 overflow-x-hidden">
       <Card className={cn("overflow-hidden border-l-4 transition-shadow hover:shadow-[var(--shadow-card-hover)]", headerAccentClass(vehicle.status))}>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 pl-4">
           <div className="flex items-start gap-3 min-w-0">
@@ -662,7 +662,7 @@ export default function VehicleDetail() {
             </span>
             <div className="min-w-0 space-y-1.5">
               <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="text-2xl font-bold tracking-tight text-foreground">{vehicle.nazev_vozu || vehicle.znacka || "Vozidlo"}</h1>
+                <h1 className="break-words text-xl font-bold tracking-tight text-foreground sm:text-2xl">{vehicle.nazev_vozu || vehicle.znacka || "Vozidlo"}</h1>
                 {statusBadge(vehicle.status)}
               </div>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-muted-foreground">
@@ -688,7 +688,7 @@ export default function VehicleDetail() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 lg:shrink-0">
             {!editing ? (
               <>
                 <Button variant="outline" size="sm" onClick={startEditing}>
@@ -758,8 +758,9 @@ export default function VehicleDetail() {
         <LeasingMileagePanel vehicleId={vehicle.id} vehicle={vehicle} />
       )}
 
-      <Tabs defaultValue="info">
-        <TabsList>
+      <Tabs defaultValue="info" className="w-full max-w-full">
+        <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
+        <TabsList className="w-max min-w-full justify-start">
           <TabsTrigger value="info">
             <Info className="mr-2 h-4 w-4" />Údaje
           </TabsTrigger>
@@ -785,6 +786,7 @@ export default function VehicleDetail() {
             <AlertTriangle className="mr-2 h-4 w-4" />Škody
           </TabsTrigger>
         </TabsList>
+        </div>
 
         <TabsContent value="info" className="mt-6">
           <div className="grid gap-6 md:grid-cols-2 items-start">
@@ -842,7 +844,7 @@ export default function VehicleDetail() {
           </div>
         </TabsContent>
 
-        <TabsContent value="calendar" className="mt-6">
+        <TabsContent value="calendar" className="mt-6 max-w-full overflow-x-auto">
           <Card>
             <CardContent className="pt-6">
               <VehicleCalendar vehicleId={vehicle.id} />
@@ -850,7 +852,7 @@ export default function VehicleDetail() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="documents" className="mt-6">
+        <TabsContent value="documents" className="mt-6 max-w-full overflow-x-auto">
           <Card>
             <CardContent className="pt-6">
               <VehicleDocuments vehicleId={vehicle.id} />
@@ -859,7 +861,7 @@ export default function VehicleDetail() {
         </TabsContent>
 
 
-        <TabsContent value="service" className="mt-6">
+        <TabsContent value="service" className="mt-6 max-w-full overflow-x-auto">
           <Tabs defaultValue="history">
             <TabsList>
               <TabsTrigger value="history">Historie servisu</TabsTrigger>
@@ -882,7 +884,7 @@ export default function VehicleDetail() {
           </Tabs>
         </TabsContent>
 
-        <TabsContent value="triplog" className="mt-6">
+        <TabsContent value="triplog" className="mt-6 max-w-full overflow-x-auto">
           <Card>
             <CardContent className="pt-6">
               <VehicleTripLogInline vehicleId={vehicle.id} />
@@ -890,7 +892,7 @@ export default function VehicleDetail() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="fuelcards" className="mt-6">
+        <TabsContent value="fuelcards" className="mt-6 max-w-full overflow-x-auto">
           <Card>
             <CardContent className="pt-6">
               <VehicleFuelCards vehicleId={vehicle.id} defaultOwner={vehicle.spravce} />
@@ -898,7 +900,7 @@ export default function VehicleDetail() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="handover" className="mt-6">
+        <TabsContent value="handover" className="mt-6 max-w-full overflow-x-auto">
           <Card>
             <CardContent className="pt-6">
               <VehicleHandover vehicleId={vehicle.id} />
@@ -906,7 +908,7 @@ export default function VehicleDetail() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="incidents" className="mt-6">
+        <TabsContent value="incidents" className="mt-6 max-w-full overflow-x-auto">
           <Card>
             <CardContent className="pt-6">
               <VehicleIncidents vehicleId={vehicle.id} />

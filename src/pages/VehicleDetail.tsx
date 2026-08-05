@@ -662,7 +662,7 @@ export default function VehicleDetail() {
             </span>
             <div className="min-w-0 space-y-1.5">
               <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="text-2xl font-bold tracking-tight text-foreground">{vehicle.nazev_vozu || vehicle.znacka || "Vozidlo"}</h1>
+                <h1 className="break-words text-xl font-bold tracking-tight text-foreground sm:text-2xl">{vehicle.nazev_vozu || vehicle.znacka || "Vozidlo"}</h1>
                 {statusBadge(vehicle.status)}
               </div>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-muted-foreground">

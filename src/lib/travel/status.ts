@@ -17,10 +17,10 @@ export const STATUS_LABEL: Record<string, string> = {
 // discrete state colors so každý stav je jasně rozlišený.
 export const STATUS_BADGE_CLASS: Record<string, string> = {
   koncept: "bg-muted text-muted-foreground border-border",
-  odeslano: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-200 dark:border-blue-900",
+  odeslano: "bg-muted text-foreground border-border dark:bg-muted/20 dark:text-foreground",
   vyuctovano: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-900",
   schvaleno: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-200 dark:border-emerald-900",
-  zamitnuto: "bg-red-100 text-red-800 border-red-200 dark:bg-red-950 dark:text-red-200 dark:border-red-900",
+  zamitnuto: "bg-destructive/10 text-destructive border-destructive/20 dark:bg-destructive/20 dark:text-destructive-foreground",
 };
 
 // Kroky v stepperu (bez „Zamítnuto" — to je vedlejší větev)

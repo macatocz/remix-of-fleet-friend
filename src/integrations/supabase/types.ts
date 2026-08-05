@@ -1692,6 +1692,7 @@ export type Database = {
       }
     }
     Functions: {
+      can_access_vehicle: { Args: { _vehicle_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1726,6 +1727,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      safe_uuid: { Args: { _val: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "dispatcer" | "ridic"

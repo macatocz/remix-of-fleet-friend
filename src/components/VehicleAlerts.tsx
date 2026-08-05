@@ -110,26 +110,32 @@ export default function VehicleAlerts({ vehicle, mileageRecords = [], tripLogs =
   const info = alerts.filter(a => a.type === "info");
 
   return (
-    <div className="space-y-2">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {critical.map((a, i) => (
-        <div key={`c${i}`} className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2">
-          <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
-          <span className="text-sm">{a.message}</span>
-          <Badge variant="destructive" className="ml-auto text-[10px] shrink-0">Kritické</Badge>
+        <div key={`c${i}`} className="flex items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/10 p-4">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive/20 text-destructive">
+            <AlertTriangle className="h-5 w-5" />
+          </span>
+          <p className="flex-1 text-sm font-medium text-destructive">{a.message}</p>
+          <Badge variant="destructive" className="shrink-0 text-[10px]">Kritické</Badge>
         </div>
       ))}
       {warning.map((a, i) => (
-        <div key={`w${i}`} className="flex items-center gap-2 rounded-lg border border-warning/30 bg-warning/5 px-3 py-2">
-          <AlertTriangle className="h-4 w-4 text-warning shrink-0" />
-          <span className="text-sm">{a.message}</span>
-          <Badge variant="secondary" className="ml-auto text-[10px] shrink-0">Varování</Badge>
+        <div key={`w${i}`} className="flex items-center gap-3 rounded-xl border border-warning/30 bg-warning/10 p-4">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-warning/20 text-warning">
+            <AlertTriangle className="h-5 w-5" />
+          </span>
+          <p className="flex-1 text-sm font-medium text-warning">{a.message}</p>
+          <Badge className="shrink-0 bg-warning text-warning-foreground text-[10px]">Varování</Badge>
         </div>
       ))}
       {info.map((a, i) => (
-        <div key={`i${i}`} className="flex items-center gap-2 rounded-lg border border-info/30 bg-info/5 px-3 py-2">
-          <Info className="h-4 w-4 text-info shrink-0" />
-          <span className="text-sm">{a.message}</span>
-          <Badge variant="outline" className="ml-auto text-[10px] shrink-0">Info</Badge>
+        <div key={`i${i}`} className="flex items-center gap-3 rounded-xl border border-info/30 bg-info/10 p-4">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-info/20 text-info">
+            <Info className="h-5 w-5" />
+          </span>
+          <p className="flex-1 text-sm font-medium text-info">{a.message}</p>
+          <Badge variant="outline" className="shrink-0 text-[10px] border-info/50 text-info">Info</Badge>
         </div>
       ))}
     </div>

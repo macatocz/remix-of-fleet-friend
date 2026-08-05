@@ -419,7 +419,7 @@ export type Database = {
           reservation_id: string | null
           status: string
           updated_at: string
-          vehicle_id: string
+          vehicle_id: string | null
         }
         Insert: {
           created_at?: string
@@ -432,7 +432,7 @@ export type Database = {
           reservation_id?: string | null
           status?: string
           updated_at?: string
-          vehicle_id: string
+          vehicle_id?: string | null
         }
         Update: {
           created_at?: string
@@ -445,9 +445,38 @@ export type Database = {
           reservation_id?: string | null
           status?: string
           updated_at?: string
-          vehicle_id?: string
+          vehicle_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "incidents_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidents_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidents_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_key_status"
+            referencedColumns: ["vehicle_id"]
+          },
+          {
+            foreignKeyName: "incidents_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inspections: {
         Row: {

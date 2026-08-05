@@ -9,6 +9,9 @@ Dashboard má tyto oblasti:
 - Termíny, leasing a rezervace: 3 karty pod sebou/vedle sebe — Blížící se termíny, Čerpání nájezdu leasingových vozů, Čekající rezervace. Karty mají velké paddingy a vysoký řádek na jednotlivé položky.
 - Přehled a Náklady a provoz: 4 statové karty s paddingy a sparkline grafy, které zabírají slušnou část výšky.
 
+## Zvolený směr
+Volím kompaktní hustotu ve stylu „Condensed list“: karty se sjednocenou hlavičkou, řádky místo velkých bloků, menší paddingy a fonty, tenké barevné statusové pruhy místo velkých ikon. Modrobílá paleta, čeština a všechen obsah zůstávají.
+
 ## Návrh optimalizace
 
 ### 1. Kompaktní notifikace

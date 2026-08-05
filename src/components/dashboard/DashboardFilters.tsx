@@ -48,14 +48,14 @@ export default function DashboardFilters({
   const isFiltered = vehicleId !== "all" || driverId !== "all" || period !== "6";
 
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-card/60 p-3 shadow-card">
-      <div className="inline-flex rounded-md border bg-background p-0.5">
+    <div className="flex flex-col gap-2 rounded-lg border bg-card/60 p-2.5 shadow-card sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 sm:p-3">
+      <div className="flex w-full rounded-md border bg-background p-0.5 sm:inline-flex sm:w-auto">
         {PERIODS.map((p) => (
           <button
             key={p.key}
             onClick={() => onPeriodChange(p.key)}
             className={cn(
-              "rounded px-3 py-1.5 text-xs font-medium transition-colors",
+              "flex-1 rounded px-2 py-1.5 text-xs font-medium transition-colors sm:flex-none sm:px-3",
               period === p.key ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -64,10 +64,10 @@ export default function DashboardFilters({
         ))}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-1 items-center gap-2 sm:flex-none">
         <Car className="h-4 w-4 text-muted-foreground" />
         <Select value={vehicleId} onValueChange={onVehicleChange}>
-          <SelectTrigger className="h-9 w-[200px] text-sm">
+          <SelectTrigger className="h-9 w-full text-sm sm:w-[200px]">
             <SelectValue placeholder="Všechna vozidla" />
           </SelectTrigger>
           <SelectContent className="max-h-72 bg-popover">
@@ -77,10 +77,10 @@ export default function DashboardFilters({
         </Select>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-1 items-center gap-2 sm:flex-none">
         <Users className="h-4 w-4 text-muted-foreground" />
         <Select value={driverId} onValueChange={onDriverChange}>
-          <SelectTrigger className="h-9 w-[200px] text-sm">
+          <SelectTrigger className="h-9 w-full text-sm sm:w-[200px]">
             <SelectValue placeholder="Všichni řidiči" />
           </SelectTrigger>
           <SelectContent className="max-h-72 bg-popover">
@@ -94,7 +94,7 @@ export default function DashboardFilters({
         <Button
           variant="ghost"
           size="sm"
-          className="ml-auto text-muted-foreground"
+          className="w-full text-muted-foreground sm:ml-auto sm:w-auto"
           onClick={() => { onPeriodChange("6"); onVehicleChange("all"); onDriverChange("all"); }}
         >
           <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Zrušit filtry

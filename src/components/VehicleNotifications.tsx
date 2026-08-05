@@ -193,14 +193,14 @@ export default function VehicleNotifications() {
 
   return (
     <div className="rounded-lg border bg-card shadow-card">
-      <div className="grid grid-cols-3 divide-x divide-border">
+      <div className="grid grid-cols-1 divide-y divide-border sm:grid-cols-3 sm:divide-x sm:divide-y-0">
         {SEGMENTS.map((s) => (
           <button
             key={s.key}
             onClick={() => toggle(s.key)}
             disabled={s.items.length === 0}
-            className={`flex items-center justify-center gap-2 border-b px-3 py-2.5 text-left transition-colors ${
-              expanded[s.key] ? s.active : "border-transparent hover:bg-muted/50"
+            className={`flex items-center gap-2 px-3 py-2 text-left transition-colors sm:justify-center sm:py-2.5 ${
+              expanded[s.key] ? s.active : "hover:bg-muted/50"
             } ${s.items.length === 0 ? "opacity-50" : ""}`}
           >
             <span className={`h-2 w-2 shrink-0 rounded-full ${s.dot}`} />
@@ -208,37 +208,37 @@ export default function VehicleNotifications() {
             <span className="truncate text-xs text-muted-foreground">{s.title}</span>
             {s.items.length > 0 &&
               (expanded[s.key] ? (
-                <ChevronUp className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <ChevronUp className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground sm:ml-0" />
               ) : (
-                <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <ChevronDown className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground sm:ml-0" />
               ))}
           </button>
         ))}
       </div>
 
       {openSegment ? (
-        <div className="max-h-[260px] space-y-1 overflow-y-auto p-2">
+        <div className="max-h-[260px] space-y-1 overflow-y-auto border-t p-2">
           {openSegment.items.map((a, i) => (
             <div
               key={i}
               onClick={() => navigate(`/vozidla/${a.vehicleId}`)}
-              className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-muted/60"
+              className="flex cursor-pointer flex-wrap items-center gap-x-2 gap-y-0.5 rounded-md px-2 py-1.5 transition-colors hover:bg-muted/60"
             >
               <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${openSegment.dot}`} />
               <Car className="h-3 w-3 shrink-0 text-muted-foreground" />
-              <span className="shrink-0 truncate text-xs font-medium">{a.vehicleLabel}</span>
-              <span className="truncate text-[11px] text-muted-foreground">{a.message}</span>
+              <span className="max-w-[55%] truncate text-xs font-medium sm:shrink-0 sm:max-w-none">{a.vehicleLabel}</span>
               <Badge
                 variant={a.daysLeft < 0 ? "destructive" : "outline"}
-                className="ml-auto shrink-0 text-[10px] tabular-nums"
+                className="ml-auto shrink-0 text-[10px] tabular-nums sm:order-last"
               >
                 {a.daysLeft < 0 ? "Expirováno" : `${a.daysLeft} dní`}
               </Badge>
+              <span className="w-full truncate text-[11px] text-muted-foreground sm:w-auto sm:flex-1">{a.message}</span>
             </div>
           ))}
         </div>
       ) : (
-        <div className="px-3 py-1.5 text-center text-[11px] text-muted-foreground">
+        <div className="border-t px-3 py-1.5 text-center text-[11px] text-muted-foreground">
           {totalCount === 0 ? "Žádná upozornění" : `Celkem ${totalCount} upozornění – klikněte pro detail`}
         </div>
       )}

@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Gauge, ArrowRight } from "lucide-react";
+import { Gauge, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   computeLeasingMileage,
@@ -13,12 +14,16 @@ import {
   TripLogMileage,
 } from "@/lib/leasing/mileage";
 
+const PREVIEW_COUNT = 5;
+
 export default function LeasingMileageWidget() {
   const navigate = useNavigate();
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [records, setRecords] = useState<MileageSource[]>([]);
   const [tripLogs, setTripLogs] = useState<TripLogMileage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(false);
+
 
   useEffect(() => {
     Promise.all([

@@ -81,9 +81,16 @@ export default function LeasingMileageWidget() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <Gauge className="h-4 w-4" />
-          Čerpání nájezdu leasingových vozů
+        <CardTitle className="text-base flex items-center justify-between gap-2">
+          <span className="flex items-center gap-2">
+            <Gauge className="h-4 w-4" />
+            Čerpání nájezdu leasingových vozů
+          </span>
+          {!loading && rows.length > 0 && (
+            <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+              {rows.length}
+            </span>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -93,7 +100,7 @@ export default function LeasingMileageWidget() {
           <div className="text-sm text-muted-foreground">Žádná aktivní leasingová vozidla s údaji o nájezdu.</div>
         ) : (
           <div className="space-y-3">
-            {rows.map((row) => (
+            {visibleRows.map((row) => (
               <div
                 key={row.id}
                 className="group cursor-pointer rounded-lg border p-3 hover:bg-muted/50 transition-colors"
@@ -126,9 +133,30 @@ export default function LeasingMileageWidget() {
                 </div>
               </div>
             ))}
+            {hasMore && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full h-8 text-xs"
+                onClick={() => setExpanded((e) => !e)}
+              >
+                {expanded ? (
+                  <>
+                    <ChevronUp className="h-3.5 w-3.5 mr-1" />
+                    Zobrazit méně
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-3.5 w-3.5 mr-1" />
+                    Zobrazit vše ({rows.length})
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         )}
       </CardContent>
     </Card>
   );
 }
+

@@ -74,6 +74,10 @@ export default function LeasingMileageWidget() {
       .sort((a, b) => b.percentage - a.percentage);
   }, [vehicles, records, tripLogs]);
 
+  const visibleRows = expanded ? rows : rows.slice(0, PREVIEW_COUNT);
+  const hasMore = rows.length > PREVIEW_COUNT;
+
+
   return (
     <Card>
       <CardHeader>

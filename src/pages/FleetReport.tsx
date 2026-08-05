@@ -114,9 +114,9 @@ export default function FleetReport() {
     if (!current) return;
     const { jsPDF } = await import("jspdf");
     const autoTable = (await import("jspdf-autotable")).default;
-    const { ensureCzechFont } = await import("@/lib/travel/pdfFont");
+    const { ensurePdfFont } = await import("@/lib/travel/pdfFont");
     const doc = new jsPDF({ orientation: "landscape" });
-    const font = await ensureCzechFont(doc);
+    const font = await ensurePdfFont(doc);
 
     doc.setFont(font, "bold");
     doc.setFontSize(16);

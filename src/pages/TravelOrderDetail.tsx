@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Plus, Trash2, Save, FileDown, RefreshCw, CheckCircle2, Banknote, Send, XCircle, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";

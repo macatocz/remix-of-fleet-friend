@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { ArrowLeft, FileText, CalendarDays, Info, Loader2, Pencil, Save, X, Trash2, Wrench, BookOpen, CreditCard, CalendarIcon, Gauge, ClipboardCheck, AlertTriangle, Sparkles } from "lucide-react";
+import { ArrowLeft, FileText, CalendarDays, Info, Loader2, Pencil, Save, X, Trash2, Wrench, BookOpen, CreditCard, CalendarIcon, Gauge, ClipboardCheck, AlertTriangle, Sparkles, Car, FileSignature, ShieldCheck, Settings2, QrCode } from "lucide-react";
+import { InfoCard, PlateBadge, YesNoBadge, DeadlineAlert, MiniProgress, deadlineLevel, relativeDeadline } from "@/components/vehicle/InfoCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format, parseISO, differenceInMonths } from "date-fns";
@@ -172,6 +173,13 @@ const typVlastnictviLabel: Record<string, string> = {
   majetek: "Majetek",
   operativni_leasing: "Operativní leasing",
   financni_leasing: "Finanční leasing",
+};
+
+const kategorieLabel: Record<string, string> = {
+  A: "A – Ředitel",
+  B: "B – Management",
+  C: "C – Konzultant",
+  D: "D – Referent",
 };
 
 const statusBadge = (status: string) => {

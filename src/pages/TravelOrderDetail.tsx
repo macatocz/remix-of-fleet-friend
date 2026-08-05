@@ -83,11 +83,11 @@ export default function TravelOrderDetail() {
   });
   const { data: vehicles } = useQuery({
     queryKey: ["vehicles-min"],
-    queryFn: async () => (await supabase.from("vehicles").select("id,rz,znacka").order("rz")).data || [],
+    queryFn: async () => (await supabase.from("vehicles_basic").select("id,rz,znacka").order("rz")).data || [],
   });
   const { data: company } = useQuery({
     queryKey: ["company_settings"],
-    queryFn: async () => (await supabase.from("company_settings").select("*").maybeSingle()).data,
+    queryFn: async () => (await supabase.from("company_public").select("*").maybeSingle()).data,
   });
 
   const { data: existing } = useQuery({

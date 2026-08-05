@@ -46,7 +46,7 @@ export default function MobileVehicles() {
     queryKey: ["vehicles_mobile"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("vehicles")
+        .from("vehicles_basic")
         .select("*")
         .order("rz", { ascending: true });
       if (error) throw error;

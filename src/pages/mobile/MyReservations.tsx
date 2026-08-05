@@ -51,7 +51,7 @@ export default function MyReservations() {
     const ids = Array.from(new Set(list.map(r => r.vehicle_id)));
     if (ids.length) {
       const { data: vs } = await supabase
-        .from("vehicles").select("id, znacka, rz, nazev_vozu").in("id", ids);
+        .from("vehicles_basic").select("id, znacka, rz, nazev_vozu").in("id", ids);
       const map = new Map((vs || []).map((v: any) => [v.id, v]));
       list.forEach(r => { r.vehicle = map.get(r.vehicle_id); });
     }
@@ -77,7 +77,7 @@ export default function MyReservations() {
     const list = (data as PendingReservation[]) || [];
     const ids = Array.from(new Set(list.map(r => r.vehicle_id)));
     if (ids.length) {
-        const { data: vs } = await supabase.from("vehicles").select("id, rz, znacka, nazev_vozu").in("id", ids);
+        const { data: vs } = await supabase.from("vehicles_basic").select("id, rz, znacka, nazev_vozu").in("id", ids);
       const map = new Map((vs || []).map((v: any) => [v.id, v]));
       list.forEach(r => { r.vehicle = map.get(r.vehicle_id); });
     }

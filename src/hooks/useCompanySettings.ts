@@ -18,7 +18,7 @@ export function useCompanySettings() {
   const refresh = useCallback(async () => {
     setLoading(true);
     const { data: row } = await supabase
-      .from("company_settings")
+      .from("company_public")
       .select("id, meal_rates_override, foreign_meal_rates_override, fuel_price_override, km_rate_override")
       .limit(1)
       .maybeSingle();

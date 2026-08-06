@@ -35,6 +35,7 @@ import SettingsPage from "@/pages/SettingsPage";
 import NotificationsPage from "@/pages/NotificationsPage";
 import Login from "@/pages/Login";
 import SetPassword from "@/pages/SetPassword";
+import InstallGuide from "@/pages/InstallGuide";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +50,8 @@ const App = () => (
           <Routes>
             <Route path="/prihlaseni" element={<Login />} />
             <Route path="/nastaveni-hesla" element={<SetPassword />} />
+            <Route path="/instalace" element={<InstallGuide />} />
+            <Route path="/m/instalace" element={<InstallGuide />} />
             <Route
               element={
                 <ProtectedRoute>

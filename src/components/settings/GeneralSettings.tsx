@@ -52,17 +52,16 @@ export function GeneralSettings() {
   const handleSave = async () => {
     setSaving(true);
     const allSettings = { ...settings, branches: JSON.stringify(branches) };
-    const promises = Object.entries(allSettings).map(([key, value]) =>
-      supabase.from("app_settings").update({ value }).eq("key", key)
-    );
-    const results = await Promise.all(promises);
+    const rows = Object.entries(allSettings).map(([key, value]) => ({ key, value }));
+    const { error } = await supabase.from("app_settings").upsert(rows, { onConflict: "key" });
     setSaving(false);
-    if (results.some((r) => r.error)) {
-      toast.error("Chyba při ukládání");
+    if (error) {
+      toast.error("Chyba při ukládání: " + error.message);
     } else {
       toast.success("Nastavení uloženo");
     }
   };
+
 
   if (loading) return <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 

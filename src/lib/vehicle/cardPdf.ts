@@ -49,10 +49,6 @@ const qrDataUrl = (vehicleId: string, publicUrl?: string | null) => {
   return QRCode.toDataURL(`${base}/m/vozidla/${vehicleId}`, { width: 320, margin: 1 });
 };
 
-const qrSheetDataUrl = (vehicleId: string, publicUrl?: string | null) => {
-  const base = (publicUrl || window.location.origin).replace(/\/$/, "");
-  return QRCode.toDataURL(`${base}/m/vozidla/${vehicleId}`, { width: 320, margin: 1 });
-};
 
 
 const CATEGORY: Record<string, string> = {

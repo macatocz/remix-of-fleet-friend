@@ -52,17 +52,16 @@ export function GeneralSettings() {
   const handleSave = async () => {
     setSaving(true);
     const allSettings = { ...settings, branches: JSON.stringify(branches) };
-    const promises = Object.entries(allSettings).map(([key, value]) =>
-      supabase.from("app_settings").update({ value }).eq("key", key)
-    );
-    const results = await Promise.all(promises);
+    const rows = Object.entries(allSettings).map(([key, value]) => ({ key, value }));
+    const { error } = await supabase.from("app_settings").upsert(rows, { onConflict: "key" });
     setSaving(false);
-    if (results.some((r) => r.error)) {
-      toast.error("Chyba při ukládání");
+    if (error) {
+      toast.error("Chyba při ukládání: " + error.message);
     } else {
       toast.success("Nastavení uloženo");
     }
   };
+
 
   if (loading) return <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
@@ -193,6 +192,24 @@ export function GeneralSettings() {
           </div>
         </div>
 
+        <div className="border-t pt-4">
+          <h3 className="font-medium mb-3">Veřejná adresa aplikace</h3>
+          <p className="text-sm text-muted-foreground mb-3">
+            Adresa, pod kterou je aplikace dostupná po publikování. Z QR kódů a tisknutých karet vozidel se bude otevírat právě tato adresa — řidič se tak po naskenování dostane rovnou do nainstalované aplikace.
+          </p>
+          <div className="flex flex-col gap-2 max-w-xl">
+            <Input
+              type="url"
+              placeholder={`https://example.com`}
+              value={settings.app_public_url || ""}
+              onChange={(e) => update("app_public_url", e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Pokud necháte prázdné, použije se aktuální adresa okna prohlížeče ({typeof window !== "undefined" ? window.location.origin : ""}).
+            </p>
+          </div>
+        </div>
+
         <div className="rounded-lg border p-4">
           <div className="font-medium text-sm">Instalace do mobilu</div>
           <p className="text-sm text-muted-foreground mt-1">
@@ -205,6 +222,7 @@ export function GeneralSettings() {
             Otevřít návod
           </a>
         </div>
+
 
         <Button onClick={handleSave} disabled={saving}>
           {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}

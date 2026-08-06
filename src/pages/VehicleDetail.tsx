@@ -23,6 +23,7 @@ import { format, parseISO, differenceInMonths } from "date-fns";
 import { cs } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { buildVehicleName } from "@/lib/vehicleName";
+import { useAppPublicUrl } from "@/hooks/useAppPublicUrl";
 import VehicleDocuments from "@/components/VehicleDocuments";
 import VehicleCalendar from "@/components/VehicleCalendar";
 
@@ -36,6 +37,7 @@ import VehicleVignettes from "@/components/VehicleVignettes";
 import VehicleServicePlan from "@/components/VehicleServicePlan";
 import VehicleHandover from "@/components/VehicleHandover";
 import VehicleIncidents from "@/components/VehicleIncidents";
+
 
 interface FieldDef {
   key: string;
@@ -505,8 +507,10 @@ export default function VehicleDetail() {
     { value: "Liberec", label: "Liberec" },
   ]);
   const { toast } = useToast();
+  const { url: appPublicUrl } = useAppPublicUrl();
 
   useEffect(() => {
+
     supabase.from("app_settings").select("value").eq("key", "branches").maybeSingle()
       .then(({ data }) => {
         if (data?.value) {
@@ -556,7 +560,9 @@ export default function VehicleDetail() {
         stkValidUntil: (stkRes.data?.[0] as any)?.valid_until ?? null,
         insurance: (insRes.data as any) || [],
         currentKm,
+        publicUrl: appPublicUrl,
       });
+
     } catch (e: any) {
       toast({ title: "Chyba tisku", description: e.message, variant: "destructive" });
     }

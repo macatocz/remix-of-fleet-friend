@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSortableTable } from "@/hooks/useSortableTable";
+import { useAppPublicUrl } from "@/hooks/useAppPublicUrl";
 import { SortableTableHead } from "@/components/ui/sortable-table-head";
+
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -154,8 +156,10 @@ export default function Vehicles() {
   const [bulkValue, setBulkValue] = useState("");
   const [bulkSpravceId, setBulkSpravceId] = useState<string | null>(null);
   const { toast } = useToast();
+  const { url: appPublicUrl } = useAppPublicUrl();
 
   const fetchVehicles = async () => {
+
     setLoading(true);
     const { data, error } = await supabase.from("vehicles").select("*").order("created_at");
     if (error) {
@@ -306,13 +310,14 @@ export default function Vehicles() {
     setQrExporting(true);
     try {
       const { generateQrSheetPdf } = await import("@/lib/vehicle/cardPdf");
-      await generateQrSheetPdf(list.map((v: any) => ({ id: v.id, nazev_vozu: v.nazev_vozu, znacka: v.znacka, rz: v.rz })));
+      await generateQrSheetPdf(list.map((v: any) => ({ id: v.id, nazev_vozu: v.nazev_vozu, znacka: v.znacka, rz: v.rz })), appPublicUrl);
       toast({ title: "QR kódy vygenerovány", description: `${list.length} vozidel v PDF.` });
     } catch (e: any) {
       toast({ title: "Chyba exportu", description: e.message, variant: "destructive" });
     }
     setQrExporting(false);
   };
+
 
   const applyBulk = async () => {
     if (!bulkDialog) return;

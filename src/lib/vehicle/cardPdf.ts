@@ -32,9 +32,11 @@ export interface VehicleCardExtras {
   stkValidUntil?: string | null;
   insurance?: { insurer?: string | null; type?: string | null; valid_until?: string | null }[];
   currentKm?: number | null;
+  publicUrl?: string | null;
 }
 
 const cs = (d?: string | null) => {
+
   if (!d) return "—";
   const t = Date.parse(d);
   return isNaN(t) ? d : new Date(t).toLocaleDateString("cs-CZ");
@@ -42,8 +44,12 @@ const cs = (d?: string | null) => {
 const val = (v?: string | number | null) =>
   v === null || v === undefined || v === "" ? "—" : String(v);
 
-const qrDataUrl = (vehicleId: string) =>
-  QRCode.toDataURL(`${window.location.origin}/m/vozidla/${vehicleId}`, { width: 320, margin: 1 });
+const qrDataUrl = (vehicleId: string, publicUrl?: string | null) => {
+  const base = (publicUrl || window.location.origin).replace(/\/$/, "");
+  return QRCode.toDataURL(`${base}/m/vozidla/${vehicleId}`, { width: 320, margin: 1 });
+};
+
+
 
 const CATEGORY: Record<string, string> = {
   A: "A – Ředitel",
@@ -76,13 +82,14 @@ export async function generateVehicleCardPdf(v: VehicleCardData, extras: Vehicle
 
   // QR vpravo nahoře
   try {
-    const qr = await qrDataUrl(v.id);
+    const qr = await qrDataUrl(v.id, extras.publicUrl);
     doc.addImage(qr, "PNG", W - M - 34, 12, 34, 34);
     doc.setFontSize(7);
     doc.setTextColor(120);
     doc.text("Naskenujte pro kartu vozu", W - M - 34, 49);
     doc.setTextColor(0);
   } catch { /* QR je nepovinné */ }
+
 
   y += 10;
 
@@ -171,7 +178,8 @@ export async function generateVehicleCardPdf(v: VehicleCardData, extras: Vehicle
 
 /** Mřížka QR kódů vybraných vozidel pro tisk a nalepení do vozů. */
 export async function generateQrSheetPdf(
-  vehicles: { id: string; nazev_vozu?: string | null; znacka?: string | null; rz?: string | null }[]
+  vehicles: { id: string; nazev_vozu?: string | null; znacka?: string | null; rz?: string | null }[],
+  publicUrl?: string | null
 ) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   await ensurePdfFont(doc);
@@ -180,6 +188,7 @@ export async function generateQrSheetPdf(
   const rowsPerPage = 4;
   const cellW = (210 - 2 * M) / cols;
   const cellH = (297 - 2 * M - 10) / rowsPerPage;
+
 
   for (let i = 0; i < vehicles.length; i++) {
     const idx = i % (cols * rowsPerPage);
@@ -193,8 +202,9 @@ export async function generateQrSheetPdf(
     doc.setDrawColor(225);
     doc.roundedRect(x + 2, y - 4, cellW - 4, cellH - 6, 2, 2);
     try {
-      const qr = await QRCode.toDataURL(`${window.location.origin}/m/vozidla/${v.id}`, { width: 320, margin: 1 });
+      const qr = await qrDataUrl(v.id, publicUrl);
       const size = Math.min(cellW - 22, cellH - 30);
+
       doc.addImage(qr, "PNG", x + (cellW - size) / 2, y + 2, size, size);
       doc.setFont(PDF_FONT, "bold");
       doc.setFontSize(9);

@@ -310,13 +310,14 @@ export default function Vehicles() {
     setQrExporting(true);
     try {
       const { generateQrSheetPdf } = await import("@/lib/vehicle/cardPdf");
-      await generateQrSheetPdf(list.map((v: any) => ({ id: v.id, nazev_vozu: v.nazev_vozu, znacka: v.znacka, rz: v.rz })));
+      await generateQrSheetPdf(list.map((v: any) => ({ id: v.id, nazev_vozu: v.nazev_vozu, znacka: v.znacka, rz: v.rz })), appPublicUrl);
       toast({ title: "QR kódy vygenerovány", description: `${list.length} vozidel v PDF.` });
     } catch (e: any) {
       toast({ title: "Chyba exportu", description: e.message, variant: "destructive" });
     }
     setQrExporting(false);
   };
+
 
   const applyBulk = async () => {
     if (!bulkDialog) return;

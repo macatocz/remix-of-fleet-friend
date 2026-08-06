@@ -156,8 +156,10 @@ export default function Vehicles() {
   const [bulkValue, setBulkValue] = useState("");
   const [bulkSpravceId, setBulkSpravceId] = useState<string | null>(null);
   const { toast } = useToast();
+  const { url: appPublicUrl } = useAppPublicUrl();
 
   const fetchVehicles = async () => {
+
     setLoading(true);
     const { data, error } = await supabase.from("vehicles").select("*").order("created_at");
     if (error) {

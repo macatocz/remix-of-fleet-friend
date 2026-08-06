@@ -181,7 +181,8 @@ export async function generateVehicleCardPdf(v: VehicleCardData, extras: Vehicle
 
 /** Mřížka QR kódů vybraných vozidel pro tisk a nalepení do vozů. */
 export async function generateQrSheetPdf(
-  vehicles: { id: string; nazev_vozu?: string | null; znacka?: string | null; rz?: string | null }[]
+  vehicles: { id: string; nazev_vozu?: string | null; znacka?: string | null; rz?: string | null }[],
+  publicUrl?: string | null
 ) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   await ensurePdfFont(doc);
@@ -190,6 +191,7 @@ export async function generateQrSheetPdf(
   const rowsPerPage = 4;
   const cellW = (210 - 2 * M) / cols;
   const cellH = (297 - 2 * M - 10) / rowsPerPage;
+
 
   for (let i = 0; i < vehicles.length; i++) {
     const idx = i % (cols * rowsPerPage);

@@ -86,13 +86,14 @@ export async function generateVehicleCardPdf(v: VehicleCardData, extras: Vehicle
 
   // QR vpravo nahoře
   try {
-    const qr = await qrDataUrl(v.id);
+    const qr = await qrDataUrl(v.id, extras.publicUrl);
     doc.addImage(qr, "PNG", W - M - 34, 12, 34, 34);
     doc.setFontSize(7);
     doc.setTextColor(120);
     doc.text("Naskenujte pro kartu vozu", W - M - 34, 49);
     doc.setTextColor(0);
   } catch { /* QR je nepovinné */ }
+
 
   y += 10;
 

@@ -560,7 +560,9 @@ export default function VehicleDetail() {
         stkValidUntil: (stkRes.data?.[0] as any)?.valid_until ?? null,
         insurance: (insRes.data as any) || [],
         currentKm,
+        publicUrl: appPublicUrl,
       });
+
     } catch (e: any) {
       toast({ title: "Chyba tisku", description: e.message, variant: "destructive" });
     }

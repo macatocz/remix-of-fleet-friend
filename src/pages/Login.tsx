@@ -101,6 +101,11 @@ export default function Login() {
           <p className="text-xs text-muted-foreground text-center mt-6 leading-relaxed">
             Účty zakládá správce aplikace. Pokud nemáte přístup, obraťte se na svého administrátora.
           </p>
+          <p className="text-xs text-center mt-3">
+            <a href="/instalace" className="text-primary underline underline-offset-4">
+              Jak si aplikaci dát do mobilu
+            </a>
+          </p>
         </CardContent>
       </Card>
     </div>

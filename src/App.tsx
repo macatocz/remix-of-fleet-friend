@@ -25,6 +25,7 @@ import MobileVehicles from "@/pages/mobile/MobileVehicles";
 import MobileService from "@/pages/mobile/MobileService";
 import MobileIncidents from "@/pages/mobile/MobileIncidents";
 import MobileIncidentDetail from "@/pages/mobile/MobileIncidentDetail";
+import MobileSettings from "@/pages/mobile/MobileSettings";
 import TravelOrders from "@/pages/TravelOrders";
 import TravelOrderDetail from "@/pages/TravelOrderDetail";
 import MobileTravelOrders from "@/pages/mobile/MobileTravelOrders";
@@ -93,7 +94,7 @@ const App = () => (
               <Route path="tankovaci-karty" element={<MobileFuelCards />} />
               <Route path="cestovni-prikazy" element={<MobileTravelOrders />} />
               <Route path="cestovni-prikazy/:id" element={<TravelOrderDetail />} />
-              <Route path="nastaveni" element={<SettingsPage />} />
+              <Route path="nastaveni" element={<MobileSettings />} />
               <Route path="notifikace" element={<NotificationsPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />

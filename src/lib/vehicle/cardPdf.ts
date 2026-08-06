@@ -205,8 +205,9 @@ export async function generateQrSheetPdf(
     doc.setDrawColor(225);
     doc.roundedRect(x + 2, y - 4, cellW - 4, cellH - 6, 2, 2);
     try {
-      const qr = await QRCode.toDataURL(`${window.location.origin}/m/vozidla/${v.id}`, { width: 320, margin: 1 });
+      const qr = await qrDataUrl(v.id, publicUrl);
       const size = Math.min(cellW - 22, cellH - 30);
+
       doc.addImage(qr, "PNG", x + (cellW - size) / 2, y + 2, size, size);
       doc.setFont(PDF_FONT, "bold");
       doc.setFontSize(9);

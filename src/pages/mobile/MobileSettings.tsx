@@ -475,7 +475,7 @@ export default function MobileSettings() {
       </div>
 
       <Tabs defaultValue="company" className="w-full min-w-0">
-        <div className="-mx-4 px-4 overflow-x-auto no-scrollbar">
+        <div className="-mx-4 px-4 overflow-x-auto">
           <TabsList className="w-max">
             <TabsTrigger value="company" className="gap-1.5 text-xs">
               <Building2 className="h-4 w-4" /> Firma

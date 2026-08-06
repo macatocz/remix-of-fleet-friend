@@ -193,6 +193,19 @@ export function GeneralSettings() {
           </div>
         </div>
 
+        <div className="rounded-lg border p-4">
+          <div className="font-medium text-sm">Instalace do mobilu</div>
+          <p className="text-sm text-muted-foreground mt-1">
+            Návod, jak si aplikaci přidat na plochu telefonu.
+          </p>
+          <a
+            href="/instalace"
+            className="text-sm text-primary underline underline-offset-4 mt-2 inline-block"
+          >
+            Otevřít návod
+          </a>
+        </div>
+
         <Button onClick={handleSave} disabled={saving}>
           {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
           Uložit

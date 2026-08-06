@@ -44,8 +44,16 @@ const cs = (d?: string | null) => {
 const val = (v?: string | number | null) =>
   v === null || v === undefined || v === "" ? "—" : String(v);
 
-const qrDataUrl = (vehicleId: string) =>
-  QRCode.toDataURL(`${window.location.origin}/m/vozidla/${vehicleId}`, { width: 320, margin: 1 });
+const qrDataUrl = (vehicleId: string, publicUrl?: string | null) => {
+  const base = (publicUrl || window.location.origin).replace(/\/$/, "");
+  return QRCode.toDataURL(`${base}/m/vozidla/${vehicleId}`, { width: 320, margin: 1 });
+};
+
+const qrSheetDataUrl = (vehicleId: string, publicUrl?: string | null) => {
+  const base = (publicUrl || window.location.origin).replace(/\/$/, "");
+  return QRCode.toDataURL(`${base}/m/vozidla/${vehicleId}`, { width: 320, margin: 1 });
+};
+
 
 const CATEGORY: Record<string, string> = {
   A: "A – Ředitel",

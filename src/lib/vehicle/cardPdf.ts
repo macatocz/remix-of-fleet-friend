@@ -32,9 +32,11 @@ export interface VehicleCardExtras {
   stkValidUntil?: string | null;
   insurance?: { insurer?: string | null; type?: string | null; valid_until?: string | null }[];
   currentKm?: number | null;
+  publicUrl?: string | null;
 }
 
 const cs = (d?: string | null) => {
+
   if (!d) return "—";
   const t = Date.parse(d);
   return isNaN(t) ? d : new Date(t).toLocaleDateString("cs-CZ");

@@ -507,8 +507,10 @@ export default function VehicleDetail() {
     { value: "Liberec", label: "Liberec" },
   ]);
   const { toast } = useToast();
+  const { url: appPublicUrl } = useAppPublicUrl();
 
   useEffect(() => {
+
     supabase.from("app_settings").select("value").eq("key", "branches").maybeSingle()
       .then(({ data }) => {
         if (data?.value) {

@@ -23,6 +23,7 @@ import { format, parseISO, differenceInMonths } from "date-fns";
 import { cs } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { buildVehicleName } from "@/lib/vehicleName";
+import { useAppPublicUrl } from "@/hooks/useAppPublicUrl";
 import VehicleDocuments from "@/components/VehicleDocuments";
 import VehicleCalendar from "@/components/VehicleCalendar";
 
@@ -36,6 +37,7 @@ import VehicleVignettes from "@/components/VehicleVignettes";
 import VehicleServicePlan from "@/components/VehicleServicePlan";
 import VehicleHandover from "@/components/VehicleHandover";
 import VehicleIncidents from "@/components/VehicleIncidents";
+
 
 interface FieldDef {
   key: string;

@@ -12,6 +12,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [resetting, setResetting] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,10 +23,31 @@ export default function Login() {
     });
     setLoading(false);
     if (error) {
-      toast.error("Přihlášení selhalo: " + error.message);
+      toast.error(
+        error.message.toLowerCase().includes("invalid login credentials")
+          ? "Nesprávný e-mail nebo heslo."
+          : "Přihlášení selhalo: " + error.message
+      );
     } else {
       toast.success("Přihlášení úspěšné");
       navigate("/");
+    }
+  };
+
+  const handleReset = async () => {
+    if (!loginEmail) {
+      toast.error("Zadejte nejdřív svůj e-mail.");
+      return;
+    }
+    setResetting(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(loginEmail, {
+      redirectTo: `${window.location.origin}/nastaveni-hesla`,
+    });
+    setResetting(false);
+    if (error) {
+      toast.error("Odeslání selhalo: " + error.message);
+    } else {
+      toast.success("Poslali jsme vám e-mail s odkazem pro nastavení nového hesla.");
     }
   };
 
@@ -65,6 +87,16 @@ export default function Login() {
               {loading ? "Přihlašuji..." : "Přihlásit se"}
             </Button>
           </form>
+
+          <Button
+            type="button"
+            variant="link"
+            className="w-full mt-2 text-sm"
+            onClick={handleReset}
+            disabled={resetting}
+          >
+            {resetting ? "Odesílám…" : "Zapomenuté heslo?"}
+          </Button>
 
           <p className="text-xs text-muted-foreground text-center mt-6 leading-relaxed">
             Účty zakládá správce aplikace. Pokud nemáte přístup, obraťte se na svého administrátora.

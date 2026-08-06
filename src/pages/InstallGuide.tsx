@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/accordion";
 import { toast } from "sonner";
 import {
-  Apple, ArrowLeft, Check, CheckCircle2, Copy, Download, Monitor, Share, Smartphone,
+  Apple, ArrowLeft, Check, CheckCircle2, Chrome, Copy, Download, Monitor, Share, Smartphone,
 } from "lucide-react";
 
 type Platform = "ios" | "android" | "desktop";
@@ -71,20 +71,21 @@ function DesktopGuide() {
 }
 
 const GUIDES: Record<Platform, { title: string; icon: typeof Smartphone; el: JSX.Element }> = {
-  ios: { title: "iPhone a iPad (Safari)", icon: Apple, el: <IosGuide /> },
   android: { title: "Android (Chrome)", icon: Smartphone, el: <AndroidGuide /> },
+  ios: { title: "iPhone a iPad (Safari)", icon: Apple, el: <IosGuide /> },
   desktop: { title: "Počítač (Chrome / Edge)", icon: Monitor, el: <DesktopGuide /> },
 };
 
 export default function InstallGuide() {
-  const [platform, setPlatform] = useState<Platform>("desktop");
+  const detected = detectPlatform();
+  // Android/Chrome je primární cesta pro většinu uživatelů.
+  const [platform, setPlatform] = useState<Platform>(detected === "ios" ? "ios" : "android");
   const [installed, setInstalled] = useState(false);
   const [deferred, setDeferred] = useState<any>(null);
   const [copied, setCopied] = useState(false);
   const appUrl = typeof window !== "undefined" ? window.location.origin : "";
 
   useEffect(() => {
-    setPlatform(detectPlatform());
     const standalone =
       window.matchMedia?.("(display-mode: standalone)").matches ||
       (navigator as any).standalone === true;
@@ -152,20 +153,43 @@ export default function InstallGuide() {
               </div>
             </CardContent>
           </Card>
-        ) : deferred ? (
-          <Button className="w-full" onClick={install}>
-            <Download className="mr-2 h-4 w-4" /> Nainstalovat aplikaci
-          </Button>
+        ) : null}
+
+        {deferred && !installed ? (
+          <Card className="border-primary/40">
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-start gap-3">
+                <Chrome className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                <div className="min-w-0">
+                  <div className="font-semibold">Nejrychlejší cesta pro Android</div>
+                  <p className="mt-1 text-sm text-muted-foreground break-words">
+                    Chrome na Androidu umí aplikaci nainstalovat jedním klepnutím. Zbytek vám zařídíme.
+                  </p>
+                </div>
+              </div>
+              <Button className="w-full" size="lg" onClick={install}>
+                <Download className="mr-2 h-4 w-4" /> Nainstalovat aplikaci
+              </Button>
+            </CardContent>
+          </Card>
         ) : null}
 
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Primary.icon className="h-5 w-5 shrink-0 text-primary" />
+              {platform === "android" ? (
+                <Chrome className="h-5 w-5 shrink-0 text-primary" />
+              ) : (
+                <Primary.icon className="h-5 w-5 shrink-0 text-primary" />
+              )}
               <span className="break-words">{Primary.title}</span>
-              <Badge variant="secondary" className="ml-auto shrink-0">Vaše zařízení</Badge>
+              <Badge variant="secondary" className="ml-auto shrink-0">Doporučeno</Badge>
             </CardTitle>
-            <CardDescription>Postup pro zařízení, ze kterého tuto stránku čtete.</CardDescription>
+            <CardDescription>
+              {platform === "android"
+                ? "Nejrychlejší postup pro většinu telefonů."
+                : "Postup pro zařízení, ze kterého tuto stránku čtete."}
+            </CardDescription>
           </CardHeader>
           <CardContent>{Primary.el}</CardContent>
         </Card>
@@ -186,14 +210,18 @@ export default function InstallGuide() {
 
         <section>
           <h2 className="mb-2 text-sm font-semibold text-muted-foreground">Ostatní zařízení</h2>
-          <Accordion type="single" collapsible className="rounded-lg border">
+          <Accordion type="single" collapsible defaultValue={detected === "desktop" ? "android" : undefined} className="rounded-lg border">
             {others.map((p) => {
               const g = GUIDES[p];
               return (
                 <AccordionItem key={p} value={p} className="px-4">
                   <AccordionTrigger className="text-sm">
                     <span className="flex items-center gap-2 text-left">
-                      <g.icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      {p === "android" ? (
+                        <Chrome className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      ) : (
+                        <g.icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      )}
                       {g.title}
                     </span>
                   </AccordionTrigger>

@@ -39,7 +39,7 @@ export default function TripLogExport({ vehicleId, selectedMonth, vehicleLabel }
       [`Kniha jízd – ${vehicleLabel || "Vozidlo"}`],
       [`Období: ${monthLabel}`],
       [],
-      ["Datum", "Den", "Čas", "Řidič", "Odkud", "Kam", "Účel", "Popis", "Poč. km", "Kon. km", "Km celkem", "PHM (l)", "PHM (Kč)", "Ost. (Kč)"],
+      ["Datum", "Den", "Čas", "Přest. (min)", "Řidič", "Odkud", "Kam", "Účel", "Typ jízdy", "Popis", "Poč. km", "Kon. km", "Km celkem", "PHM (l)", "PHM (Kč)", "Ost. (Kč)"],
     ];
 
     let totalKm = 0;
@@ -67,10 +67,12 @@ export default function TripLogExport({ vehicleId, selectedMonth, vehicleLabel }
         d.toLocaleDateString("cs-CZ"),
         dayName,
         r.time ? r.time.slice(0, 5) : "",
+        (r as any).break_minutes ?? "",
         driverName,
         r.route_from || "",
         r.route_to || "",
         r.purpose || "",
+        purposeTypeLabel((r as any).purpose_type),
         r.description || "",
         r.km_start ?? "",
         r.km_end ?? "",
@@ -83,18 +85,18 @@ export default function TripLogExport({ vehicleId, selectedMonth, vehicleLabel }
 
     // Summary row
     wsData.push([]);
-    wsData.push(["", "", "", "", "", "", "", "CELKEM:", "", "", totalKm, Math.round(totalFuel * 10) / 10, Math.round(totalFuelPrice), Math.round(totalOther)]);
+    wsData.push(["", "", "", "", "", "", "", "", "", "CELKEM:", "", "", totalKm, Math.round(totalFuel * 10) / 10, Math.round(totalFuelPrice), Math.round(totalOther)]);
 
     if (totalKm > 0 && totalFuel > 0) {
-      wsData.push(["", "", "", "", "", "", "", "Spotřeba l/100km:", "", "", "", Math.round(totalFuel / totalKm * 1000) / 10]);
+      wsData.push(["", "", "", "", "", "", "", "", "", "Spotřeba l/100km:", "", "", "", Math.round(totalFuel / totalKm * 1000) / 10]);
     }
 
     const ws = XLSX.utils.aoa_to_sheet(wsData);
 
     // Set column widths
     ws["!cols"] = [
-      { wch: 12 }, { wch: 4 }, { wch: 6 }, { wch: 18 }, { wch: 15 }, { wch: 15 },
-      { wch: 15 }, { wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
+      { wch: 12 }, { wch: 4 }, { wch: 6 }, { wch: 10 }, { wch: 18 }, { wch: 15 }, { wch: 15 },
+      { wch: 15 }, { wch: 12 }, { wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
     ];
 
     const wb = XLSX.utils.book_new();

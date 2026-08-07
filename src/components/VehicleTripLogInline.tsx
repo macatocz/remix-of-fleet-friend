@@ -573,6 +573,7 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
         ...updated[rowIdx],
         driver_id: null, time: null, break_minutes: null,
         description: null, purpose: null, route_from: null, route_to: null,
+        purpose_type: "pracovne",
         km_start: null, km_end: null, km_total: null,
         fuel_quantity: null, fuel_price: null, other_quantity: null, other_price: null,
         _dirty: false,
@@ -589,6 +590,7 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
     break_minutes: row.break_minutes ?? 0,
     description: row.description || null,
     purpose: row.purpose || null,
+    purpose_type: row.purpose_type || "pracovne",
     route_from: row.route_from || null,
     route_to: row.route_to || null,
     km_start: row.km_start,
@@ -726,6 +728,20 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
           <SelectContent>
             {drivers.map(d => (
               <SelectItem key={d.id} value={d.id} className="text-xs">{d.first_name} {d.last_name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      );
+    }
+    if (col.type === "select" && col.key === "purpose_type") {
+      return (
+        <Select value={row.purpose_type || "pracovne"} onValueChange={v => updateCell(rowIdx, "purpose_type", v, isCal)}>
+          <SelectTrigger className="h-7 text-xs border-0 bg-transparent shadow-none focus:ring-1 focus:ring-primary">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {PURPOSE_TYPES.map(p => (
+              <SelectItem key={p.value} value={p.value} className="text-xs">{p.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>

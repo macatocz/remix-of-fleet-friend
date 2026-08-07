@@ -79,6 +79,7 @@ export default function VehicleTripLog({ vehicleId, readOnly = false }: Props) {
   const [vehicles, setVehicles] = useState<{ id: string; znacka: string; rz: string }[]>([]);
   const [drivers, setDrivers] = useState<{ id: string; first_name: string; last_name: string }[]>([]);
   const [filterVehicle, setFilterVehicle] = useState<string>("all");
+  const [filterType, setFilterType] = useState<string>("all");
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -392,6 +393,7 @@ export default function VehicleTripLog({ vehicleId, readOnly = false }: Props) {
                 {!vehicleId && <SortableTableHead sortKey="vehicle" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort}>Vozidlo</SortableTableHead>}
                 <TableHead>Popis</TableHead>
                 <TableHead>Účel</TableHead>
+                <TableHead>Typ</TableHead>
                 <TableHead>Z – do</TableHead>
                 <SortableTableHead sortKey="km_start" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} className="text-right">Poč. km</SortableTableHead>
                 <SortableTableHead sortKey="km_end" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} className="text-right">Kon. km</SortableTableHead>
@@ -416,6 +418,17 @@ export default function VehicleTripLog({ vehicleId, readOnly = false }: Props) {
                   {!vehicleId && <TableCell className="whitespace-nowrap">{(log as any).vehicles ? `${(log as any).vehicles.znacka} (${(log as any).vehicles.rz})` : "—"}</TableCell>}
                   <TableCell>{log.description || "—"}</TableCell>
                   <TableCell>{log.purpose || "—"}</TableCell>
+                  <TableCell>
+                    <span className={`inline-block rounded px-1.5 py-0.5 text-[11px] ${
+                      log.purpose_type === "soukrome"
+                        ? "bg-destructive/10 text-destructive"
+                        : log.purpose_type === "jine"
+                          ? "bg-muted text-muted-foreground"
+                          : "bg-primary/10 text-primary"
+                    }`}>
+                      {purposeTypeLabel(log.purpose_type)}
+                    </span>
+                  </TableCell>
                   <TableCell className="whitespace-nowrap">{log.route_from && log.route_to ? `${log.route_from} → ${log.route_to}` : log.route_from || log.route_to || "—"}</TableCell>
                   <TableCell className="text-right">{log.km_start?.toLocaleString("cs-CZ") || "—"}</TableCell>
                   <TableCell className="text-right">{log.km_end?.toLocaleString("cs-CZ") || "—"}</TableCell>

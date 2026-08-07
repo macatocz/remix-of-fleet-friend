@@ -18,6 +18,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Sparkles } from "lucide-react";
 import TripLogGeneratorDialog from "@/components/trip-log/TripLogGeneratorDialog";
+import { PURPOSE_TYPES, purposeTypeLabel } from "@/lib/reservationRules";
+
+const BREAK_PRESETS = [0, 15, 30, 45, 60];
 
 interface TripLog {
   id: string;
@@ -28,6 +31,7 @@ interface TripLog {
   break_minutes: number | null;
   description: string | null;
   purpose: string | null;
+  purpose_type: string | null;
   route_from: string | null;
   route_to: string | null;
   km_start: number | null;
@@ -52,6 +56,7 @@ const emptyForm = {
   break_minutes: "",
   description: "",
   purpose: "",
+  purpose_type: "pracovne",
   route_from: "",
   route_to: "",
   km_start: "",

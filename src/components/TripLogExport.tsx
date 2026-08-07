@@ -3,6 +3,7 @@ import { Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
+import { purposeTypeLabel } from "@/lib/reservationRules";
 
 interface Props {
   vehicleId: string;

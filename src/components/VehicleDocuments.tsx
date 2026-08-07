@@ -69,12 +69,14 @@ export default function VehicleDocuments({ vehicleId }: { vehicleId: string }) {
   const [documents, setDocuments] = useState<VehicleDocument[]>([]);
   const [folders, setFolders] = useState<DocumentFolder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadOk, setLoadOk] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [activeFolder, setActiveFolder] = useState<string | null>(null);
   const [uploadCategory, setUploadCategory] = useState("");
   const [deleteDoc, setDeleteDoc] = useState<VehicleDocument | null>(null);
   const [dragging, setDragging] = useState(false);
   const dropRef = useRef<HTMLDivElement>(null);
+  const seededRef = useRef<string | null>(null);
   const { toast } = useToast();
 
   // Folder management state
@@ -96,24 +98,39 @@ export default function VehicleDocuments({ vehicleId }: { vehicleId: string }) {
       setFolders(f);
       if (f.length > 0 && !uploadCategory) setUploadCategory(f[0].name);
     }
+    const err = docsRes.error || foldersRes.error;
+    if (err) {
+      toast({
+        title: "Dokumenty se nepodařilo načíst",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
     setLoading(false);
+    setLoadOk(!err);
+    return !err;
   };
 
   useEffect(() => { fetchData(); }, [vehicleId]);
 
   // Ensure default folders exist for this vehicle
   useEffect(() => {
-    if (!loading && folders.length === 0) {
-      const seedFolders = async () => {
-        const inserts = DEFAULT_FOLDERS.map((name, i) => ({
-          vehicle_id: vehicleId, name, sort_order: i,
-        }));
-        await (supabase.from("document_folders") as any).insert(inserts);
-        fetchData();
-      };
-      seedFolders();
-    }
-  }, [loading, folders.length, vehicleId]);
+    if (loading || !loadOk || folders.length > 0) return;
+    if (seededRef.current === vehicleId) return;
+    seededRef.current = vehicleId;
+    (async () => {
+      const inserts = DEFAULT_FOLDERS.map((name, i) => ({
+        vehicle_id: vehicleId, name, sort_order: i,
+      }));
+      const { error } = await (supabase.from("document_folders") as any)
+        .upsert(inserts, { onConflict: "vehicle_id,name", ignoreDuplicates: true });
+      if (error) {
+        toast({ title: "Složky se nepodařilo vytvořit", description: error.message, variant: "destructive" });
+        return;
+      }
+      fetchData();
+    })();
+  }, [loading, loadOk, folders.length, vehicleId]);
 
   const uploadFiles = async (files: File[], category: string) => {
     if (files.length === 0) return;

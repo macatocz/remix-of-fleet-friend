@@ -136,6 +136,7 @@ export default function VehicleTripLog({ vehicleId, readOnly = false }: Props) {
       break_minutes: log.break_minutes?.toString() || "",
       description: log.description || "",
       purpose: log.purpose || "",
+      purpose_type: log.purpose_type || "pracovne",
       route_from: log.route_from || "",
       route_to: log.route_to || "",
       km_start: log.km_start?.toString() || "",
@@ -163,6 +164,7 @@ export default function VehicleTripLog({ vehicleId, readOnly = false }: Props) {
       break_minutes: form.break_minutes ? parseInt(form.break_minutes) : 0,
       description: form.description || null,
       purpose: form.purpose || null,
+      purpose_type: form.purpose_type || "pracovne",
       route_from: form.route_from || null,
       route_to: form.route_to || null,
       km_start: form.km_start ? parseInt(form.km_start) : null,
@@ -196,14 +198,16 @@ export default function VehicleTripLog({ vehicleId, readOnly = false }: Props) {
   const f = (key: string, val: string) => setForm(p => ({ ...p, [key]: val }));
 
   const exportCsv = () => {
-    const header = ["Datum","Čas","Vozidlo","RZ","Popis","Účel","Z","Do","Poč. km","Kon. km","Km","PHM (l)","PHM (Kč)","Ostatní (Kč)"];
+    const header = ["Datum","Čas","Přestávka (min)","Vozidlo","RZ","Popis","Účel","Typ jízdy","Z","Do","Poč. km","Kon. km","Km","PHM (l)","PHM (Kč)","Ostatní (Kč)"];
     const rows = logs.map((l: any) => [
       l.date,
       l.time?.slice(0, 5) || "",
+      l.break_minutes ?? "",
       l.vehicles?.znacka || "",
       l.vehicles?.rz || "",
       l.description || "",
       l.purpose || "",
+      purposeTypeLabel(l.purpose_type),
       l.route_from || "",
       l.route_to || "",
       l.km_start ?? "",

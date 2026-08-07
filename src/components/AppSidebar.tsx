@@ -40,7 +40,11 @@ export function AppSidebar() {
               🚗 Vozový park
             </h1>
           )}
-          {collapsed && <span className="text-xl">🚗</span>}
+          {collapsed && (
+            <div className="flex justify-center">
+              <span className="text-xl">🚗</span>
+            </div>
+          )}
         </div>
 
         <SidebarGroup>
@@ -53,10 +57,10 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
-                      className="hover:bg-sidebar-accent/50 items-start"
+                      className={collapsed ? "justify-center" : "hover:bg-sidebar-accent/50 items-start"}
                       activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
                     >
-                      <item.icon className="mr-2 h-4 w-4 mt-0.5 shrink-0" />
+                      <item.icon className={collapsed ? "h-4 w-4 shrink-0" : "mr-2 h-4 w-4 mt-0.5 shrink-0"} />
                       {!collapsed && (
                         <div className="flex flex-col leading-tight min-w-0">
                           <span className="text-sm font-medium truncate">{item.title}</span>
@@ -80,10 +84,10 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild className="h-auto py-2">
                     <NavLink
                       to={item.url}
-                      className="hover:bg-sidebar-accent/50 items-start"
+                      className={collapsed ? "justify-center" : "hover:bg-sidebar-accent/50 items-start"}
                       activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
                     >
-                      <item.icon className="mr-2 h-4 w-4 mt-0.5 shrink-0" />
+                      <item.icon className={collapsed ? "h-4 w-4 shrink-0" : "mr-2 h-4 w-4 mt-0.5 shrink-0"} />
                       {!collapsed && (
                         <div className="flex flex-col leading-tight min-w-0">
                           <span className="text-sm font-medium truncate">{item.title}</span>

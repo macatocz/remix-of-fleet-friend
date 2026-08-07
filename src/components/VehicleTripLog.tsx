@@ -298,11 +298,41 @@ export default function VehicleTripLog({ vehicleId, readOnly = false }: Props) {
               <div className="grid grid-cols-3 gap-4">
                 <div><Label className="text-xs">Datum *</Label><Input type="date" value={form.date} onChange={e => f("date", e.target.value)} /></div>
                 <div><Label className="text-xs">Čas</Label><Input type="time" value={form.time} onChange={e => f("time", e.target.value)} /></div>
-                <div><Label className="text-xs">Přestávka (min)</Label><Input type="number" value={form.break_minutes} onChange={e => f("break_minutes", e.target.value)} /></div>
+                <div>
+                  <Label className="text-xs">Přestávka (min)</Label>
+                  <Input type="number" value={form.break_minutes} onChange={e => f("break_minutes", e.target.value)} />
+                  <div className="flex gap-1 mt-1 flex-wrap">
+                    {BREAK_PRESETS.map(m => (
+                      <Button
+                        key={m}
+                        type="button"
+                        size="sm"
+                        variant={form.break_minutes === String(m) ? "secondary" : "outline"}
+                        className="h-6 px-2 text-[11px]"
+                        onClick={() => f("break_minutes", String(m))}
+                      >
+                        {m}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div><Label className="text-xs">Popis</Label><Input value={form.description} onChange={e => f("description", e.target.value)} /></div>
                 <div><Label className="text-xs">Účel</Label><Input value={form.purpose} onChange={e => f("purpose", e.target.value)} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs">Typ jízdy</Label>
+                  <Select value={form.purpose_type} onValueChange={v => f("purpose_type", v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {PURPOSE_TYPES.map(p => (
+                        <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div><Label className="text-xs">Z (odkud)</Label><Input value={form.route_from} onChange={e => f("route_from", e.target.value)} /></div>

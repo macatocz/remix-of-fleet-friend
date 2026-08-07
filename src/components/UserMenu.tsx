@@ -91,9 +91,11 @@ export function UserMenu() {
           </Button>
         </div>
       ) : (
-        <Button variant="ghost" size="icon" onClick={signOut} title="Odhlásit se">
-          <LogOut className="h-4 w-4" />
-        </Button>
+        <div className="flex justify-center">
+          <Button variant="ghost" size="icon" onClick={signOut} title="Odhlásit se">
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
       )}
     </div>
   );

@@ -45,7 +45,7 @@ export default function FleetReport() {
       const [{ data: veh }, { data: trips }, { data: services }, { data: reservations }] = await Promise.all([
         supabase.from("vehicles").select("id, znacka, rz, nazev_vozu, status, lokalita").order("znacka"),
         supabase.from("trip_logs")
-          .select("vehicle_id, date, km_total, km_start, km_end, fuel_quantity, fuel_price, other_price")
+          .select("vehicle_id, date, km_total, km_start, km_end, fuel_quantity, fuel_price, other_price, purpose_type")
           .gte("date", from).lte("date", to),
         supabase.from("service_records").select("vehicle_id, date, cost").gte("date", from).lte("date", to),
         supabase.from("reservations")

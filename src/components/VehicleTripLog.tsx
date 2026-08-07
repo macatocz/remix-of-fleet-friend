@@ -102,13 +102,14 @@ export default function VehicleTripLog({ vehicleId, readOnly = false }: Props) {
     else if (filterVehicle !== "all") q = q.eq("vehicle_id", filterVehicle);
     const { data, error } = await q;
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
-    setLogs((data as any[]) || []);
+    const all = (data as any[]) || [];
+    setLogs(filterType === "all" ? all : all.filter((l) => (l.purpose_type || "pracovne") === filterType));
     setLoading(false);
   };
 
   useEffect(() => {
     fetchLogs();
-  }, [vehicleId, selectedMonth, filterVehicle]);
+  }, [vehicleId, selectedMonth, filterVehicle, filterType]);
 
   useEffect(() => {
     if (!vehicleId) {
@@ -249,6 +250,16 @@ export default function VehicleTripLog({ vehicleId, readOnly = false }: Props) {
               </Select>
             </>
           )}
+          <Label className="text-sm ml-2">Typ:</Label>
+          <Select value={filterType} onValueChange={setFilterType}>
+            <SelectTrigger className="w-36 h-8"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Všechny typy</SelectItem>
+              {PURPOSE_TYPES.map(p => (
+                <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         {readOnly ? (
           <Button size="sm" variant="outline" onClick={exportCsv} disabled={logs.length === 0}>
@@ -406,7 +417,7 @@ export default function VehicleTripLog({ vehicleId, readOnly = false }: Props) {
             </TableHeader>
             <TableBody>
               {logs.length === 0 ? (
-                <TableRow><TableCell colSpan={(vehicleId ? 13 : 14) - (readOnly ? 1 : 0)} className="text-center text-muted-foreground py-8">Žádné záznamy v tomto měsíci</TableCell></TableRow>
+                <TableRow><TableCell colSpan={(vehicleId ? 14 : 15) - (readOnly ? 1 : 0)} className="text-center text-muted-foreground py-8">Žádné záznamy v tomto měsíci</TableCell></TableRow>
               ) : sortData(logs, (item: any, key: string) => {
                 if (key === "vehicle") return (item as any).vehicles?.znacka || "";
                 return item[key];

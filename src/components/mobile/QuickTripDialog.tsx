@@ -195,6 +195,41 @@ export default function QuickTripDialog({ open, onOpenChange }: Props) {
               )}
             </div>
           </div>
+          <div className="space-y-1.5">
+            <Label>Typ jízdy</Label>
+            <Select value={purposeType} onValueChange={setPurposeType}>
+              <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PURPOSE_TYPES.map(p => (
+                  <SelectItem key={p.value} value={p.value} className="py-3">{p.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Přestávka (min)</Label>
+            <div className="flex gap-2 flex-wrap">
+              {BREAK_PRESETS.map(m => (
+                <Button
+                  key={m}
+                  type="button"
+                  variant={breakMinutes === String(m) ? "default" : "outline"}
+                  className="h-11 flex-1 min-w-[56px]"
+                  onClick={() => setBreakMinutes(String(m))}
+                >
+                  {m}
+                </Button>
+              ))}
+            </div>
+            <Input
+              className="h-12"
+              type="number"
+              inputMode="numeric"
+              value={breakMinutes}
+              onChange={e => setBreakMinutes(e.target.value)}
+              placeholder="Vlastní počet minut"
+            />
+          </div>
           {!navigator.onLine && (
             <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400 border border-amber-500/30 bg-amber-500/10 rounded p-2">
               <WifiOff className="h-4 w-4" /> Offline – jízda se uloží lokálně a odešle při obnovení sítě.

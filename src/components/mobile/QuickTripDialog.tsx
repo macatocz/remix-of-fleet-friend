@@ -15,6 +15,9 @@ import { predictKm, type KmPrediction } from "@/lib/mileage/predict";
 import { Sparkles, Mic, MicOff, WifiOff } from "lucide-react";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { enqueueTrip } from "@/lib/offline/tripQueue";
+import { PURPOSE_TYPES } from "@/lib/reservationRules";
+
+const BREAK_PRESETS = [0, 15, 30, 45, 60];
 
 interface Props {
   open: boolean;
@@ -29,6 +32,8 @@ export default function QuickTripDialog({ open, onOpenChange }: Props) {
   const [routeFrom, setRouteFrom] = useState("");
   const [routeTo, setRouteTo] = useState("");
   const [purpose, setPurpose] = useState("");
+  const [purposeType, setPurposeType] = useState("pracovne");
+  const [breakMinutes, setBreakMinutes] = useState("0");
   const [saving, setSaving] = useState(false);
   const [pred, setPred] = useState<KmPrediction | null>(null);
   const voice = useVoiceInput("cs-CZ");
@@ -67,6 +72,7 @@ export default function QuickTripDialog({ open, onOpenChange }: Props) {
   const reset = () => {
     setVehicleId(""); setKmStart(""); setKmEnd("");
     setRouteFrom(""); setRouteTo(""); setPurpose("");
+    setPurposeType("pracovne"); setBreakMinutes("0");
   };
 
   const submit = async () => {
@@ -89,6 +95,8 @@ export default function QuickTripDialog({ open, onOpenChange }: Props) {
       route_from: routeFrom || null,
       route_to: routeTo || null,
       purpose: purpose || null,
+      purpose_type: purposeType,
+      break_minutes: breakMinutes ? parseInt(breakMinutes) : 0,
     };
 
     if (!navigator.onLine) {
@@ -186,6 +194,41 @@ export default function QuickTripDialog({ open, onOpenChange }: Props) {
                 </Button>
               )}
             </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Typ jízdy</Label>
+            <Select value={purposeType} onValueChange={setPurposeType}>
+              <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PURPOSE_TYPES.map(p => (
+                  <SelectItem key={p.value} value={p.value} className="py-3">{p.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Přestávka (min)</Label>
+            <div className="flex gap-2 flex-wrap">
+              {BREAK_PRESETS.map(m => (
+                <Button
+                  key={m}
+                  type="button"
+                  variant={breakMinutes === String(m) ? "default" : "outline"}
+                  className="h-11 flex-1 min-w-[56px]"
+                  onClick={() => setBreakMinutes(String(m))}
+                >
+                  {m}
+                </Button>
+              ))}
+            </div>
+            <Input
+              className="h-12"
+              type="number"
+              inputMode="numeric"
+              value={breakMinutes}
+              onChange={e => setBreakMinutes(e.target.value)}
+              placeholder="Vlastní počet minut"
+            />
           </div>
           {!navigator.onLine && (
             <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400 border border-amber-500/30 bg-amber-500/10 rounded p-2">

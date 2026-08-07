@@ -7,6 +7,7 @@ export interface TripRow {
   fuel_quantity: number | null;
   fuel_price: number | null;
   other_price: number | null;
+  purpose_type?: string | null;
 }
 
 export interface ServiceRow {
@@ -82,6 +83,8 @@ export interface VehicleSummary {
 
 export interface QuarterSummary {
   km: number;
+  privateKm: number;
+  workKm: number;
   trips: number;
   fuelCost: number;
   serviceCost: number;
@@ -130,6 +133,8 @@ export function buildQuarterSummary(
   }
   const months = new Map(monthKeys.map((m) => [m, { month: m, fuel: 0, service: 0, km: 0 }]));
 
+  let privateKm = 0;
+  let workKm = 0;
   trips.filter((t) => t.date && inRange(t.date, range.from, range.to)).forEach((t) => {
     const s = get(t.vehicle_id);
     const km = tripKm(t);
@@ -137,6 +142,8 @@ export function buildQuarterSummary(
     s.km += km;
     s.trips += 1;
     s.fuelCost += fuel;
+    if (t.purpose_type === "soukrome") privateKm += km;
+    else workKm += km;
     const mk = t.date.slice(0, 7);
     const m = months.get(mk);
     if (m) { m.fuel += fuel; m.km += km; }
@@ -180,6 +187,8 @@ export function buildQuarterSummary(
 
   return {
     km,
+    privateKm,
+    workKm,
     trips: byVehicle.reduce((a, s) => a + s.trips, 0),
     fuelCost,
     serviceCost,

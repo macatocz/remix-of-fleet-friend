@@ -18,6 +18,7 @@ import TripTemplatesPopover, { TripTemplate } from "@/components/TripTemplatesPo
 import TripLogGeneratorDialog from "@/components/trip-log/TripLogGeneratorDialog";
 import { useRouteHistory } from "@/hooks/useRouteHistory";
 import { parseTSV, coerceForColumn } from "@/lib/tripParse";
+import { PURPOSE_TYPES, purposeTypeLabel } from "@/lib/reservationRules";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
@@ -31,6 +32,7 @@ interface TripRow {
   break_minutes: number | null;
   description: string | null;
   purpose: string | null;
+  purpose_type: string | null;
   route_from: string | null;
   route_to: string | null;
   km_start: number | null;
@@ -53,6 +55,7 @@ const COLUMNS = [
   { key: "driver_id", label: "Řidič", type: "select", minW: "min-w-[140px]" },
   { key: "description", label: "Popis", type: "text", minW: "min-w-[110px]" },
   { key: "purpose", label: "Účel", type: "text", minW: "min-w-[100px]" },
+  { key: "purpose_type", label: "Typ", type: "select", minW: "min-w-[110px]" },
   { key: "route_from", label: "Z", type: "text", minW: "min-w-[90px]" },
   { key: "route_to", label: "Do", type: "text", minW: "min-w-[90px]" },
   { key: "km_start", label: "Poč. km", type: "number", minW: "min-w-[100px]" },
@@ -94,6 +97,7 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
   });
   const [filterDriver, setFilterDriver] = useState<string>("all");
   const [filterPurpose, setFilterPurpose] = useState("");
+  const [filterType, setFilterType] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<"free" | "calendar">("free");
   const [calRows, setCalRows] = useState<TripRow[]>([]);
@@ -195,6 +199,7 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
           break_minutes: null,
           description: null,
           purpose: null,
+          purpose_type: "pracovne",
           route_from: null,
           route_to: null,
           km_start: prevKmEnd,
@@ -287,12 +292,13 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
   const filteredRows = useMemo(() => {
     let result = rows;
     if (filterDriver && filterDriver !== "all") result = result.filter(r => r.driver_id === filterDriver);
+    if (filterType !== "all") result = result.filter(r => (r.purpose_type || "pracovne") === filterType);
     if (filterPurpose.trim()) {
       const q = filterPurpose.toLowerCase();
       result = result.filter(r => (r.purpose || "").toLowerCase().includes(q) || (r.description || "").toLowerCase().includes(q));
     }
     return result;
-  }, [rows, filterDriver, filterPurpose]);
+  }, [rows, filterDriver, filterPurpose, filterType]);
 
   const addRow = () => {
     const lastRow = rows[rows.length - 1];
@@ -308,6 +314,7 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
       driver_id: lastRow?.driver_id || null,
       date: today,
       time: null, break_minutes: null, description: null, purpose: null,
+      purpose_type: "pracovne",
       route_from: null, route_to: null,
       km_start: lastRow?.km_end || null, km_end: null, km_total: null,
       fuel_quantity: null, fuel_price: null, other_quantity: null, other_price: null,
@@ -528,6 +535,7 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
             driver_id: null,
             date: new Date().toISOString().split("T")[0],
             time: null, break_minutes: null, description: null, purpose: null,
+            purpose_type: "pracovne",
             route_from: null, route_to: null,
             km_start: last?.km_end ?? null, km_end: null, km_total: null,
             fuel_quantity: null, fuel_price: null, other_quantity: null, other_price: null,
@@ -567,6 +575,7 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
         ...updated[rowIdx],
         driver_id: null, time: null, break_minutes: null,
         description: null, purpose: null, route_from: null, route_to: null,
+        purpose_type: "pracovne",
         km_start: null, km_end: null, km_total: null,
         fuel_quantity: null, fuel_price: null, other_quantity: null, other_price: null,
         _dirty: false,
@@ -583,6 +592,7 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
     break_minutes: row.break_minutes ?? 0,
     description: row.description || null,
     purpose: row.purpose || null,
+    purpose_type: row.purpose_type || "pracovne",
     route_from: row.route_from || null,
     route_to: row.route_to || null,
     km_start: row.km_start,
@@ -725,6 +735,20 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
         </Select>
       );
     }
+    if (col.type === "select" && col.key === "purpose_type") {
+      return (
+        <Select value={row.purpose_type || "pracovne"} onValueChange={v => updateCell(rowIdx, "purpose_type", v, isCal)}>
+          <SelectTrigger className="h-7 text-xs border-0 bg-transparent shadow-none focus:ring-1 focus:ring-primary">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {PURPOSE_TYPES.map(p => (
+              <SelectItem key={p.value} value={p.value} className="text-xs">{p.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      );
+    }
     return (
       <input
         data-row={rowIdx}
@@ -837,8 +861,18 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
             <Label className="text-xs">Popis/účel:</Label>
             <Input className="h-7 w-40 text-xs" placeholder="Hledat..." value={filterPurpose} onChange={e => setFilterPurpose(e.target.value)} />
           </div>
-          {(filterDriver !== "all" || filterPurpose) && (
-            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => { setFilterDriver("all"); setFilterPurpose(""); }}>Zrušit</Button>
+          <div className="flex items-center gap-1.5">
+            <Label className="text-xs">Typ:</Label>
+            <Select value={filterType} onValueChange={setFilterType}>
+              <SelectTrigger className="h-7 w-32 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-xs">Všechny</SelectItem>
+                {PURPOSE_TYPES.map(p => <SelectItem key={p.value} value={p.value} className="text-xs">{p.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          {(filterDriver !== "all" || filterPurpose || filterType !== "all") && (
+            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => { setFilterDriver("all"); setFilterPurpose(""); setFilterType("all"); }}>Zrušit</Button>
           )}
         </div>
       )}

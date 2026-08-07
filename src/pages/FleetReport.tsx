@@ -45,7 +45,7 @@ export default function FleetReport() {
       const [{ data: veh }, { data: trips }, { data: services }, { data: reservations }] = await Promise.all([
         supabase.from("vehicles").select("id, znacka, rz, nazev_vozu, status, lokalita").order("znacka"),
         supabase.from("trip_logs")
-          .select("vehicle_id, date, km_total, km_start, km_end, fuel_quantity, fuel_price, other_price")
+          .select("vehicle_id, date, km_total, km_start, km_end, fuel_quantity, fuel_price, other_price, purpose_type")
           .gte("date", from).lte("date", to),
         supabase.from("service_records").select("vehicle_id, date, cost").gte("date", from).lte("date", to),
         supabase.from("reservations")
@@ -132,6 +132,7 @@ export default function FleetReport() {
       head: [["Ukazatel", range.label, prevRange.label]],
       body: [
         ["Najeté km", num(current.km), num(previous?.km || 0)],
+        ["Km pracovní / soukromé", `${num(current.workKm)} / ${num(current.privateKm)}`, `${num(previous?.workKm || 0)} / ${num(previous?.privateKm || 0)}`],
         ["Náklady PHM", czk(current.fuelCost), czk(previous?.fuelCost || 0)],
         ["Náklady servis", czk(current.serviceCost), czk(previous?.serviceCost || 0)],
         ["Náklady celkem", czk(current.totalCost), czk(previous?.totalCost || 0)],
@@ -238,6 +239,9 @@ export default function FleetReport() {
                 <div className="mt-1 text-2xl font-bold">{current.reservations}</div>
                 <div className="text-xs text-muted-foreground">
                   {current.workDays} prac. / {current.privateDays} soukr. dní
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {current.workKm.toLocaleString("cs-CZ")} prac. / {current.privateKm.toLocaleString("cs-CZ")} soukr. km
                 </div>
               </CardContent>
             </Card>

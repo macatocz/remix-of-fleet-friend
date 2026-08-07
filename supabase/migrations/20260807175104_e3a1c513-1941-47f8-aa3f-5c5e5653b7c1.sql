@@ -1,0 +1,1 @@
+ALTER TABLE public.trip_logs ADD COLUMN IF NOT EXISTS purpose_type text NOT NULL DEFAULT 'pracovne';

@@ -18,6 +18,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Sparkles } from "lucide-react";
 import TripLogGeneratorDialog from "@/components/trip-log/TripLogGeneratorDialog";
+import { PURPOSE_TYPES, purposeTypeLabel } from "@/lib/reservationRules";
+
+const BREAK_PRESETS = [0, 15, 30, 45, 60];
 
 interface TripLog {
   id: string;
@@ -28,6 +31,7 @@ interface TripLog {
   break_minutes: number | null;
   description: string | null;
   purpose: string | null;
+  purpose_type: string | null;
   route_from: string | null;
   route_to: string | null;
   km_start: number | null;
@@ -52,6 +56,7 @@ const emptyForm = {
   break_minutes: "",
   description: "",
   purpose: "",
+  purpose_type: "pracovne",
   route_from: "",
   route_to: "",
   km_start: "",
@@ -74,6 +79,7 @@ export default function VehicleTripLog({ vehicleId, readOnly = false }: Props) {
   const [vehicles, setVehicles] = useState<{ id: string; znacka: string; rz: string }[]>([]);
   const [drivers, setDrivers] = useState<{ id: string; first_name: string; last_name: string }[]>([]);
   const [filterVehicle, setFilterVehicle] = useState<string>("all");
+  const [filterType, setFilterType] = useState<string>("all");
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -96,13 +102,14 @@ export default function VehicleTripLog({ vehicleId, readOnly = false }: Props) {
     else if (filterVehicle !== "all") q = q.eq("vehicle_id", filterVehicle);
     const { data, error } = await q;
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
-    setLogs((data as any[]) || []);
+    const all = (data as any[]) || [];
+    setLogs(filterType === "all" ? all : all.filter((l) => (l.purpose_type || "pracovne") === filterType));
     setLoading(false);
   };
 
   useEffect(() => {
     fetchLogs();
-  }, [vehicleId, selectedMonth, filterVehicle]);
+  }, [vehicleId, selectedMonth, filterVehicle, filterType]);
 
   useEffect(() => {
     if (!vehicleId) {
@@ -131,6 +138,7 @@ export default function VehicleTripLog({ vehicleId, readOnly = false }: Props) {
       break_minutes: log.break_minutes?.toString() || "",
       description: log.description || "",
       purpose: log.purpose || "",
+      purpose_type: log.purpose_type || "pracovne",
       route_from: log.route_from || "",
       route_to: log.route_to || "",
       km_start: log.km_start?.toString() || "",
@@ -158,6 +166,7 @@ export default function VehicleTripLog({ vehicleId, readOnly = false }: Props) {
       break_minutes: form.break_minutes ? parseInt(form.break_minutes) : 0,
       description: form.description || null,
       purpose: form.purpose || null,
+      purpose_type: form.purpose_type || "pracovne",
       route_from: form.route_from || null,
       route_to: form.route_to || null,
       km_start: form.km_start ? parseInt(form.km_start) : null,
@@ -191,14 +200,16 @@ export default function VehicleTripLog({ vehicleId, readOnly = false }: Props) {
   const f = (key: string, val: string) => setForm(p => ({ ...p, [key]: val }));
 
   const exportCsv = () => {
-    const header = ["Datum","Čas","Vozidlo","RZ","Popis","Účel","Z","Do","Poč. km","Kon. km","Km","PHM (l)","PHM (Kč)","Ostatní (Kč)"];
+    const header = ["Datum","Čas","Přestávka (min)","Vozidlo","RZ","Popis","Účel","Typ jízdy","Z","Do","Poč. km","Kon. km","Km","PHM (l)","PHM (Kč)","Ostatní (Kč)"];
     const rows = logs.map((l: any) => [
       l.date,
       l.time?.slice(0, 5) || "",
+      l.break_minutes ?? "",
       l.vehicles?.znacka || "",
       l.vehicles?.rz || "",
       l.description || "",
       l.purpose || "",
+      purposeTypeLabel(l.purpose_type),
       l.route_from || "",
       l.route_to || "",
       l.km_start ?? "",
@@ -239,6 +250,16 @@ export default function VehicleTripLog({ vehicleId, readOnly = false }: Props) {
               </Select>
             </>
           )}
+          <Label className="text-sm ml-2">Typ:</Label>
+          <Select value={filterType} onValueChange={setFilterType}>
+            <SelectTrigger className="w-36 h-8"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Všechny typy</SelectItem>
+              {PURPOSE_TYPES.map(p => (
+                <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         {readOnly ? (
           <Button size="sm" variant="outline" onClick={exportCsv} disabled={logs.length === 0}>
@@ -289,11 +310,41 @@ export default function VehicleTripLog({ vehicleId, readOnly = false }: Props) {
               <div className="grid grid-cols-3 gap-4">
                 <div><Label className="text-xs">Datum *</Label><Input type="date" value={form.date} onChange={e => f("date", e.target.value)} /></div>
                 <div><Label className="text-xs">Čas</Label><Input type="time" value={form.time} onChange={e => f("time", e.target.value)} /></div>
-                <div><Label className="text-xs">Přestávka (min)</Label><Input type="number" value={form.break_minutes} onChange={e => f("break_minutes", e.target.value)} /></div>
+                <div>
+                  <Label className="text-xs">Přestávka (min)</Label>
+                  <Input type="number" value={form.break_minutes} onChange={e => f("break_minutes", e.target.value)} />
+                  <div className="flex gap-1 mt-1 flex-wrap">
+                    {BREAK_PRESETS.map(m => (
+                      <Button
+                        key={m}
+                        type="button"
+                        size="sm"
+                        variant={form.break_minutes === String(m) ? "secondary" : "outline"}
+                        className="h-6 px-2 text-[11px]"
+                        onClick={() => f("break_minutes", String(m))}
+                      >
+                        {m}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div><Label className="text-xs">Popis</Label><Input value={form.description} onChange={e => f("description", e.target.value)} /></div>
                 <div><Label className="text-xs">Účel</Label><Input value={form.purpose} onChange={e => f("purpose", e.target.value)} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs">Typ jízdy</Label>
+                  <Select value={form.purpose_type} onValueChange={v => f("purpose_type", v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {PURPOSE_TYPES.map(p => (
+                        <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div><Label className="text-xs">Z (odkud)</Label><Input value={form.route_from} onChange={e => f("route_from", e.target.value)} /></div>
@@ -353,6 +404,7 @@ export default function VehicleTripLog({ vehicleId, readOnly = false }: Props) {
                 {!vehicleId && <SortableTableHead sortKey="vehicle" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort}>Vozidlo</SortableTableHead>}
                 <TableHead>Popis</TableHead>
                 <TableHead>Účel</TableHead>
+                <TableHead>Typ</TableHead>
                 <TableHead>Z – do</TableHead>
                 <SortableTableHead sortKey="km_start" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} className="text-right">Poč. km</SortableTableHead>
                 <SortableTableHead sortKey="km_end" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} className="text-right">Kon. km</SortableTableHead>
@@ -365,7 +417,7 @@ export default function VehicleTripLog({ vehicleId, readOnly = false }: Props) {
             </TableHeader>
             <TableBody>
               {logs.length === 0 ? (
-                <TableRow><TableCell colSpan={(vehicleId ? 13 : 14) - (readOnly ? 1 : 0)} className="text-center text-muted-foreground py-8">Žádné záznamy v tomto měsíci</TableCell></TableRow>
+                <TableRow><TableCell colSpan={(vehicleId ? 14 : 15) - (readOnly ? 1 : 0)} className="text-center text-muted-foreground py-8">Žádné záznamy v tomto měsíci</TableCell></TableRow>
               ) : sortData(logs, (item: any, key: string) => {
                 if (key === "vehicle") return (item as any).vehicles?.znacka || "";
                 return item[key];
@@ -377,6 +429,17 @@ export default function VehicleTripLog({ vehicleId, readOnly = false }: Props) {
                   {!vehicleId && <TableCell className="whitespace-nowrap">{(log as any).vehicles ? `${(log as any).vehicles.znacka} (${(log as any).vehicles.rz})` : "—"}</TableCell>}
                   <TableCell>{log.description || "—"}</TableCell>
                   <TableCell>{log.purpose || "—"}</TableCell>
+                  <TableCell>
+                    <span className={`inline-block rounded px-1.5 py-0.5 text-[11px] ${
+                      log.purpose_type === "soukrome"
+                        ? "bg-destructive/10 text-destructive"
+                        : log.purpose_type === "jine"
+                          ? "bg-muted text-muted-foreground"
+                          : "bg-primary/10 text-primary"
+                    }`}>
+                      {purposeTypeLabel(log.purpose_type)}
+                    </span>
+                  </TableCell>
                   <TableCell className="whitespace-nowrap">{log.route_from && log.route_to ? `${log.route_from} → ${log.route_to}` : log.route_from || log.route_to || "—"}</TableCell>
                   <TableCell className="text-right">{log.km_start?.toLocaleString("cs-CZ") || "—"}</TableCell>
                   <TableCell className="text-right">{log.km_end?.toLocaleString("cs-CZ") || "—"}</TableCell>

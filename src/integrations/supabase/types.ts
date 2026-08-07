@@ -1215,6 +1215,7 @@ export type Database = {
           other_price: number | null
           other_quantity: number | null
           purpose: string | null
+          purpose_type: string
           route_from: string | null
           route_to: string | null
           time: string | null
@@ -1236,6 +1237,7 @@ export type Database = {
           other_price?: number | null
           other_quantity?: number | null
           purpose?: string | null
+          purpose_type?: string
           route_from?: string | null
           route_to?: string | null
           time?: string | null
@@ -1257,6 +1259,7 @@ export type Database = {
           other_price?: number | null
           other_quantity?: number | null
           purpose?: string | null
+          purpose_type?: string
           route_from?: string | null
           route_to?: string | null
           time?: string | null

@@ -136,23 +136,24 @@ export default function VehicleDocuments({ vehicleId }: { vehicleId: string }) {
     if (files.length === 0) return;
     setUploading(true);
     let success = 0, failed = 0;
+    let lastError: string | null = null;
 
     for (const file of files) {
       const safeName = sanitizeFileName(file.name);
       const filePath = `${vehicleId}/${Date.now()}_${safeName}`;
       const { error: uploadErr } = await supabase.storage.from("vehicle-documents").upload(filePath, file);
-      if (uploadErr) { failed++; continue; }
+      if (uploadErr) { failed++; lastError = uploadErr.message; continue; }
 
       const { error: insertErr } = await supabase.from("vehicle_documents").insert({
         vehicle_id: vehicleId, name: file.name, file_path: filePath,
         file_size: file.size, mime_type: file.type, category,
       } as any);
-      if (insertErr) { failed++; } else { success++; }
+      if (insertErr) { failed++; lastError = insertErr.message; } else { success++; }
     }
 
     toast(failed === 0
       ? { title: success === 1 ? "Dokument nahrán" : `Nahráno ${success} dokumentů` }
-      : { title: `Nahráno ${success} z ${files.length}`, description: `${failed} se nepodařilo`, variant: "destructive" as const }
+      : { title: `Nahráno ${success} z ${files.length}`, description: lastError ? `${failed} se nepodařilo: ${lastError}` : `${failed} se nepodařilo`, variant: "destructive" as const }
     );
     setUploading(false);
     fetchData();
@@ -177,8 +178,9 @@ export default function VehicleDocuments({ vehicleId }: { vehicleId: string }) {
   const confirmDeleteDoc = async () => {
     if (!deleteDoc) return;
     await supabase.storage.from("vehicle-documents").remove([deleteDoc.file_path]);
-    await supabase.from("vehicle_documents").delete().eq("id", deleteDoc.id as any);
-    toast({ title: "Dokument smazán" });
+    const { error } = await supabase.from("vehicle_documents").delete().eq("id", deleteDoc.id as any);
+    if (error) toast({ title: "Smazání se nezdařilo", description: error.message, variant: "destructive" });
+    else toast({ title: "Dokument smazán" });
     setDeleteDoc(null);
     fetchData();
   };

@@ -26,3 +26,14 @@ Umožnit v knize jízd označit, jestli jízda byla **služební (pracovní)**, 
 - Použije se stávající konstanta `PURPOSE_TYPES` z `src/lib/reservationRules.ts` (`pracovne`, `soukrome`, `jine`).
 - Pro soukromé jízdy zůstává **volný text „Účel“** pro poznámku (např. „nákup“), ale typ bude přesně evidován.
 - Všechny existující záznamy zůstanou bez změny, nové budou mít výchozí hodnotu „Pracovně“.
+
+## Přestávka v jízdě
+
+Přestávka je v knize jízd už evidovaná (pole „Přestávka (min)“ v dialogu i sloupec „Přest.“ v Excel-like tabulce), ale chybí na několika místech a není nijak zvýrazněná. Doplní se:
+
+- **Mobilní „Zápis jízdy“** — nové pole **Přestávka (min)** s rychlými volbami 0 / 15 / 30 / 45 / 60 min, aby se nemuselo psát ručně. Uloží se do `break_minutes` (i přes offline frontu).
+- **Dialog „Nová jízda / Upravit jízdu“** — vedle číselného pole doplnit stejné rychlé volby.
+- **Excel-like tabulka** — sloupec „Přest.“ zůstane, přidá se možnost hromadného vyplnění (Ctrl+D / kopie z předchozího řádku) stejně jako u ostatních sloupců.
+- **Přehled a export** — přestávka se přidá do CSV exportu a zobrazí se v mobilním detailu jízdy.
+
+Žádná změna databáze pro přestávku není potřeba — sloupec `break_minutes` v `trip_logs` již existuje.

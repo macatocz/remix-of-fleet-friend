@@ -97,6 +97,7 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
   });
   const [filterDriver, setFilterDriver] = useState<string>("all");
   const [filterPurpose, setFilterPurpose] = useState("");
+  const [filterType, setFilterType] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<"free" | "calendar">("free");
   const [calRows, setCalRows] = useState<TripRow[]>([]);
@@ -291,12 +292,13 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
   const filteredRows = useMemo(() => {
     let result = rows;
     if (filterDriver && filterDriver !== "all") result = result.filter(r => r.driver_id === filterDriver);
+    if (filterType !== "all") result = result.filter(r => (r.purpose_type || "pracovne") === filterType);
     if (filterPurpose.trim()) {
       const q = filterPurpose.toLowerCase();
       result = result.filter(r => (r.purpose || "").toLowerCase().includes(q) || (r.description || "").toLowerCase().includes(q));
     }
     return result;
-  }, [rows, filterDriver, filterPurpose]);
+  }, [rows, filterDriver, filterPurpose, filterType]);
 
   const addRow = () => {
     const lastRow = rows[rows.length - 1];
@@ -859,8 +861,18 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
             <Label className="text-xs">Popis/účel:</Label>
             <Input className="h-7 w-40 text-xs" placeholder="Hledat..." value={filterPurpose} onChange={e => setFilterPurpose(e.target.value)} />
           </div>
-          {(filterDriver !== "all" || filterPurpose) && (
-            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => { setFilterDriver("all"); setFilterPurpose(""); }}>Zrušit</Button>
+          <div className="flex items-center gap-1.5">
+            <Label className="text-xs">Typ:</Label>
+            <Select value={filterType} onValueChange={setFilterType}>
+              <SelectTrigger className="h-7 w-32 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-xs">Všechny</SelectItem>
+                {PURPOSE_TYPES.map(p => <SelectItem key={p.value} value={p.value} className="text-xs">{p.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          {(filterDriver !== "all" || filterPurpose || filterType !== "all") && (
+            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => { setFilterDriver("all"); setFilterPurpose(""); setFilterType("all"); }}>Zrušit</Button>
           )}
         </div>
       )}

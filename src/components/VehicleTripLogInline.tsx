@@ -18,6 +18,7 @@ import TripTemplatesPopover, { TripTemplate } from "@/components/TripTemplatesPo
 import TripLogGeneratorDialog from "@/components/trip-log/TripLogGeneratorDialog";
 import { useRouteHistory } from "@/hooks/useRouteHistory";
 import { parseTSV, coerceForColumn } from "@/lib/tripParse";
+import { PURPOSE_TYPES, purposeTypeLabel } from "@/lib/reservationRules";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
@@ -31,6 +32,7 @@ interface TripRow {
   break_minutes: number | null;
   description: string | null;
   purpose: string | null;
+  purpose_type: string | null;
   route_from: string | null;
   route_to: string | null;
   km_start: number | null;
@@ -53,6 +55,7 @@ const COLUMNS = [
   { key: "driver_id", label: "Řidič", type: "select", minW: "min-w-[140px]" },
   { key: "description", label: "Popis", type: "text", minW: "min-w-[110px]" },
   { key: "purpose", label: "Účel", type: "text", minW: "min-w-[100px]" },
+  { key: "purpose_type", label: "Typ", type: "select", minW: "min-w-[110px]" },
   { key: "route_from", label: "Z", type: "text", minW: "min-w-[90px]" },
   { key: "route_to", label: "Do", type: "text", minW: "min-w-[90px]" },
   { key: "km_start", label: "Poč. km", type: "number", minW: "min-w-[100px]" },

@@ -240,6 +240,9 @@ export default function FleetReport() {
                 <div className="text-xs text-muted-foreground">
                   {current.workDays} prac. / {current.privateDays} soukr. dní
                 </div>
+                <div className="text-xs text-muted-foreground">
+                  {current.workKm.toLocaleString("cs-CZ")} prac. / {current.privateKm.toLocaleString("cs-CZ")} soukr. km
+                </div>
               </CardContent>
             </Card>
           </div>

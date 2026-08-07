@@ -132,6 +132,7 @@ export default function FleetReport() {
       head: [["Ukazatel", range.label, prevRange.label]],
       body: [
         ["Najeté km", num(current.km), num(previous?.km || 0)],
+        ["Km pracovní / soukromé", `${num(current.workKm)} / ${num(current.privateKm)}`, `${num(previous?.workKm || 0)} / ${num(previous?.privateKm || 0)}`],
         ["Náklady PHM", czk(current.fuelCost), czk(previous?.fuelCost || 0)],
         ["Náklady servis", czk(current.serviceCost), czk(previous?.serviceCost || 0)],
         ["Náklady celkem", czk(current.totalCost), czk(previous?.totalCost || 0)],

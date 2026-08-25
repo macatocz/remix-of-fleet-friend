@@ -1,116 +1,114 @@
-# Inspirace z Fleetio – co zapracovat do CMFleetu
+# Datový model pro oddělení firem (multi-tenant)
 
-## Shrnutí analýzy Fleetio
+Tohle je příprava pro produktovou verzi. V tomto interním projektu se **nic nemění** — rozpis slouží k tomu, aby práce v novém (remixnutém) projektu šla rychle a bez chyb.
 
-Fleetio (www.fleetio.com) je americká "maintenance-first" platforma pro správu vozového parku. Cení se od ~4 USD/vozidlo/měsíc, neomezený počet uživatelů, mobilní app Fleetio Go. Klíčové silné stránky:
+## Proč to potřebujeme
 
-- **Servisní workflow** (Work Orders) se stavy, přiřazením technikům a historií.
-- **Sklad náhradních dílů** s vazbou na servisní zakázky.
-- **Digitální inspekce/DVIR** s fotkami, závadami a eskalací do servisu.
-- **Otevřené API + webhooky** a integrační marketplace (telematika, palivové karty, pneu, mýtné).
-- **Vendor Network** – přímé napojení na servisní partnery.
-- **Custom fields, TCO reporting, asset lifecycle** (pořízení – provoz – remarketing).
+Dnes databáze nezná pojem "firma". Vozidlo je prostě vozidlo, řidič prostě řidič. Když do jedné aplikace pustíme dva zákazníky, uvidí si navzájem do dat. Potřebujeme tedy ke každému záznamu doplnit, které firmě patří, a přepsat přístupová pravidla tak, aby uživatel z principu nemohl vidět nic mimo svou firmu.
 
-Fleetio **nemá vlastní GPS/telematiku** – slouží jako centrální datový hub napojený na Samsara, Geotab, Motive apod.
+## Nové tabulky
 
-## Aktuální stav CMFleetu
+### `organizations` (firmy)
+Jedna řádka = jeden zákazník produktu.
 
-Aplikace už má solidní základ:
+- název firmy, IČO, DIČ, adresa
+- logo (cesta do storage), primární barva — pro branding zákazníka
+- stav předplatného (zkušební / aktivní / pozastaveno), datum konce zkušebního období
+- tarif (podle počtu vozidel)
 
-- Evidence vozidel, řidičů, rezervací, kalendář.
-- Kniha jízd s Excel-like zadáváním, generátorem jízd, offline frontou.
-- Servisní záznamy, škody, náklady, tankovací karty, cestovní příkazy.
-- Leasing, dokumenty, QR kódy, notifikace, reporty.
-- PWA mobilní aplikace, push notifikace.
-- Role (Admin, Dispečer, Řidič) a přístupová právia přes RLS.
+### `organization_members` (členství)
+Kdo patří do které firmy.
 
-## Mezery vůči Fleetiu a doporučení k zapracování
+- uživatel, firma, datum přidání
+- každý uživatel patří do právě jedné firmy (na začátku; víc firem na jednoho člověka lze doplnit později)
 
-### 1. Servisní zakázky se workflow (Work Orders)
+### Úprava `user_roles`
+Role (Admin / Dispečer / Řidič) dnes platí globálně. Přidá se k nim firma, takže role platí **v rámci firmy** — admin jedné firmy není admin u druhé.
 
-Fleetio má plný životní cyklus servisní zakázky: naplánováno → v servisu → hotovo → fakturováno. Dnes má CMFleet jen servisní záznam po události.
+## Změny ve stávajících tabulkách
 
-**Doporučení:** Přidat tabulku `work_orders` s přechody stavů, přiřazením technika/řidiče, odhadem nákladů, fotkami a vazbou na konkrétní vozidlo. Umožnit objednávku servisu z aplikace.
-
-### 2. Evidence náhradních dílů a skladu
-
-Fleetio umí skladové hospodářství dílů, spotřebu na work ordery, LIFO/FIFO.
-
-**Doporučení:** Přidat jednoduchý sklad dílů (parts_inventory) s příjmem/spotřebou a vazbou na work orders. Pro začátek stačí základní evidence bez plného účetnictví skladu.
-
-### 3. Digitální kontroly vozidla (DVIR) s fotkami
-
-Fleetio Go umožňuje řidičům/technikům dělat předjízdní kontroly s fotkami a automaticky vytvářet servisní issue.
-
-**Doporučení:** Rozšířit existující kontrolní listy (vehicle_checklists) o šablony (před jízdou, po jízdě, STK), fotodokumentaci a možnost vytvořit servisní záznam/work order z nalezené závady.
-
-### 4. Otevřené API a webhooky
-
-Fleetio nabízí REST API od středního tarifu. CMFleet dnes API nemá.
-
-**Doporučení:** Vystavit základní REST API (Supabase PostgREST už podporuje čtení, ale potřebujeme dokumentaci, rate limiting, token management). Přidat webhooky pro klíčové události (nová rezervace, servis, nehoda). Produkčně je to nutné pro ERP integrace a telematiku.
-
-### 5. Integrační marketplace pro český trh
-
-Fleetio integruje desítky amerických služeb (Samsara, WEX, Geotab). Pro český/Slovenský trh jsou relevantní:
-
-- **Palivové karty:** CCS, Shell, DKV, Eurowag.
-- **Telematika/GPS:** Navixy, Webdispečink, Cyngn, Mireo, AEC.
-- **Mýtné:** MYTO CZ, vignety.
-- **Účetní systémy:** Pohoda, Money, FlexiBee.
-
-**Doporučení:** Vytvořit stránku "Integrace" v nastavení, začít s jedním konektorem (např. import tankovacích transakcí z CSV/Excel od CCS) a postupně přidávat API konektory.
-
-### 6. TCO reporting a životní cyklus vozidla
-
-Fleetio sleduje celkové náklady vlastnictví (TCO) a lifecycle. CMFleet dnes reportuje náklady, ale nepredikuje obměnu vozidla.
-
-**Doporučení:** Rozšířit Report o TCO na vozidlo (pořizovací cena, provozní náklady, servis, palivo, leasing, pojištění) a predikční grafy: "Kdy se vyplatí vůz vyměnit?"
-
-### 7. Konfigurovatelné vlastní pole
-
-Fleetio umožňuje custom fields na vyšších tarifech. CMFleet má pevná pole.
-
-**Doporučení:** Přidat uživatelsky definovaná pole k vozidlům, řidičům, work orders apod. – klíčové pro různé typy flotily (stavební stroje, vysokozdvižné vozíky, nákladní vozy).
-
-### 8. Mobilní role pro techniky/skladníky
-
-Fleetio Go slouží řidičům, technikům i skladníkům. CMFleet mobilní app je zaměřená na řidiče/správce.
-
-**Doporučení:** Rozšířit mobilní zobrazení o roli technika/skladníka: zpracovat work order, zadat spotřebu dílů, udělat kontrolu vozidla.
-
-### 9. Cenový model "per vozidlo" pro komerční produkt
-
-Fleetio účtuje za vozidlo, ne za uživatele. To snižuje bariéru pro rozšíření mezi řidiče.
-
-**Doporučení:** Při komerčním uvedení zvážit tarify podle počtu vozidel (např. do 20 / do 50 / 100+), neomezený počet uživatelů uvnitř firmy.
-
-## Navrhovaný pořadí zapracování
+Ke všem provozním tabulkám přibude sloupec s příslušností k firmě (`organization_id`), povinný:
 
 ```text
-Fáze 1 (základ konkurenceschopnosti)
-├── Servisní zakázky se workflow (Work Orders)
-├── Digitální kontroly vozidla s fotkami a eskalací závad
-└── Evidence náhradních dílů (základní sklad)
+Přímo na tabulce (mají vlastní organization_id)
+├── vehicles          ├── drivers            ├── reservations
+├── trip_logs         ├── incidents          ├── service_records
+├── service_plans     ├── fuel_cards         ├── travel_orders
+├── insurance         ├── inspections        ├── vehicle_documents
+├── document_folders  ├── vehicle_mileage    ├── vehicle_vignettes
+├── vehicle_checklists├── key_handovers      ├── handover_protocols
+├── trip_templates    ├── notifications      └── profiles
 
-Fáze 2 (otevřenost a integrace)
-├── REST API + webhooky
-├── Import tankovacích transakcí (CCS/Excel)
-└── TCO report a predikce životního cyklu
-
-Fáze 3 (škálování a přizpůsobení)
-├── Konfigurovatelné vlastní pole
-├── Marketplace integrací (telematika, ERP, mýtné)
-├── Mobilní role technika/skladníka
-└── Cenový model per vozidlo ve Stripe
+Dědí přes rodiče (nepotřebují vlastní sloupec)
+├── travel_order_legs, travel_order_meals, travel_order_expenses  → travel_orders
+├── incident_photos                                              → incidents
+└── handover_photos                                              → handover_protocols
 ```
 
-## Co zůstává jako silná stránka CMFleetu
+Dnes globální nastavení se stanou nastavením firmy:
 
-- Česká lokalizace, cestovní příkazy, kniha jízd a leasingové hlídání – to Fleetio neřeší lokálně.
-- Jednoduché PWA řešení bez nutnosti instalace nativní app.
-- Flexibilní role a přístupová práva už jsou vybudovaná.
+- `company_settings` — dnes jedna řádka pro CM, bude jedna řádka na firmu (pobočky, cestovní sazby, přepisy stravného)
+- `app_settings` — veřejná adresa aplikace, notifikační pravidla → per firma
+- `currency_rates` zůstane globální (kurzy ČNB jsou pro všechny stejné)
 
-## Další krok
+## Přístupová pravidla
 
-Vybrat z výše uvedeného první sadu funkcí (doporučuji Fázi 1) a zapracovat ji do produktové verze po dokončení multi-tenant architektury.
+Jádrem bude pomocná funkce v `private` schématu, obdobně jako už dnes máte `private.has_role` a `private.can_access_vehicle`:
+
+- `private.current_org_id()` — vrátí firmu přihlášeného uživatele
+- všechna pravidla čtení i zápisu na každé tabulce dostanou podmínku "záznam patří do mé firmy"
+- existující pravidla (řidič vidí jen své vozidlo, PIN karty jen během rezervace) zůstanou — jen se k nim přidá filtr firmy jako první podmínka
+
+To znamená dvě vrstvy ochrany: nejdřív firma, pak role uvnitř firmy.
+
+## Nahrané soubory (storage)
+
+Buckety `vehicle-documents` a `handover-photos` dnes rozlišují přístup podle vozidla. Cesty souborů dostanou na začátek ID firmy:
+
+```text
+dnes:  {vehicle_id}/{soubor}
+nově:  {organization_id}/{vehicle_id}/{soubor}
+```
+
+Pravidla bucketů se navážou na první segment cesty, takže soubor cizí firmy nelze stáhnout ani při znalosti odkazu.
+
+## Edge funkce
+
+Tři existující funkce běží dnes napříč celou databází a budou muset pracovat po firmách:
+
+- `notify-expirations` — hlídání STK, pojištění, leasingu
+- `notify-reservation-start` a `notify-travel-orders` — notifikace
+- `admin-invite-user` — zvání uživatelů; přidá pozvaného do firmy zvoucího admina
+- `cnb-rates` zůstane beze změny (globální kurzy)
+
+## Registrace a onboarding
+
+- Veřejná registrace: zakladatel založí firmu a stane se jejím adminem
+- Průvodce prvním spuštěním: název firmy, logo, pobočky, import vozidel z Excelu (import už máme)
+- Zkušební období 14 dní bez karty
+
+## Předplatné
+
+- Tabulka `subscriptions` napojená na Stripe, webhook edge funkce
+- Kontrola limitu vozidel při vytváření vozidla podle tarifu
+- Po vypršení přechod do režimu jen pro čtení — data se nemažou
+
+## Postup nasazení v novém projektu
+
+```text
+1. Vytvoříte remix tohoto projektu (Lovable → název projektu → Remix)
+2. Rebranding: název, barvy, PWA ikony, texty přihlášení a návodu
+3. Vyčištění interních specifik (pobočky CM, sazby, testovací data)
+4. Migrace: organizations, organization_members, organization_id všude
+5. Přepis přístupových pravidel + storage cesty
+6. Úprava edge funkcí na režim per firma
+7. Registrace firmy + onboarding průvodce
+8. Stripe předplatné a limity vozidel
+9. Administrace firem pro vás, vlastní doména, e-maily
+```
+
+Migrace dat se dělat nemusí — produktová verze startuje prázdná, tato interní zůstává oddělená a nedotčená.
+
+## Co se v tomto projektu nemění
+
+Nic. Tento plán je podklad pro nový projekt. Interní verze CM zůstává, jak je, včetně dat.

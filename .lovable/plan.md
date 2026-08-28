@@ -38,7 +38,7 @@ Jeden dávkový příkaz nad databází v pořadí od podřízených tabulek k n
 6. `fuel_cards`, `vehicle_documents`, `document_folders`, `notifications`
 7. `UPDATE drivers SET vehicle_id = NULL`
 8. `vehicles`
-
-Soubory nahrané v úložišti (dokumenty vozidel, fotky škod a protokolů) zůstanou fyzicky v bucketech, ale nebudou nikde odkazované — pokud je chceš také smazat, řekni a doplním krok navíc.
+9. Smazání souborů v úložišti — obsah bucketů `vehicle-documents` a `handover-photos` (nahrané dokumenty, fotky škod a předávacích protokolů) se odstraní i fyzicky.
 
 Akce je nevratná; databáze nemá vlastní zálohu tohoto stavu.
+

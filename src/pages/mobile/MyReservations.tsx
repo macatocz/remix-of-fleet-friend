@@ -87,6 +87,31 @@ export default function MyReservations() {
 
   useEffect(() => { loadPending(); }, [loadPending]);
 
+  const [vehicleItems, setVehicleItems] = useState<(Reservation & { driver_name?: string })[]>([]);
+  const myVehicleIds = myVehicles.map(v => v.id);
+
+  const loadVehicle = useCallback(async () => {
+    if (!isSpravce || myVehicleIds.length === 0) { setVehicleItems([]); return; }
+    const { data } = await supabase
+      .from("reservations")
+      .select("id, vehicle_id, driver_name, date_from, date_to, time_from, time_to, purpose, status")
+      .in("vehicle_id", myVehicleIds)
+      .gte("date_to", localDateStr())
+      .order("date_from", { ascending: true });
+    const list = (data as (Reservation & { driver_name?: string })[]) || [];
+    const ids = Array.from(new Set(list.map(r => r.vehicle_id)));
+    if (ids.length) {
+      const { data: vs } = await supabase
+        .from("vehicles_basic").select("id, znacka, rz, nazev_vozu").in("id", ids);
+      const map = new Map((vs || []).map((v: any) => [v.id, v]));
+      list.forEach(r => { r.vehicle = map.get(r.vehicle_id); });
+    }
+    setVehicleItems(list);
+  }, [isSpravce, myVehicleIds.join(",")]);
+
+  useEffect(() => { loadVehicle(); }, [loadVehicle]);
+
+
   const statusVariant = (s: string): "default" | "secondary" | "outline" | "destructive" => {
     if (s === "schváleno") return "default";
     if (s === "zamítnuto") return "destructive";

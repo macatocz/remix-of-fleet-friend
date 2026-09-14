@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { insertOrQueue } from "@/lib/offline/tripQueue";
 import {
+import { localDateStr } from "@/lib/utils";
   PURPOSE_TYPES, checkAdvanceLimit, checkPrivateLimit, getPrivateUsage,
   PRIVATE_LIMIT_WEEKENDS, PRIVATE_LIMIT_WORKDAYS, MAX_ADVANCE_DAYS,
 } from "@/lib/reservationRules";
@@ -35,11 +36,11 @@ export default function NewReservationDialog({
   initialVehicleId, initialDateFrom, initialDateTo, initialTimeFrom, initialTimeTo,
 }: Props) {
   const { driver, myVehicles, allVehicles } = useDriverContext();
-  const today = new Date().toISOString().split("T")[0];
+  const today = localDateStr();
   const maxDate = (() => {
     const d = new Date();
     d.setDate(d.getDate() + MAX_ADVANCE_DAYS);
-    return d.toISOString().split("T")[0];
+    return localDateStr(d);
   })();
 
   const [vehicleId, setVehicleId] = useState(initialVehicleId || "");

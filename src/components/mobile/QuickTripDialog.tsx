@@ -16,6 +16,7 @@ import { Sparkles, Mic, MicOff, WifiOff } from "lucide-react";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { enqueueTrip } from "@/lib/offline/tripQueue";
 import { PURPOSE_TYPES } from "@/lib/reservationRules";
+import { localDateStr } from "@/lib/utils";
 
 const BREAK_PRESETS = [0, 15, 30, 45, 60];
 
@@ -88,7 +89,7 @@ export default function QuickTripDialog({ open, onOpenChange }: Props) {
     const payload = {
       vehicle_id: vehicleId,
       driver_id: driver?.id || null,
-      date: new Date().toISOString().split("T")[0],
+      date: localDateStr(),
       km_start: start,
       km_end: end,
       km_total: end - start,

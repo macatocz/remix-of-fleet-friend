@@ -12,6 +12,7 @@ import FindVehicleSheet from "@/components/mobile/FindVehicleSheet";
 import NewReservationDialog from "@/components/mobile/NewReservationDialog";
 import PendingApprovalCard, { PendingReservation } from "@/components/mobile/PendingApprovalCard";
 import ReservationFuelCardWidget from "@/components/mobile/ReservationFuelCardWidget";
+import { localDateStr } from "@/lib/utils";
 
 interface UpcomingReservation {
   id: string;
@@ -147,7 +148,7 @@ function SpravceHome({ greeting, isPrivileged }: { greeting: string; isPrivilege
 
   useEffect(() => {
     if (!primary || !driver) return;
-    const today = new Date().toISOString().split("T")[0];
+    const today = localDateStr();
     (async () => {
       const ids = myVehicles.map(v => v.id);
       const { data } = await supabase
@@ -304,7 +305,7 @@ function DriverOnlyHome({ greeting, isPrivileged }: { greeting: string; isPrivil
 
   useEffect(() => {
     if (!driver) return;
-    const today = new Date().toISOString().split("T")[0];
+    const today = localDateStr();
     (async () => {
       const { data } = await supabase
         .from("reservations")
@@ -391,7 +392,7 @@ function DriverOnlyHome({ greeting, isPrivileged }: { greeting: string; isPrivil
       </Card>
 
       {(() => {
-        const today = new Date().toISOString().split("T")[0];
+        const today = localDateStr();
         const current = active.find(
           r => r.status === "schváleno" && r.date_from <= today && r.date_to >= today
         );

@@ -12,6 +12,7 @@ import ReservationFuelCardWidget from "@/components/mobile/ReservationFuelCardWi
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
+import { localDateStr } from "@/lib/utils";
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
@@ -99,7 +100,7 @@ export default function MyReservations() {
     load();
   };
 
-  const todayStr = new Date().toISOString().split("T")[0];
+  const todayStr = localDateStr();
   const activeItems = items.filter(r => r.date_to >= todayStr);
   const pastItems = items.filter(r => r.date_to < todayStr);
 
@@ -228,8 +229,8 @@ function ActiveList({
             )}
 
             {r.status === "schváleno" &&
-              r.date_from <= new Date().toISOString().split("T")[0] &&
-              r.date_to >= new Date().toISOString().split("T")[0] && (
+              r.date_from <= localDateStr() &&
+              r.date_to >= localDateStr() && (
                 <ReservationFuelCardWidget vehicleId={r.vehicle_id} />
               )}
 

@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Zap } from "lucide-react";
 import { insertOrQueue } from "@/lib/offline/tripQueue";
 import { PURPOSE_TYPES, checkPrivateLimit } from "@/lib/reservationRules";
+import { localDateStr } from "@/lib/utils";
 
 interface Props { open: boolean; onOpenChange: (o: boolean) => void; }
 
@@ -38,7 +39,7 @@ export default function QuickNowReservation({ open, onOpenChange }: Props) {
   const startStr = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
   const endDate = new Date(now.getTime() + duration * 60000);
   const endStr = `${pad(endDate.getHours())}:${pad(endDate.getMinutes())}`;
-  const dateStr = now.toISOString().slice(0, 10);
+  const dateStr = localDateStr(now);
 
   useEffect(() => {
     if (!open) return;

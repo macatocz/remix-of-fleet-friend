@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { insertOrQueue } from "@/lib/offline/tripQueue";
 import { WifiOff } from "lucide-react";
+import { localDateStr } from "@/lib/utils";
 
 interface Props {
   open: boolean;
@@ -39,7 +40,7 @@ export default function QuickIncidentDialog({ open, onOpenChange }: Props) {
     const res = await insertOrQueue("incidents", {
       vehicle_id: vehicleId,
       driver_id: driver?.id || null,
-      date: new Date().toISOString().split("T")[0],
+      date: localDateStr(),
       location: location || null,
       description,
       estimated_cost: estimatedCost ? parseFloat(estimatedCost) : 0,

@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { AlertTriangle, Loader2, Search, Plus, ChevronRight, MapPin, CalendarDays } from "lucide-react";
 import { vehicleLabel } from "@/lib/vehicleName";
+import { localDateStr } from "@/lib/utils";
 
 interface Row {
   id: string;
@@ -46,7 +47,7 @@ export default function MobileIncidents() {
   const [saving, setSaving] = useState(false);
   const emptyForm = {
     vehicle_id: "",
-    date: new Date().toISOString().slice(0, 10),
+    date: localDateStr(),
     location: "",
     description: "",
     estimated_cost: "",

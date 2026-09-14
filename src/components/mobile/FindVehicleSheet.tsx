@@ -11,6 +11,7 @@ import { Car, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useDriverContext } from "@/hooks/useDriverContext";
 import { toast } from "sonner";
+import { localDateStr } from "@/lib/utils";
 
 interface FreeVehicle {
   id: string;
@@ -28,7 +29,7 @@ interface Props {
 
 export default function FindVehicleSheet({ open, onOpenChange, onPick }: Props) {
   const { allVehicles } = useDriverContext();
-  const today = new Date().toISOString().split("T")[0];
+  const today = localDateStr();
   const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
   const [timeFrom, setTimeFrom] = useState("08:00");

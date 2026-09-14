@@ -17,6 +17,7 @@ import {
 import { Plus, Wrench, Shield, FileCheck, Loader2, Search, CalendarDays } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { vehicleLabel } from "@/lib/vehicleName";
+import { localDateStr } from "@/lib/utils";
 
 const czk = (n: any) => (n || n === 0 ? `${Number(n).toLocaleString("cs-CZ")} Kč` : "—");
 const d = (s?: string | null) => (s ? new Date(s).toLocaleDateString("cs-CZ") : "—");
@@ -33,7 +34,7 @@ export default function MobileService() {
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
-  const [serviceForm, setServiceForm] = useState({ vehicle_id: "", type: "", date: new Date().toISOString().split("T")[0], cost: "", description: "", status: "dokončeno" });
+  const [serviceForm, setServiceForm] = useState({ vehicle_id: "", type: "", date: localDateStr(), cost: "", description: "", status: "dokončeno" });
   const [inspectionForm, setInspectionForm] = useState({ vehicle_id: "", type: "STK", date: "", valid_until: "", result: "platná", notes: "" });
   const [insuranceForm, setInsuranceForm] = useState({ vehicle_id: "", insurer: "", type: "POV", policy_number: "", valid_from: "", valid_until: "", annual_cost: "", notes: "" });
 
@@ -73,7 +74,7 @@ export default function MobileService() {
   };
 
   const openCreate = () => {
-    if (activeTab === "service") setServiceForm({ vehicle_id: "", type: "", date: new Date().toISOString().split("T")[0], cost: "", description: "", status: "dokončeno" });
+    if (activeTab === "service") setServiceForm({ vehicle_id: "", type: "", date: localDateStr(), cost: "", description: "", status: "dokončeno" });
     if (activeTab === "inspection") setInspectionForm({ vehicle_id: "", type: "STK", date: "", valid_until: "", result: "platná", notes: "" });
     if (activeTab === "insurance") setInsuranceForm({ vehicle_id: "", insurer: "", type: "POV", policy_number: "", valid_from: "", valid_until: "", annual_cost: "", notes: "" });
     setDialogOpen(true);

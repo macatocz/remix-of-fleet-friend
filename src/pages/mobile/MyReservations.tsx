@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, Plus, X, Clock, History } from "lucide-react";
+import { CalendarDays, Plus, X, Clock, History, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useDriverContext } from "@/hooks/useDriverContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,6 +26,7 @@ interface Reservation {
   time_from: string | null;
   time_to: string | null;
   purpose: string | null;
+  purpose_type?: string | null;
   status: string;
   vehicle?: { znacka: string | null; rz: string | null; nazev_vozu?: string | null };
 }
@@ -39,6 +40,7 @@ export default function MyReservations() {
   const [items, setItems] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<Reservation | null>(null);
   const [pending, setPending] = useState<PendingReservation[]>([]);
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -63,7 +65,7 @@ export default function MyReservations() {
     setLoading(true);
     const { data } = await supabase
       .from("reservations")
-      .select("id, vehicle_id, date_from, date_to, time_from, time_to, purpose, status")
+      .select("id, vehicle_id, date_from, date_to, time_from, time_to, purpose, purpose_type, status")
       .eq("driver_name", driver.fullName)
       .order("date_from", { ascending: false });
     const list = (data as Reservation[]) || [];
@@ -163,7 +165,7 @@ export default function MyReservations() {
     return (
       <>
         {activeItems.length > 0 && (
-          <ActiveList items={activeItems} statusVariant={statusVariant} cancel={cancel} />
+          <ActiveList items={activeItems} statusVariant={statusVariant} cancel={cancel} onEdit={(r) => { setEditing(r); setDialogOpen(true); }} />
         )}
         {pastItems.length > 0 && (
           <>
@@ -258,19 +260,21 @@ export default function MyReservations() {
 
       <NewReservationDialog
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onCreated={() => { load(); loadPending(); }}
+        onOpenChange={(o) => { setDialogOpen(o); if (!o) setEditing(null); }}
+        onCreated={() => { setEditing(null); load(); loadPending(); loadVehicle(); }}
+        editReservation={editing}
       />
     </div>
   );
 }
 
 function ActiveList({
-  items, statusVariant, cancel,
+  items, statusVariant, cancel, onEdit,
 }: {
   items: Reservation[];
   statusVariant: (s: string) => "default" | "secondary" | "outline" | "destructive";
   cancel: (id: string) => void;
+  onEdit: (r: Reservation) => void;
 }) {
   return (
     <>
@@ -309,6 +313,11 @@ function ActiveList({
                 <ReservationFuelCardWidget vehicleId={r.vehicle_id} />
               )}
 
+            {r.status === "čeká" && (
+              <Button variant="outline" className="w-full h-11" onClick={() => onEdit(r)}>
+                <Pencil className="h-4 w-4 mr-2" /> Upravit žádost
+              </Button>
+            )}
             {r.status === "čeká" && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>

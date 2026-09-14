@@ -20,6 +20,17 @@ import {
 } from "@/lib/reservationRules";
 import { localDateStr } from "@/lib/utils";
 
+export interface EditReservationData {
+  id: string;
+  vehicle_id: string;
+  date_from: string;
+  date_to: string;
+  time_from?: string | null;
+  time_to?: string | null;
+  purpose?: string | null;
+  purpose_type?: string | null;
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -29,12 +40,15 @@ interface Props {
   initialDateTo?: string;
   initialTimeFrom?: string;
   initialTimeTo?: string;
+  editReservation?: EditReservationData | null;
 }
 
 export default function NewReservationDialog({
   open, onOpenChange, onCreated,
   initialVehicleId, initialDateFrom, initialDateTo, initialTimeFrom, initialTimeTo,
+  editReservation,
 }: Props) {
+  const isEdit = !!editReservation;
   const { driver, myVehicles, allVehicles } = useDriverContext();
   const today = localDateStr();
   const maxDate = (() => {
@@ -55,13 +69,23 @@ export default function NewReservationDialog({
 
   useEffect(() => {
     if (open) {
+      if (editReservation) {
+        setVehicleId(editReservation.vehicle_id);
+        setDateFrom(editReservation.date_from);
+        setDateTo(editReservation.date_to);
+        setTimeFrom(editReservation.time_from?.slice(0, 5) || "08:00");
+        setTimeTo(editReservation.time_to?.slice(0, 5) || "17:00");
+        setPurpose(editReservation.purpose || "");
+        setPurposeType(editReservation.purpose_type || "pracovne");
+        return;
+      }
       if (initialVehicleId) setVehicleId(initialVehicleId);
       if (initialDateFrom) setDateFrom(initialDateFrom);
       if (initialDateTo) setDateTo(initialDateTo);
       if (initialTimeFrom) setTimeFrom(initialTimeFrom);
       if (initialTimeTo) setTimeTo(initialTimeTo);
     }
-  }, [open, initialVehicleId, initialDateFrom, initialDateTo, initialTimeFrom, initialTimeTo]);
+  }, [open, editReservation, initialVehicleId, initialDateFrom, initialDateTo, initialTimeFrom, initialTimeTo]);
 
   useEffect(() => {
     if (!open || purposeType !== "soukrome" || !driver?.fullName || !dateFrom) {
@@ -111,6 +135,7 @@ export default function NewReservationDialog({
     }
 
     const overlapping = (conflicts || []).filter((c) => {
+      if (isEdit && c.id === editReservation!.id) return false;
       if (c.date_from !== c.date_to || dateFrom !== dateTo || c.date_from !== dateFrom) {
         return true;
       }
@@ -128,6 +153,28 @@ export default function NewReservationDialog({
         `Vozidlo je v daném termínu obsazené (${c.driver_name}, ${c.date_from} → ${c.date_to}, stav: ${c.status}). Zvolte jiný termín nebo vozidlo.`,
         { duration: 6000 }
       );
+      return;
+    }
+
+    if (isEdit) {
+      const { error } = await supabase
+        .from("reservations")
+        .update({
+          vehicle_id: vehicleId,
+          date_from: dateFrom,
+          date_to: dateTo,
+          time_from: timeFrom,
+          time_to: timeTo,
+          purpose: purpose || null,
+          purpose_type: purposeType,
+        })
+        .eq("id", editReservation!.id);
+      setSaving(false);
+      if (error) { toast.error("Chyba: " + error.message); return; }
+      toast.success("Rezervace upravena");
+      reset();
+      onOpenChange(false);
+      onCreated?.();
       return;
     }
 
@@ -156,7 +203,7 @@ export default function NewReservationDialog({
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[92vh]">
         <DrawerHeader>
-          <DrawerTitle>Nová žádost o vozidlo</DrawerTitle>
+          <DrawerTitle>{isEdit ? "Upravit žádost" : "Nová žádost o vozidlo"}</DrawerTitle>
         </DrawerHeader>
         <div className="px-4 space-y-4 overflow-y-auto">
           <div className="space-y-1.5">
@@ -219,7 +266,7 @@ export default function NewReservationDialog({
         </div>
         <DrawerFooter className="pb-safe gap-2">
           <Button className="w-full h-12 text-base" onClick={submit} disabled={saving}>
-            {saving ? "Odesílám…" : "Odeslat žádost"}
+            {saving ? (isEdit ? "Ukládám…" : "Odesílám…") : (isEdit ? "Uložit změny" : "Odeslat žádost")}
           </Button>
           <Button variant="outline" className="w-full h-12" onClick={() => onOpenChange(false)}>
             Zrušit

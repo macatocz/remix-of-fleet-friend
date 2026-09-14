@@ -119,7 +119,7 @@ function PendingApprovalsSection({
           <Badge variant="secondary" className="text-[10px] py-0">{items.length}</Badge>
         </CardTitle>
         <button
-          onClick={() => navigate("/m/rezervace")}
+          onClick={() => navigate("/m/rezervace?tab=schvaleni")}
           className="text-xs text-primary flex items-center gap-0.5"
         >
           Vše <ChevronRight className="h-3 w-3" />
@@ -243,7 +243,7 @@ function SpravceHome({ greeting, isPrivileged }: { greeting: string; isPrivilege
         <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
           <CardTitle className="text-sm">Nadcházející rezervace mého vozu</CardTitle>
           <button
-            onClick={() => navigate("/m/rezervace")}
+            onClick={() => navigate("/m/rezervace?tab=vozidlo")}
             className="text-xs text-primary flex items-center gap-0.5"
           >
             Vše <ChevronRight className="h-3 w-3" />
@@ -272,7 +272,7 @@ function SpravceHome({ greeting, isPrivileged }: { greeting: string; isPrivilege
 
       {myCount > 0 && (
         <button
-          onClick={() => navigate("/m/rezervace")}
+          onClick={() => navigate("/m/rezervace?tab=moje")}
           className="w-full text-left"
         >
           <Card>

@@ -203,7 +203,7 @@ export default function NewReservationDialog({
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[92vh]">
         <DrawerHeader>
-          <DrawerTitle>Nová žádost o vozidlo</DrawerTitle>
+          <DrawerTitle>{isEdit ? "Upravit žádost" : "Nová žádost o vozidlo"}</DrawerTitle>
         </DrawerHeader>
         <div className="px-4 space-y-4 overflow-y-auto">
           <div className="space-y-1.5">
@@ -266,7 +266,7 @@ export default function NewReservationDialog({
         </div>
         <DrawerFooter className="pb-safe gap-2">
           <Button className="w-full h-12 text-base" onClick={submit} disabled={saving}>
-            {saving ? "Odesílám…" : "Odeslat žádost"}
+            {saving ? (isEdit ? "Ukládám…" : "Odesílám…") : (isEdit ? "Uložit změny" : "Odeslat žádost")}
           </Button>
           <Button variant="outline" className="w-full h-12" onClick={() => onOpenChange(false)}>
             Zrušit

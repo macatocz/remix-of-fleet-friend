@@ -69,13 +69,23 @@ export default function NewReservationDialog({
 
   useEffect(() => {
     if (open) {
+      if (editReservation) {
+        setVehicleId(editReservation.vehicle_id);
+        setDateFrom(editReservation.date_from);
+        setDateTo(editReservation.date_to);
+        setTimeFrom(editReservation.time_from?.slice(0, 5) || "08:00");
+        setTimeTo(editReservation.time_to?.slice(0, 5) || "17:00");
+        setPurpose(editReservation.purpose || "");
+        setPurposeType(editReservation.purpose_type || "pracovne");
+        return;
+      }
       if (initialVehicleId) setVehicleId(initialVehicleId);
       if (initialDateFrom) setDateFrom(initialDateFrom);
       if (initialDateTo) setDateTo(initialDateTo);
       if (initialTimeFrom) setTimeFrom(initialTimeFrom);
       if (initialTimeTo) setTimeTo(initialTimeTo);
     }
-  }, [open, initialVehicleId, initialDateFrom, initialDateTo, initialTimeFrom, initialTimeTo]);
+  }, [open, editReservation, initialVehicleId, initialDateFrom, initialDateTo, initialTimeFrom, initialTimeTo]);
 
   useEffect(() => {
     if (!open || purposeType !== "soukrome" || !driver?.fullName || !dateFrom) {

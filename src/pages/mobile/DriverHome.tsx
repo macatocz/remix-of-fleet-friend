@@ -12,6 +12,7 @@ import FindVehicleSheet from "@/components/mobile/FindVehicleSheet";
 import NewReservationDialog from "@/components/mobile/NewReservationDialog";
 import PendingApprovalCard, { PendingReservation } from "@/components/mobile/PendingApprovalCard";
 import ReservationFuelCardWidget from "@/components/mobile/ReservationFuelCardWidget";
+import { localDateStr } from "@/lib/utils";
 
 interface UpcomingReservation {
   id: string;
@@ -118,7 +119,7 @@ function PendingApprovalsSection({
           <Badge variant="secondary" className="text-[10px] py-0">{items.length}</Badge>
         </CardTitle>
         <button
-          onClick={() => navigate("/m/rezervace")}
+          onClick={() => navigate("/m/rezervace?tab=schvaleni")}
           className="text-xs text-primary flex items-center gap-0.5"
         >
           Vše <ChevronRight className="h-3 w-3" />
@@ -147,7 +148,7 @@ function SpravceHome({ greeting, isPrivileged }: { greeting: string; isPrivilege
 
   useEffect(() => {
     if (!primary || !driver) return;
-    const today = new Date().toISOString().split("T")[0];
+    const today = localDateStr();
     (async () => {
       const ids = myVehicles.map(v => v.id);
       const { data } = await supabase
@@ -242,7 +243,7 @@ function SpravceHome({ greeting, isPrivileged }: { greeting: string; isPrivilege
         <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
           <CardTitle className="text-sm">Nadcházející rezervace mého vozu</CardTitle>
           <button
-            onClick={() => navigate("/m/rezervace")}
+            onClick={() => navigate("/m/rezervace?tab=vozidlo")}
             className="text-xs text-primary flex items-center gap-0.5"
           >
             Vše <ChevronRight className="h-3 w-3" />
@@ -271,7 +272,7 @@ function SpravceHome({ greeting, isPrivileged }: { greeting: string; isPrivilege
 
       {myCount > 0 && (
         <button
-          onClick={() => navigate("/m/rezervace")}
+          onClick={() => navigate("/m/rezervace?tab=moje")}
           className="w-full text-left"
         >
           <Card>
@@ -304,7 +305,7 @@ function DriverOnlyHome({ greeting, isPrivileged }: { greeting: string; isPrivil
 
   useEffect(() => {
     if (!driver) return;
-    const today = new Date().toISOString().split("T")[0];
+    const today = localDateStr();
     (async () => {
       const { data } = await supabase
         .from("reservations")
@@ -391,7 +392,7 @@ function DriverOnlyHome({ greeting, isPrivileged }: { greeting: string; isPrivil
       </Card>
 
       {(() => {
-        const today = new Date().toISOString().split("T")[0];
+        const today = localDateStr();
         const current = active.find(
           r => r.status === "schváleno" && r.date_from <= today && r.date_to >= today
         );

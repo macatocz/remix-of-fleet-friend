@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
+import { cn, localDateStr } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Clock } from "lucide-react";
 
@@ -21,7 +21,7 @@ interface Props {
 }
 
 function fmtDate(d: Date) {
-  return d.toISOString().split("T")[0];
+  return localDateStr(d);
 }
 
 function dayLabel(d: Date) {
@@ -129,7 +129,7 @@ export default function SpravceCalendarStrip({ vehicleId, days = 14 }: Props) {
       {selected && (
         <div className="rounded-lg border bg-card p-3 space-y-2">
           <p className="text-sm font-medium">
-            {new Date(selected).toLocaleDateString("cs-CZ", { weekday: "long", day: "numeric", month: "long" })}
+            {(range.find(d => fmtDate(d) === selected) ?? new Date()).toLocaleDateString("cs-CZ", { weekday: "long", day: "numeric", month: "long" })}
           </p>
           {selectedItems.length === 0 ? (
             <p className="text-sm text-muted-foreground">Volné – žádné rezervace.</p>

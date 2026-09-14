@@ -17,6 +17,7 @@ import {
 import {
   Drawer, DrawerContent, DrawerHeader, DrawerTitle,
 } from "@/components/ui/drawer";
+import { localDateStr } from "@/lib/utils";
 
 interface MiniRes {
   id: string;
@@ -38,7 +39,7 @@ export default function MyVehicle() {
 
   useEffect(() => {
     if (myVehicles.length === 0) return;
-    const today = new Date().toISOString().split("T")[0];
+    const today = localDateStr();
     (async () => {
       const ids = myVehicles.map(v => v.id);
       const { data } = await supabase

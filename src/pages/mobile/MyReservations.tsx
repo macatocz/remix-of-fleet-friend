@@ -15,6 +15,8 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { cn, localDateStr } from "@/lib/utils";
+import { useSearchParams } from "react-router-dom";
 
 interface Reservation {
   id: string;
@@ -38,6 +40,23 @@ export default function MyReservations() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pending, setPending] = useState<PendingReservation[]>([]);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requested = searchParams.get("tab");
+  const initialTab = requested === "vozidlo" && isSpravce ? "vozidlo"
+    : requested === "schvaleni" ? "schvaleni" : "moje";
+  const [tab, setTabState] = useState(initialTab);
+  useEffect(() => {
+    if (requested && requested !== tab) {
+      setTabState(requested === "vozidlo" && !isSpravce ? "moje" : requested);
+    }
+  }, [requested, isSpravce]);
+  const setTab = (v: string) => {
+    setTabState(v);
+    setSearchParams(v === "moje" ? {} : { tab: v }, { replace: true });
+  };
+
+
 
   const load = useCallback(async () => {
     if (!driver) { setLoading(false); return; }
@@ -86,6 +105,31 @@ export default function MyReservations() {
 
   useEffect(() => { loadPending(); }, [loadPending]);
 
+  const [vehicleItems, setVehicleItems] = useState<(Reservation & { driver_name?: string })[]>([]);
+  const myVehicleIds = myVehicles.map(v => v.id);
+
+  const loadVehicle = useCallback(async () => {
+    if (!isSpravce || myVehicleIds.length === 0) { setVehicleItems([]); return; }
+    const { data } = await supabase
+      .from("reservations")
+      .select("id, vehicle_id, driver_name, date_from, date_to, time_from, time_to, purpose, status")
+      .in("vehicle_id", myVehicleIds)
+      .gte("date_to", localDateStr())
+      .order("date_from", { ascending: true });
+    const list = (data as (Reservation & { driver_name?: string })[]) || [];
+    const ids = Array.from(new Set(list.map(r => r.vehicle_id)));
+    if (ids.length) {
+      const { data: vs } = await supabase
+        .from("vehicles_basic").select("id, znacka, rz, nazev_vozu").in("id", ids);
+      const map = new Map((vs || []).map((v: any) => [v.id, v]));
+      list.forEach(r => { r.vehicle = map.get(r.vehicle_id); });
+    }
+    setVehicleItems(list);
+  }, [isSpravce, myVehicleIds.join(",")]);
+
+  useEffect(() => { loadVehicle(); }, [loadVehicle]);
+
+
   const statusVariant = (s: string): "default" | "secondary" | "outline" | "destructive" => {
     if (s === "schváleno") return "default";
     if (s === "zamítnuto") return "destructive";
@@ -99,7 +143,7 @@ export default function MyReservations() {
     load();
   };
 
-  const todayStr = new Date().toISOString().split("T")[0];
+  const todayStr = localDateStr();
   const activeItems = items.filter(r => r.date_to >= todayStr);
   const pastItems = items.filter(r => r.date_to < todayStr);
 
@@ -151,10 +195,11 @@ export default function MyReservations() {
       </Button>
 
       {showApprovalsTab ? (
-        <Tabs defaultValue="mine" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="mine">Moje žádosti</TabsTrigger>
-            <TabsTrigger value="approvals" className="gap-1.5">
+        <Tabs value={tab} onValueChange={setTab} className="w-full">
+          <TabsList className={cn("grid w-full", isSpravce ? "grid-cols-3" : "grid-cols-2")}>
+            <TabsTrigger value="moje">Moje</TabsTrigger>
+            {isSpravce && <TabsTrigger value="vozidlo">Můj vůz</TabsTrigger>}
+            <TabsTrigger value="schvaleni" className="gap-1.5">
               Ke schválení
               {pending.length > 0 && (
                 <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold">
@@ -163,22 +208,53 @@ export default function MyReservations() {
               )}
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="mine" className="space-y-4 mt-4">
+          <TabsContent value="moje" className="space-y-4 mt-4">
             {renderReservations()}
           </TabsContent>
-          <TabsContent value="approvals" className="space-y-3 mt-4">
+          {isSpravce && (
+            <TabsContent value="vozidlo" className="space-y-3 mt-4">
+              {vehicleItems.length === 0 ? (
+                <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">
+                  Na vašich vozidlech nejsou žádné nadcházející rezervace.
+                </CardContent></Card>
+              ) : vehicleItems.map(r => (
+                <Card key={r.id}>
+                  <CardContent className="p-4 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-base truncate">{r.driver_name}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {r.vehicle?.nazev_vozu || r.vehicle?.znacka || "?"} · {r.vehicle?.rz || "—"}
+                        </p>
+                      </div>
+                      <Badge variant={statusVariant(r.status)} className="shrink-0">{r.status}</Badge>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm bg-accent/30 rounded-lg px-3 py-2">
+                      <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span>
+                        {r.date_from} {r.time_from?.slice(0, 5)} → {r.date_to} {r.time_to?.slice(0, 5)}
+                      </span>
+                    </div>
+                    {r.purpose && <p className="text-sm text-muted-foreground">{r.purpose}</p>}
+                  </CardContent>
+                </Card>
+              ))}
+            </TabsContent>
+          )}
+          <TabsContent value="schvaleni" className="space-y-3 mt-4">
             {pending.length === 0 ? (
               <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">
                 Žádné čekající žádosti ke schválení.
               </CardContent></Card>
             ) : pending.map(p => (
-              <PendingApprovalCard key={p.id} reservation={p} onChanged={loadPending} />
+              <PendingApprovalCard key={p.id} reservation={p} onChanged={() => { loadPending(); loadVehicle(); }} />
             ))}
           </TabsContent>
         </Tabs>
       ) : (
         renderReservations()
       )}
+
 
       <NewReservationDialog
         open={dialogOpen}
@@ -228,8 +304,8 @@ function ActiveList({
             )}
 
             {r.status === "schváleno" &&
-              r.date_from <= new Date().toISOString().split("T")[0] &&
-              r.date_to >= new Date().toISOString().split("T")[0] && (
+              r.date_from <= localDateStr() &&
+              r.date_to >= localDateStr() && (
                 <ReservationFuelCardWidget vehicleId={r.vehicle_id} />
               )}
 

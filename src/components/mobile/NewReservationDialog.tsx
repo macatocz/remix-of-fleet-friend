@@ -15,10 +15,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { insertOrQueue } from "@/lib/offline/tripQueue";
 import {
-import { localDateStr } from "@/lib/utils";
   PURPOSE_TYPES, checkAdvanceLimit, checkPrivateLimit, getPrivateUsage,
   PRIVATE_LIMIT_WEEKENDS, PRIVATE_LIMIT_WORKDAYS, MAX_ADVANCE_DAYS,
 } from "@/lib/reservationRules";
+import { localDateStr } from "@/lib/utils";
 
 interface Props {
   open: boolean;

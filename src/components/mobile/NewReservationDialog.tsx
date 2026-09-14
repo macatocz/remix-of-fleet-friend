@@ -135,6 +135,7 @@ export default function NewReservationDialog({
     }
 
     const overlapping = (conflicts || []).filter((c) => {
+      if (isEdit && c.id === editReservation!.id) return false;
       if (c.date_from !== c.date_to || dateFrom !== dateTo || c.date_from !== dateFrom) {
         return true;
       }

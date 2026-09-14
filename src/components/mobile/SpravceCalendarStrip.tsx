@@ -129,7 +129,7 @@ export default function SpravceCalendarStrip({ vehicleId, days = 14 }: Props) {
       {selected && (
         <div className="rounded-lg border bg-card p-3 space-y-2">
           <p className="text-sm font-medium">
-            {new Date(selected).toLocaleDateString("cs-CZ", { weekday: "long", day: "numeric", month: "long" })}
+            {(range.find(d => fmtDate(d) === selected) ?? new Date()).toLocaleDateString("cs-CZ", { weekday: "long", day: "numeric", month: "long" })}
           </p>
           {selectedItems.length === 0 ? (
             <p className="text-sm text-muted-foreground">Volné – žádné rezervace.</p>

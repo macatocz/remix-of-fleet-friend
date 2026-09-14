@@ -41,6 +41,23 @@ export default function MyReservations() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pending, setPending] = useState<PendingReservation[]>([]);
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requested = searchParams.get("tab");
+  const initialTab = requested === "vozidlo" && isSpravce ? "vozidlo"
+    : requested === "schvaleni" ? "schvaleni" : "moje";
+  const [tab, setTabState] = useState(initialTab);
+  useEffect(() => {
+    if (requested && requested !== tab) {
+      setTabState(requested === "vozidlo" && !isSpravce ? "moje" : requested);
+    }
+  }, [requested, isSpravce]);
+  const setTab = (v: string) => {
+    setTabState(v);
+    setSearchParams(v === "moje" ? {} : { tab: v }, { replace: true });
+  };
+
+
+
   const load = useCallback(async () => {
     if (!driver) { setLoading(false); return; }
     setLoading(true);

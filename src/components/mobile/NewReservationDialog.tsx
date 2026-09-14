@@ -156,6 +156,28 @@ export default function NewReservationDialog({
       return;
     }
 
+    if (isEdit) {
+      const { error } = await supabase
+        .from("reservations")
+        .update({
+          vehicle_id: vehicleId,
+          date_from: dateFrom,
+          date_to: dateTo,
+          time_from: timeFrom,
+          time_to: timeTo,
+          purpose: purpose || null,
+          purpose_type: purposeType,
+        })
+        .eq("id", editReservation!.id);
+      setSaving(false);
+      if (error) { toast.error("Chyba: " + error.message); return; }
+      toast.success("Rezervace upravena");
+      reset();
+      onOpenChange(false);
+      onCreated?.();
+      return;
+    }
+
     const res = await insertOrQueue("reservations", {
       vehicle_id: vehicleId,
       driver_name: driver.fullName,

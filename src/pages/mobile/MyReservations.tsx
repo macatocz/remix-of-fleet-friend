@@ -26,6 +26,7 @@ interface Reservation {
   time_from: string | null;
   time_to: string | null;
   purpose: string | null;
+  purpose_type?: string | null;
   status: string;
   vehicle?: { znacka: string | null; rz: string | null; nazev_vozu?: string | null };
 }
@@ -39,6 +40,7 @@ export default function MyReservations() {
   const [items, setItems] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<Reservation | null>(null);
   const [pending, setPending] = useState<PendingReservation[]>([]);
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -63,7 +65,7 @@ export default function MyReservations() {
     setLoading(true);
     const { data } = await supabase
       .from("reservations")
-      .select("id, vehicle_id, date_from, date_to, time_from, time_to, purpose, status")
+      .select("id, vehicle_id, date_from, date_to, time_from, time_to, purpose, purpose_type, status")
       .eq("driver_name", driver.fullName)
       .order("date_from", { ascending: false });
     const list = (data as Reservation[]) || [];
@@ -163,7 +165,7 @@ export default function MyReservations() {
     return (
       <>
         {activeItems.length > 0 && (
-          <ActiveList items={activeItems} statusVariant={statusVariant} cancel={cancel} />
+          <ActiveList items={activeItems} statusVariant={statusVariant} cancel={cancel} onEdit={(r) => { setEditing(r); setDialogOpen(true); }} />
         )}
         {pastItems.length > 0 && (
           <>

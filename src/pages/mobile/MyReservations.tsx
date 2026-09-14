@@ -268,11 +268,12 @@ export default function MyReservations() {
 }
 
 function ActiveList({
-  items, statusVariant, cancel,
+  items, statusVariant, cancel, onEdit,
 }: {
   items: Reservation[];
   statusVariant: (s: string) => "default" | "secondary" | "outline" | "destructive";
   cancel: (id: string) => void;
+  onEdit: (r: Reservation) => void;
 }) {
   return (
     <>

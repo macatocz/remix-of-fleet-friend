@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, Plus, X, Clock, History } from "lucide-react";
+import { CalendarDays, Plus, X, Clock, History, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useDriverContext } from "@/hooks/useDriverContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -260,8 +260,9 @@ export default function MyReservations() {
 
       <NewReservationDialog
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onCreated={() => { load(); loadPending(); }}
+        onOpenChange={(o) => { setDialogOpen(o); if (!o) setEditing(null); }}
+        onCreated={() => { setEditing(null); load(); loadPending(); loadVehicle(); }}
+        editReservation={editing}
       />
     </div>
   );
@@ -312,6 +313,11 @@ function ActiveList({
                 <ReservationFuelCardWidget vehicleId={r.vehicle_id} />
               )}
 
+            {r.status === "čeká" && (
+              <Button variant="outline" className="w-full h-11" onClick={() => onEdit(r)}>
+                <Pencil className="h-4 w-4 mr-2" /> Upravit žádost
+              </Button>
+            )}
             {r.status === "čeká" && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>

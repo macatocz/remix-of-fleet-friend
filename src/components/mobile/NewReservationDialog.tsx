@@ -20,6 +20,17 @@ import {
 } from "@/lib/reservationRules";
 import { localDateStr } from "@/lib/utils";
 
+export interface EditReservationData {
+  id: string;
+  vehicle_id: string;
+  date_from: string;
+  date_to: string;
+  time_from?: string | null;
+  time_to?: string | null;
+  purpose?: string | null;
+  purpose_type?: string | null;
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -29,12 +40,15 @@ interface Props {
   initialDateTo?: string;
   initialTimeFrom?: string;
   initialTimeTo?: string;
+  editReservation?: EditReservationData | null;
 }
 
 export default function NewReservationDialog({
   open, onOpenChange, onCreated,
   initialVehicleId, initialDateFrom, initialDateTo, initialTimeFrom, initialTimeTo,
+  editReservation,
 }: Props) {
+  const isEdit = !!editReservation;
   const { driver, myVehicles, allVehicles } = useDriverContext();
   const today = localDateStr();
   const maxDate = (() => {

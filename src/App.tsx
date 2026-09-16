@@ -36,6 +36,8 @@ import NotificationsPage from "@/pages/NotificationsPage";
 import Login from "@/pages/Login";
 import SetPassword from "@/pages/SetPassword";
 import InstallGuide from "@/pages/InstallGuide";
+import MyTrips from "@/pages/mobile/MyTrips";
+import DriverDesktopHome from "@/pages/DriverDesktopHome";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -76,6 +78,14 @@ const App = () => (
               <Route path="/notifikace" element={<NotificationsPage />} />
             </Route>
             <Route
+              path="/ridic"
+              element={
+                <ProtectedRoute>
+                  <DriverDesktopHome />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/m"
               element={
                 <ProtectedRoute>
@@ -85,6 +95,7 @@ const App = () => (
             >
               <Route index element={<DriverHome />} />
               <Route path="vozidlo" element={<MyVehicle />} />
+              <Route path="jizdy" element={<MyTrips />} />
               <Route path="rezervace" element={<MyReservations />} />
               {/* Admin/dispečer mobilní routy – znovupoužívají desktop stránky */}
               <Route path="vozidla" element={<MobileVehicles />} />

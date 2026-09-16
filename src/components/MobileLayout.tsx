@@ -30,6 +30,7 @@ const spravceNav: NavItem[] = [
 
 const driverNav: NavItem[] = [
   { url: "/m", label: "Domů", icon: Home, end: true },
+  { url: "/m/jizdy", label: "Jízdy", icon: Route },
   { url: "__find__", label: "Najít vůz", icon: Search, action: "find" },
   { url: "/m/rezervace", label: "Rezervace", icon: CalendarDays },
 ];

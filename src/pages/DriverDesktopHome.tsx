@@ -101,28 +101,7 @@ export default function DriverDesktopHome() {
   }
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen bg-background flex w-full">
-        <DriverSidebar
-          primaryVehicleId={primary?.id ?? null}
-          primaryVehicleLabel={primary?.nazev_vozu || primary?.znacka || null}
-          onIncident={() => setIncidentOpen(true)}
-        />
-        <div className="flex-1 flex flex-col min-w-0">
-          <header className="border-b bg-card sticky top-0 z-30">
-            <div className="h-16 flex items-center justify-between px-6">
-              <div className="flex items-center gap-2">
-                <SidebarTrigger />
-                <h1 className="font-semibold text-base">🚗 Vozový park</h1>
-              </div>
-              <div className="flex items-center gap-1">
-                <NotificationBell />
-                <MobileUserMenu />
-              </div>
-            </div>
-          </header>
-
-          <main className="flex-1 px-6 py-8 space-y-8">
+    <div className="space-y-8">
         <div>
           <p className="text-sm text-muted-foreground">Vítejte zpět</p>
           <h2 className="text-3xl font-semibold">{greeting}</h2>
@@ -241,8 +220,6 @@ export default function DriverDesktopHome() {
             <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </CardContent>
         </Card>
-      </main>
-
       <FindVehicleSheet
         open={findOpen}
         onOpenChange={setFindOpen}
@@ -260,10 +237,8 @@ export default function DriverDesktopHome() {
         initialTimeFrom={preset?.timeFrom}
         initialTimeTo={preset?.timeTo}
       />
-          <QuickTripDialog open={tripOpen} onOpenChange={setTripOpen} />
-          <QuickIncidentDialog open={incidentOpen} onOpenChange={setIncidentOpen} />
-        </div>
-      </div>
-    </SidebarProvider>
+      <QuickTripDialog open={tripOpen} onOpenChange={setTripOpen} />
+      <QuickIncidentDialog open={incidentOpen} onOpenChange={setIncidentOpen} />
+    </div>
   );
 }

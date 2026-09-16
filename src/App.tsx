@@ -38,6 +38,7 @@ import SetPassword from "@/pages/SetPassword";
 import InstallGuide from "@/pages/InstallGuide";
 import MyTrips from "@/pages/mobile/MyTrips";
 import DriverDesktopHome from "@/pages/DriverDesktopHome";
+import { DriverLayout } from "@/components/DriverLayout";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -81,10 +82,15 @@ const App = () => (
               path="/ridic"
               element={
                 <ProtectedRoute>
-                  <DriverDesktopHome />
+                  <DriverLayout />
                 </ProtectedRoute>
               }
-            />
+            >
+              <Route index element={<DriverDesktopHome />} />
+              <Route path="rezervace" element={<MyReservations />} />
+              <Route path="jizdy" element={<MyTrips />} />
+              <Route path="vozidla/:id" element={<VehicleDetail />} />
+            </Route>
             <Route
               path="/m"
               element={

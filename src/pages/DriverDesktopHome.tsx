@@ -6,13 +6,9 @@ import { useDriverContext } from "@/hooks/useDriverContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import {
   Car, ChevronRight, Search, Plus, AlertTriangle, Route as RouteIcon, Clock,
 } from "lucide-react";
-import { NotificationBell } from "@/components/NotificationBell";
-import { DriverSidebar } from "@/components/DriverSidebar";
-import { MobileUserMenu } from "@/components/mobile/MobileUserMenu";
 import FindVehicleSheet from "@/components/mobile/FindVehicleSheet";
 import NewReservationDialog from "@/components/mobile/NewReservationDialog";
 import QuickTripDialog from "@/components/mobile/QuickTripDialog";

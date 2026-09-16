@@ -16,6 +16,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn, localDateStr } from "@/lib/utils";
+import { reservationEnd, reservationStart } from "@/lib/reservationRules";
 import { useSearchParams } from "react-router-dom";
 
 interface Reservation {
@@ -308,9 +309,11 @@ function ActiveList({
             )}
 
             {r.status === "schváleno" &&
-              r.date_from <= localDateStr() &&
-              r.date_to >= localDateStr() && (
-                <ReservationFuelCardWidget vehicleId={r.vehicle_id} />
+              reservationEnd(r.date_to, r.time_to) > new Date() && (
+                <ReservationFuelCardWidget
+                  vehicleId={r.vehicle_id}
+                  startsAt={reservationStart(r.date_from, r.time_from)}
+                />
               )}
 
             {r.status === "čeká" && (

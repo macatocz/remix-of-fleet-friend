@@ -13,8 +13,10 @@ import { useDriverContext } from "@/hooks/useDriverContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { insertOrQueue } from "@/lib/offline/tripQueue";
-import { WifiOff } from "lucide-react";
+import { WifiOff, Camera, X } from "lucide-react";
 import { localDateStr } from "@/lib/utils";
+
+const MAX_PHOTOS = 5;
 
 interface Props {
   open: boolean;

@@ -135,6 +135,47 @@ export default function QuickIncidentDialog({ open, onOpenChange }: Props) {
             <Label>Odhadovaná škoda (Kč)</Label>
             <Input className="h-12" type="number" inputMode="numeric" value={estimatedCost} onChange={e => setEstimatedCost(e.target.value)} />
           </div>
+          <div className="space-y-1.5">
+            <Label>Fotky (max {MAX_PHOTOS})</Label>
+            <input
+              id="incident-photos-input"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              multiple
+              className="hidden"
+              onChange={(e) => { addPhotos(e.target.files); e.target.value = ""; }}
+            />
+            <div className="flex flex-wrap gap-2">
+              {photos.map((f, i) => (
+                <div key={i} className="relative h-20 w-20 rounded-lg overflow-hidden border bg-muted">
+                  <img src={URL.createObjectURL(f)} alt="" className="h-full w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setPhotos(photos.filter((_, j) => j !== i))}
+                    className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-black/60 text-white flex items-center justify-center"
+                    aria-label="Odebrat fotku"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+              {photos.length < MAX_PHOTOS && (
+                <label
+                  htmlFor="incident-photos-input"
+                  className="h-20 w-20 rounded-lg border border-dashed flex flex-col items-center justify-center gap-1 text-muted-foreground cursor-pointer active:bg-accent"
+                >
+                  <Camera className="h-5 w-5" />
+                  <span className="text-[10px]">Přidat</span>
+                </label>
+              )}
+            </div>
+            {photos.length > 0 && typeof navigator !== "undefined" && !navigator.onLine && (
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                Offline se fotky neuloží – připojte se k síti, nebo odešlete hlášení bez nich.
+              </p>
+            )}
+          </div>
           {typeof navigator !== "undefined" && !navigator.onLine && (
             <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400 border border-amber-500/30 bg-amber-500/10 rounded p-2">
               <WifiOff className="h-4 w-4" /> Offline – hlášení se uloží lokálně a odešle při obnovení sítě.

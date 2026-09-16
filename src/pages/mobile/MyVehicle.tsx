@@ -81,7 +81,7 @@ export default function MyVehicle() {
       {myVehicles.map((v) => (
         <Card key={v.id} className="overflow-hidden">
           <button
-            onClick={() => navigate(`/vozidla/${v.id}`)}
+            onClick={() => navigate(`/m/vozidla/${v.id}`)}
             className="w-full text-left active:bg-accent/30 transition-colors"
           >
             <CardContent className="p-4 flex items-center gap-3">

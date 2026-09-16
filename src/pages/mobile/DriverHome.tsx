@@ -187,7 +187,7 @@ function SpravceHome({ greeting, isPrivileged }: { greeting: string; isPrivilege
       {primary && (
         <Card
           className="cursor-pointer active:scale-[0.99] transition-transform overflow-hidden"
-          onClick={() => navigate(`/vozidla/${primary.id}`)}
+          onClick={() => navigate(`/m/vozidla/${primary.id}`)}
         >
           <CardContent className="p-4 flex items-center gap-3">
             <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center shrink-0">

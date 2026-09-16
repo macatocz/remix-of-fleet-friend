@@ -38,6 +38,12 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to={`/m/cestovni-prikazy/${mobileTravelOrderPath[1]}`} replace />;
   }
 
+  // Detail vozidla na telefonu vždy otevřít v mobilní verzi
+  const mobileVehiclePath = location.pathname.match(/^\/vozidla\/([^/]+)$/);
+  if (isMobile && !preferDesktop && mobileVehiclePath) {
+    return <Navigate to={`/m/vozidla/${mobileVehiclePath[1]}`} replace />;
+  }
+
   // Driver-only: vždy mobilní UI (kromě detailu vozidla)
   if (isDriverOnly && !onMobileRoute && !location.pathname.startsWith("/vozidla/")) {
     return <Navigate to="/m" replace />;

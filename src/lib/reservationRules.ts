@@ -126,6 +126,16 @@ export async function checkPrivateLimit(
   return null;
 }
 
+/** Začátek rezervace jako lokální datum a čas. */
+export function reservationStart(dateFrom: string, timeFrom?: string | null): Date {
+  return new Date(`${dateFrom}T${(timeFrom || "00:00").slice(0, 5)}:00`);
+}
+
+/** Konec rezervace jako lokální datum a čas. */
+export function reservationEnd(dateTo: string, timeTo?: string | null): Date {
+  return new Date(`${dateTo}T${(timeTo || "23:59").slice(0, 5)}:00`);
+}
+
 /** Délka rezervace v hodinách (počítá se první den od–do). */
 export function reservationHours(
   dateFrom: string,

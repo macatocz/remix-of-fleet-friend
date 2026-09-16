@@ -13,6 +13,7 @@ import NewReservationDialog from "@/components/mobile/NewReservationDialog";
 import PendingApprovalCard, { PendingReservation } from "@/components/mobile/PendingApprovalCard";
 import ReservationFuelCardWidget from "@/components/mobile/ReservationFuelCardWidget";
 import { localDateStr } from "@/lib/utils";
+import { reservationEnd, reservationStart } from "@/lib/reservationRules";
 
 interface UpcomingReservation {
   id: string;
@@ -392,11 +393,15 @@ function DriverOnlyHome({ greeting, isPrivileged }: { greeting: string; isPrivil
       </Card>
 
       {(() => {
-        const today = localDateStr();
         const current = active.find(
-          r => r.status === "schváleno" && r.date_from <= today && r.date_to >= today
+          r => r.status === "schváleno" && reservationEnd(r.date_to, r.time_to) > new Date()
         );
-        return current ? <ReservationFuelCardWidget vehicleId={current.vehicle_id} /> : null;
+        return current ? (
+          <ReservationFuelCardWidget
+            vehicleId={current.vehicle_id}
+            startsAt={reservationStart(current.date_from, current.time_from)}
+          />
+        ) : null;
       })()}
 
       {isPrivileged && <PendingApprovalsSection scope="all" />}

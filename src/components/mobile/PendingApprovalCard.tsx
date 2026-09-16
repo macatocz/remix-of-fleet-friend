@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, X, Clock, User, Car } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { notifyReservationStatus } from "@/lib/notify";
 import { toast } from "sonner";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -39,6 +40,16 @@ export default function PendingApprovalCard({ reservation: r, onChanged }: Props
     setBusy(false);
     if (error) { toast.error("Chyba: " + error.message); return; }
     toast.success(status === "schváleno" ? "Rezervace schválena" : "Rezervace zamítnuta");
+    void notifyReservationStatus(status, {
+      id: r.id,
+      driver_name: r.driver_name,
+      vehicle_id: r.vehicle_id,
+      vehicleLabel: `${r.vehicle?.rz || ""} ${r.vehicle?.znacka || ""}`.trim() || null,
+      date_from: r.date_from,
+      date_to: r.date_to,
+      time_from: r.time_from,
+      time_to: r.time_to,
+    });
     onChanged();
   };
 

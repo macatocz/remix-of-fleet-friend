@@ -74,7 +74,7 @@ export async function notifyReservationStatus(
     body: approved
       ? `${vehicle}${term}`
       : `${vehicle}${term}${res.reason ? ` — důvod: ${res.reason}` : ""}`,
-    link: "/rezervace",
+    link: "/m/rezervace",
     vehicle_id: res.vehicle_id || undefined,
     reservation_id: res.id,
   });

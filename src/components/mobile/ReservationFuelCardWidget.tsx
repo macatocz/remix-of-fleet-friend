@@ -63,11 +63,17 @@ export default function ReservationFuelCardWidget({
           <CreditCard className="h-4 w-4 text-primary" />
           Tankovací karta k vozu
         </CardTitle>
+        {notStarted && (
+          <p className="text-[11px] text-muted-foreground pt-1">
+            Rezervace začíná {startsAt!.toLocaleDateString("cs-CZ")}{" "}
+            {startsAt!.toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" })}
+          </p>
+        )}
       </CardHeader>
       <CardContent className="pt-0 space-y-3">
         {cards.length === 0 ? (
           <p className="text-xs text-muted-foreground py-1">
-            K tomuto vozu není přiřazena tankovací karta.
+            K tomuto vozu není přiřazena tankovací karta — kontaktujte správce vozového parku.
           </p>
         ) : cards.map(c => (
           <div key={c.id} className="rounded-lg border bg-accent/20 p-3 space-y-2">

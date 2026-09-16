@@ -200,6 +200,23 @@ export default function MobileIncidentDetail() {
           </p>
         </Card>
       </section>
+
+      {photoUrls.length > 0 && (
+        <section>
+          <h2 className="mb-2 text-sm font-semibold">Fotky ({photoUrls.length})</h2>
+          <div className="grid grid-cols-2 gap-2">
+            {photoUrls.map((url, i) => (
+              <a key={i} href={url} target="_blank" rel="noreferrer" className="block">
+                <img
+                  src={url}
+                  alt={`Fotka škody ${i + 1}`}
+                  className="h-36 w-full rounded-lg border object-cover"
+                />
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

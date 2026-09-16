@@ -40,7 +40,7 @@ export default function QuickIncidentDialog({ open, onOpenChange }: Props) {
       return;
     }
     setSaving(true);
-    const res = await insertOrQueue("incidents", {
+    const payload = {
       vehicle_id: vehicleId,
       driver_id: driver?.id || null,
       date: localDateStr(),
@@ -48,14 +48,59 @@ export default function QuickIncidentDialog({ open, onOpenChange }: Props) {
       description,
       estimated_cost: estimatedCost ? parseFloat(estimatedCost) : 0,
       status: "nahlaseno",
-    });
+    };
+
+    // Offline nebo bez fotek → stávající cesta (fronta / prostý insert)
+    if (!navigator.onLine || photos.length === 0) {
+      const res = await insertOrQueue("incidents", payload);
+      setSaving(false);
+      if (res.status === "error") { toast.error("Chyba: " + res.message); return; }
+      toast.success(res.status === "queued"
+        ? "Offline – uloženo bez fotek, odešle se po obnovení sítě"
+        : "Škoda nahlášena");
+      reset();
+      onOpenChange(false);
+      return;
+    }
+
+    // Online s fotkami: potřebujeme ID incidentu pro napárování fotek
+    const { data: inserted, error: insErr } = await supabase
+      .from("incidents")
+      .insert(payload)
+      .select("id")
+      .single();
+    if (insErr || !inserted) {
+      setSaving(false);
+      toast.error("Chyba: " + (insErr?.message || "vložení selhalo"));
+      return;
+    }
+
+    let uploaded = 0;
+    for (const file of photos) {
+      const path = `incidents/${vehicleId}/${inserted.id}/${Date.now()}-${file.name}`;
+      const { error: upErr } = await supabase.storage.from("handover-photos").upload(path, file);
+      if (upErr) continue;
+      const { error: phErr } = await supabase.from("incident_photos").insert({
+        incident_id: inserted.id,
+        file_path: path,
+      });
+      if (!phErr) uploaded++;
+    }
     setSaving(false);
-    if (res.status === "error") { toast.error("Chyba: " + res.message); return; }
-    toast.success(res.status === "queued"
-      ? "Offline – uloženo, odešle se po obnovení sítě"
-      : "Škoda nahlášena");
-    setVehicleId(""); setLocation(""); setDescription(""); setEstimatedCost("");
+    toast.success(uploaded > 0 ? `Škoda nahlášena s ${uploaded} fotkou/fotkami` : "Škoda nahlášena (fotky se nenahrály)");
+    reset();
     onOpenChange(false);
+  };
+
+  const reset = () => {
+    setVehicleId(""); setLocation(""); setDescription(""); setEstimatedCost("");
+    setPhotos([]);
+  };
+
+  const addPhotos = (files: FileList | null) => {
+    if (!files) return;
+    const next = [...photos, ...Array.from(files)].slice(0, MAX_PHOTOS);
+    setPhotos(next);
   };
 
   return (

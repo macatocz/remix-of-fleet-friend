@@ -29,6 +29,7 @@ export default function QuickIncidentDialog({ open, onOpenChange }: Props) {
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
   const [estimatedCost, setEstimatedCost] = useState("");
+  const [photos, setPhotos] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
 
   const vehicles = myVehicles.length ? myVehicles : allVehicles;

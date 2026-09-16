@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import QuickTripDialog from "@/components/mobile/QuickTripDialog";
 import QuickIncidentDialog from "@/components/mobile/QuickIncidentDialog";
 import SpravceCalendarStrip from "@/components/mobile/SpravceCalendarStrip";
+import VehicleParkingWidget from "@/components/mobile/VehicleParkingWidget";
 import { toast } from "sonner";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -153,6 +154,10 @@ export default function MyVehicle() {
               ))}
             </div>
           )}
+
+          <div className="px-3 pb-2">
+            <VehicleParkingWidget vehicleId={v.id} />
+          </div>
 
           <div className="grid grid-cols-2 gap-2 px-3 pb-3 pt-1 border-t">
             <Button

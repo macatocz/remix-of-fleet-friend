@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import NewReservationDialog from "@/components/mobile/NewReservationDialog";
 import PendingApprovalCard, { PendingReservation } from "@/components/mobile/PendingApprovalCard";
 import ReservationFuelCardWidget from "@/components/mobile/ReservationFuelCardWidget";
+import VehicleParkingWidget from "@/components/mobile/VehicleParkingWidget";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
@@ -310,10 +311,13 @@ function ActiveList({
 
             {r.status === "schváleno" &&
               reservationEnd(r.date_to, r.time_to) > new Date() && (
-                <ReservationFuelCardWidget
-                  vehicleId={r.vehicle_id}
-                  startsAt={reservationStart(r.date_from, r.time_from)}
-                />
+                <>
+                  <ReservationFuelCardWidget
+                    vehicleId={r.vehicle_id}
+                    startsAt={reservationStart(r.date_from, r.time_from)}
+                  />
+                  <VehicleParkingWidget vehicleId={r.vehicle_id} />
+                </>
               )}
 
             {r.status === "čeká" && (

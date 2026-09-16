@@ -12,6 +12,7 @@ import FindVehicleSheet from "@/components/mobile/FindVehicleSheet";
 import NewReservationDialog from "@/components/mobile/NewReservationDialog";
 import PendingApprovalCard, { PendingReservation } from "@/components/mobile/PendingApprovalCard";
 import ReservationFuelCardWidget from "@/components/mobile/ReservationFuelCardWidget";
+import VehicleParkingWidget from "@/components/mobile/VehicleParkingWidget";
 import { localDateStr } from "@/lib/utils";
 import { reservationEnd, reservationStart } from "@/lib/reservationRules";
 
@@ -397,10 +398,13 @@ function DriverOnlyHome({ greeting, isPrivileged }: { greeting: string; isPrivil
           r => r.status === "schváleno" && reservationEnd(r.date_to, r.time_to) > new Date()
         );
         return current ? (
-          <ReservationFuelCardWidget
-            vehicleId={current.vehicle_id}
-            startsAt={reservationStart(current.date_from, current.time_from)}
-          />
+          <>
+            <ReservationFuelCardWidget
+              vehicleId={current.vehicle_id}
+              startsAt={reservationStart(current.date_from, current.time_from)}
+            />
+            <VehicleParkingWidget vehicleId={current.vehicle_id} />
+          </>
         ) : null;
       })()}
 

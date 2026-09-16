@@ -260,8 +260,10 @@ export default function DriverDesktopHome() {
         initialTimeFrom={preset?.timeFrom}
         initialTimeTo={preset?.timeTo}
       />
-      <QuickTripDialog open={tripOpen} onOpenChange={setTripOpen} />
-      <QuickIncidentDialog open={incidentOpen} onOpenChange={setIncidentOpen} />
-    </div>
+          <QuickTripDialog open={tripOpen} onOpenChange={setTripOpen} />
+          <QuickIncidentDialog open={incidentOpen} onOpenChange={setIncidentOpen} />
+        </div>
+      </div>
+    </SidebarProvider>
   );
 }

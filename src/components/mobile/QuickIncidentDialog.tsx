@@ -13,8 +13,10 @@ import { useDriverContext } from "@/hooks/useDriverContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { insertOrQueue } from "@/lib/offline/tripQueue";
-import { WifiOff } from "lucide-react";
+import { WifiOff, Camera, X } from "lucide-react";
 import { localDateStr } from "@/lib/utils";
+
+const MAX_PHOTOS = 5;
 
 interface Props {
   open: boolean;
@@ -27,6 +29,7 @@ export default function QuickIncidentDialog({ open, onOpenChange }: Props) {
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
   const [estimatedCost, setEstimatedCost] = useState("");
+  const [photos, setPhotos] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
 
   const vehicles = myVehicles.length ? myVehicles : allVehicles;
@@ -37,7 +40,7 @@ export default function QuickIncidentDialog({ open, onOpenChange }: Props) {
       return;
     }
     setSaving(true);
-    const res = await insertOrQueue("incidents", {
+    const payload = {
       vehicle_id: vehicleId,
       driver_id: driver?.id || null,
       date: localDateStr(),
@@ -45,14 +48,59 @@ export default function QuickIncidentDialog({ open, onOpenChange }: Props) {
       description,
       estimated_cost: estimatedCost ? parseFloat(estimatedCost) : 0,
       status: "nahlaseno",
-    });
+    };
+
+    // Offline nebo bez fotek → stávající cesta (fronta / prostý insert)
+    if (!navigator.onLine || photos.length === 0) {
+      const res = await insertOrQueue("incidents", payload);
+      setSaving(false);
+      if (res.status === "error") { toast.error("Chyba: " + res.message); return; }
+      toast.success(res.status === "queued"
+        ? "Offline – uloženo bez fotek, odešle se po obnovení sítě"
+        : "Škoda nahlášena");
+      reset();
+      onOpenChange(false);
+      return;
+    }
+
+    // Online s fotkami: potřebujeme ID incidentu pro napárování fotek
+    const { data: inserted, error: insErr } = await supabase
+      .from("incidents")
+      .insert(payload)
+      .select("id")
+      .single();
+    if (insErr || !inserted) {
+      setSaving(false);
+      toast.error("Chyba: " + (insErr?.message || "vložení selhalo"));
+      return;
+    }
+
+    let uploaded = 0;
+    for (const file of photos) {
+      const path = `incidents/${vehicleId}/${inserted.id}/${Date.now()}-${file.name}`;
+      const { error: upErr } = await supabase.storage.from("handover-photos").upload(path, file);
+      if (upErr) continue;
+      const { error: phErr } = await supabase.from("incident_photos").insert({
+        incident_id: inserted.id,
+        file_path: path,
+      });
+      if (!phErr) uploaded++;
+    }
     setSaving(false);
-    if (res.status === "error") { toast.error("Chyba: " + res.message); return; }
-    toast.success(res.status === "queued"
-      ? "Offline – uloženo, odešle se po obnovení sítě"
-      : "Škoda nahlášena");
-    setVehicleId(""); setLocation(""); setDescription(""); setEstimatedCost("");
+    toast.success(uploaded > 0 ? `Škoda nahlášena s ${uploaded} fotkou/fotkami` : "Škoda nahlášena (fotky se nenahrály)");
+    reset();
     onOpenChange(false);
+  };
+
+  const reset = () => {
+    setVehicleId(""); setLocation(""); setDescription(""); setEstimatedCost("");
+    setPhotos([]);
+  };
+
+  const addPhotos = (files: FileList | null) => {
+    if (!files) return;
+    const next = [...photos, ...Array.from(files)].slice(0, MAX_PHOTOS);
+    setPhotos(next);
   };
 
   return (
@@ -86,6 +134,47 @@ export default function QuickIncidentDialog({ open, onOpenChange }: Props) {
           <div className="space-y-1.5">
             <Label>Odhadovaná škoda (Kč)</Label>
             <Input className="h-12" type="number" inputMode="numeric" value={estimatedCost} onChange={e => setEstimatedCost(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Fotky (max {MAX_PHOTOS})</Label>
+            <input
+              id="incident-photos-input"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              multiple
+              className="hidden"
+              onChange={(e) => { addPhotos(e.target.files); e.target.value = ""; }}
+            />
+            <div className="flex flex-wrap gap-2">
+              {photos.map((f, i) => (
+                <div key={i} className="relative h-20 w-20 rounded-lg overflow-hidden border bg-muted">
+                  <img src={URL.createObjectURL(f)} alt="" className="h-full w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setPhotos(photos.filter((_, j) => j !== i))}
+                    className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-black/60 text-white flex items-center justify-center"
+                    aria-label="Odebrat fotku"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+              {photos.length < MAX_PHOTOS && (
+                <label
+                  htmlFor="incident-photos-input"
+                  className="h-20 w-20 rounded-lg border border-dashed flex flex-col items-center justify-center gap-1 text-muted-foreground cursor-pointer active:bg-accent"
+                >
+                  <Camera className="h-5 w-5" />
+                  <span className="text-[10px]">Přidat</span>
+                </label>
+              )}
+            </div>
+            {photos.length > 0 && typeof navigator !== "undefined" && !navigator.onLine && (
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                Offline se fotky neuloží – připojte se k síti, nebo odešlete hlášení bez nich.
+              </p>
+            )}
           </div>
           {typeof navigator !== "undefined" && !navigator.onLine && (
             <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400 border border-amber-500/30 bg-amber-500/10 rounded p-2">

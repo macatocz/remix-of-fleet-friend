@@ -43,6 +43,7 @@ export default function MobileIncidentDetail() {
   const [incident, setIncident] = useState<Incident | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -65,6 +66,21 @@ export default function MobileIncidentDetail() {
         setError(true);
       } else {
         setIncident(data as Incident);
+        const { data: photos } = await supabase
+          .from("incident_photos")
+          .select("file_path")
+          .eq("incident_id", id)
+          .order("created_at", { ascending: true });
+        if (active && photos?.length) {
+          const urls: string[] = [];
+          for (const ph of photos) {
+            const { data: signed } = await supabase.storage
+              .from("handover-photos")
+              .createSignedUrl(ph.file_path, 3600);
+            if (signed?.signedUrl) urls.push(signed.signedUrl);
+          }
+          if (active) setPhotoUrls(urls);
+        }
       }
       setLoading(false);
     };
@@ -184,6 +200,23 @@ export default function MobileIncidentDetail() {
           </p>
         </Card>
       </section>
+
+      {photoUrls.length > 0 && (
+        <section>
+          <h2 className="mb-2 text-sm font-semibold">Fotky ({photoUrls.length})</h2>
+          <div className="grid grid-cols-2 gap-2">
+            {photoUrls.map((url, i) => (
+              <a key={i} href={url} target="_blank" rel="noreferrer" className="block">
+                <img
+                  src={url}
+                  alt={`Fotka škody ${i + 1}`}
+                  className="h-36 w-full rounded-lg border object-cover"
+                />
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

@@ -45,9 +45,20 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to={`/m/vozidla/${mobileVehiclePath[1]}`} replace />;
   }
 
-  // Driver-only: vždy mobilní UI (kromě detailu vozidla)
-  if (isDriverOnly && !onMobileRoute && !location.pathname.startsWith("/vozidla/")) {
-    return <Navigate to="/m" replace />;
+  // Driver-only: na mobilu mobilní UI, na desktopu jednoduchý řidičský pohled
+  // (kromě detailu vozidla a samotného /ridic)
+  if (
+    isDriverOnly &&
+    !onMobileRoute &&
+    !location.pathname.startsWith("/vozidla/") &&
+    location.pathname !== "/ridic"
+  ) {
+    return <Navigate to={isMobile ? "/m" : "/ridic"} replace />;
+  }
+
+  // /ridic je určen jen čistým řidičům – ostatní přesměrovat na dashboard
+  if (!isDriverOnly && location.pathname === "/ridic") {
+    return <Navigate to="/" replace />;
   }
 
   // Ostatní role na mobilním zařízení: redirect na /m, pokud nepreferují desktop

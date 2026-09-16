@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Car, CalendarDays, ChevronRight, Search, Plus, AlertTriangle, Route as RouteIcon, Clock,
+  Car, ChevronRight, Search, Plus, AlertTriangle, Route as RouteIcon, Clock,
 } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { MobileUserMenu } from "@/components/mobile/MobileUserMenu";

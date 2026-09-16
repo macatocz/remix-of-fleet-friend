@@ -21,7 +21,14 @@ function maskNumber(num: string | null): string {
   return "•••• " + cleaned.slice(-4);
 }
 
-export default function ReservationFuelCardWidget({ vehicleId }: { vehicleId: string }) {
+export default function ReservationFuelCardWidget({
+  vehicleId,
+  startsAt,
+}: {
+  vehicleId: string;
+  /** Začátek rezervace — pokud je v budoucnu, zobrazí se poznámka. */
+  startsAt?: Date | null;
+}) {
   const [cards, setCards] = useState<FuelCard[] | null>(null);
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
 
@@ -37,6 +44,8 @@ export default function ReservationFuelCardWidget({ vehicleId }: { vehicleId: st
     })();
     return () => { cancelled = true; };
   }, [vehicleId]);
+
+  const notStarted = !!startsAt && startsAt.getTime() > Date.now();
 
   const reveal = (id: string) => {
     setRevealed(prev => ({ ...prev, [id]: true }));

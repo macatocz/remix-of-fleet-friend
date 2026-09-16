@@ -117,7 +117,7 @@ export default function DriverDesktopHome() {
               {primary ? (
                 <>
                   <button
-                    onClick={() => navigate(`/vozidla/${primary.id}`)}
+                    onClick={() => navigate(`/ridic/vozidla/${primary.id}`)}
                     className="w-full flex items-center gap-3 text-left rounded-lg p-2 -m-2 hover:bg-accent/50 transition-colors"
                   >
                     <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -153,7 +153,7 @@ export default function DriverDesktopHome() {
             <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
               <CardTitle className="text-base">Nadcházející rezervace</CardTitle>
               <button
-                onClick={() => navigate("/m/rezervace")}
+                onClick={() => navigate("/ridic/rezervace")}
                 className="text-xs text-primary flex items-center gap-0.5"
               >
                 Vše <ChevronRight className="h-3 w-3" />
@@ -165,7 +165,7 @@ export default function DriverDesktopHome() {
               ) : reservations.map((r) => (
                 <button
                   key={r.id}
-                  onClick={() => navigate("/m/rezervace")}
+                  onClick={() => navigate("/ridic/rezervace")}
                   className="w-full flex items-center justify-between py-2 border-b last:border-0 hover:bg-accent/40 -mx-2 px-2 rounded text-left"
                 >
                   <div className="min-w-0">
@@ -204,7 +204,7 @@ export default function DriverDesktopHome() {
         </div>
 
         {/* Moje jízdy */}
-        <Card className="cursor-pointer hover:bg-accent/30 transition-colors" onClick={() => navigate("/m/jizdy")}>
+        <Card className="cursor-pointer hover:bg-accent/30 transition-colors" onClick={() => navigate("/ridic/jizdy")}>
           <CardContent className="p-5 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center">

@@ -26,9 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .from("user_roles")
       .select("role")
       .eq("user_id", userId);
-    if (data) {
-      setRoles(data.map((r) => r.role as AppRole));
-    }
+    setRoles(data ? data.map((r) => r.role as AppRole) : []);
   };
 
   useEffect(() => {
@@ -37,18 +35,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         if (session?.user) {
           // Use setTimeout to avoid Supabase client deadlock
-          setTimeout(() => fetchRoles(session.user.id), 0);
+          setTimeout(async () => {
+            await fetchRoles(session.user.id);
+            setLoading(false);
+          }, 0);
         } else {
           setRoles([]);
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
-        fetchRoles(session.user.id);
+        await fetchRoles(session.user.id);
       }
       setLoading(false);
     });

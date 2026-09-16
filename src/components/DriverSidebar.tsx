@@ -20,10 +20,10 @@ export function DriverSidebar({ primaryVehicleId, primaryVehicleLabel, onInciden
   const items = [
     { title: "Domů", url: "/ridic", icon: Home, end: true },
     ...(primaryVehicleId
-      ? [{ title: primaryVehicleLabel || "Můj vůz", url: `/m/vozidla/${primaryVehicleId}`, icon: Car, end: false }]
+      ? [{ title: primaryVehicleLabel || "Můj vůz", url: `/ridic/vozidla/${primaryVehicleId}`, icon: Car, end: false }]
       : []),
-    { title: "Rezervace", url: "/m/rezervace", icon: CalendarDays, end: false },
-    { title: "Jízdy", url: "/m/jizdy", icon: RouteIcon, end: false },
+    { title: "Rezervace", url: "/ridic/rezervace", icon: CalendarDays, end: false },
+    { title: "Jízdy", url: "/ridic/jizdy", icon: RouteIcon, end: false },
   ];
 
   return (

@@ -6,13 +6,9 @@ import { useDriverContext } from "@/hooks/useDriverContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import {
   Car, ChevronRight, Search, Plus, AlertTriangle, Route as RouteIcon, Clock,
 } from "lucide-react";
-import { NotificationBell } from "@/components/NotificationBell";
-import { DriverSidebar } from "@/components/DriverSidebar";
-import { MobileUserMenu } from "@/components/mobile/MobileUserMenu";
 import FindVehicleSheet from "@/components/mobile/FindVehicleSheet";
 import NewReservationDialog from "@/components/mobile/NewReservationDialog";
 import QuickTripDialog from "@/components/mobile/QuickTripDialog";
@@ -101,28 +97,7 @@ export default function DriverDesktopHome() {
   }
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen bg-background flex w-full">
-        <DriverSidebar
-          primaryVehicleId={primary?.id ?? null}
-          primaryVehicleLabel={primary?.nazev_vozu || primary?.znacka || null}
-          onIncident={() => setIncidentOpen(true)}
-        />
-        <div className="flex-1 flex flex-col min-w-0">
-          <header className="border-b bg-card sticky top-0 z-30">
-            <div className="h-16 flex items-center justify-between px-6">
-              <div className="flex items-center gap-2">
-                <SidebarTrigger />
-                <h1 className="font-semibold text-base">🚗 Vozový park</h1>
-              </div>
-              <div className="flex items-center gap-1">
-                <NotificationBell />
-                <MobileUserMenu />
-              </div>
-            </div>
-          </header>
-
-          <main className="flex-1 px-6 py-8 space-y-8">
+    <div className="space-y-8">
         <div>
           <p className="text-sm text-muted-foreground">Vítejte zpět</p>
           <h2 className="text-3xl font-semibold">{greeting}</h2>
@@ -138,7 +113,7 @@ export default function DriverDesktopHome() {
               {primary ? (
                 <>
                   <button
-                    onClick={() => navigate(`/vozidla/${primary.id}`)}
+                    onClick={() => navigate(`/ridic/vozidla/${primary.id}`)}
                     className="w-full flex items-center gap-3 text-left rounded-lg p-2 -m-2 hover:bg-accent/50 transition-colors"
                   >
                     <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -174,7 +149,7 @@ export default function DriverDesktopHome() {
             <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
               <CardTitle className="text-base">Nadcházející rezervace</CardTitle>
               <button
-                onClick={() => navigate("/m/rezervace")}
+                onClick={() => navigate("/ridic/rezervace")}
                 className="text-xs text-primary flex items-center gap-0.5"
               >
                 Vše <ChevronRight className="h-3 w-3" />
@@ -186,7 +161,7 @@ export default function DriverDesktopHome() {
               ) : reservations.map((r) => (
                 <button
                   key={r.id}
-                  onClick={() => navigate("/m/rezervace")}
+                  onClick={() => navigate("/ridic/rezervace")}
                   className="w-full flex items-center justify-between py-2 border-b last:border-0 hover:bg-accent/40 -mx-2 px-2 rounded text-left"
                 >
                   <div className="min-w-0">
@@ -225,7 +200,7 @@ export default function DriverDesktopHome() {
         </div>
 
         {/* Moje jízdy */}
-        <Card className="cursor-pointer hover:bg-accent/30 transition-colors" onClick={() => navigate("/m/jizdy")}>
+        <Card className="cursor-pointer hover:bg-accent/30 transition-colors" onClick={() => navigate("/ridic/jizdy")}>
           <CardContent className="p-5 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center">
@@ -241,8 +216,6 @@ export default function DriverDesktopHome() {
             <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </CardContent>
         </Card>
-      </main>
-
       <FindVehicleSheet
         open={findOpen}
         onOpenChange={setFindOpen}
@@ -260,10 +233,8 @@ export default function DriverDesktopHome() {
         initialTimeFrom={preset?.timeFrom}
         initialTimeTo={preset?.timeTo}
       />
-          <QuickTripDialog open={tripOpen} onOpenChange={setTripOpen} />
-          <QuickIncidentDialog open={incidentOpen} onOpenChange={setIncidentOpen} />
-        </div>
-      </div>
-    </SidebarProvider>
+      <QuickTripDialog open={tripOpen} onOpenChange={setTripOpen} />
+      <QuickIncidentDialog open={incidentOpen} onOpenChange={setIncidentOpen} />
+    </div>
   );
 }

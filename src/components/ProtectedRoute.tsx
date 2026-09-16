@@ -45,19 +45,35 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to={`/m/vozidla/${mobileVehiclePath[1]}`} replace />;
   }
 
-  // Driver-only: na mobilu mobilní UI, na desktopu jednoduchý řidičský pohled
-  // (kromě detailu vozidla a samotného /ridic)
+  const onDriverRoute = location.pathname === "/ridic" || location.pathname.startsWith("/ridic/");
+
+  // Na telefonu držíme řidiče v mobilním rozhraní
+  if (isMobile && !preferDesktop && onDriverRoute) {
+    const rest = location.pathname.replace(/^\/ridic/, "");
+    return <Navigate to={`/m${rest}`} replace />;
+  }
+
+  // Driver-only: na mobilu mobilní UI, na desktopu řidičský pohled s panelem
+  // (kromě detailu vozidla a řidičských rout)
   if (
     isDriverOnly &&
     !onMobileRoute &&
     !location.pathname.startsWith("/vozidla/") &&
-    location.pathname !== "/ridic"
+    !onDriverRoute
   ) {
     return <Navigate to={isMobile ? "/m" : "/ridic"} replace />;
   }
 
+  // Řidiče na desktopu vracíme z mobilních rout do řidičského rozvržení
+  if (isDriverOnly && !isMobile && onMobileRoute && !preferDesktop) {
+    const rest = location.pathname.replace(/^\/m/, "");
+    if (["", "/rezervace", "/jizdy"].includes(rest) || /^\/vozidla\/[^/]+$/.test(rest)) {
+      return <Navigate to={`/ridic${rest}`} replace />;
+    }
+  }
+
   // /ridic je určen jen čistým řidičům – ostatní přesměrovat na dashboard
-  if (!isDriverOnly && location.pathname === "/ridic") {
+  if (!isDriverOnly && onDriverRoute) {
     return <Navigate to="/" replace />;
   }
 

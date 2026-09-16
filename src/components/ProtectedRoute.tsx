@@ -1,13 +1,14 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobileResolved } from "@/hooks/use-mobile";
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading, roles } = useAuth();
   const location = useLocation();
-  const isMobile = useIsMobile();
+  const resolvedMobile = useIsMobileResolved();
+  const isMobile = !!resolvedMobile;
 
-  if (loading) {
+  if (loading || resolvedMobile === undefined) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />

@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { localDateStr } from "@/lib/utils";
 import { Outlet } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { DriverSidebar } from "@/components/DriverSidebar";
@@ -8,16 +10,45 @@ import QuickIncidentDialog from "@/components/mobile/QuickIncidentDialog";
 import { useDriverContext } from "@/hooks/useDriverContext";
 
 export function DriverLayout() {
-  const { myVehicles } = useDriverContext();
+  const { myVehicles, driver } = useDriverContext();
   const [incidentOpen, setIncidentOpen] = useState(false);
+  const [borrowed, setBorrowed] = useState<any | null>(null);
   const primary = myVehicles[0] as any | undefined;
+
+  useEffect(() => {
+    if (!driver || primary) { setBorrowed(null); return; }
+    const today = localDateStr();
+    (async () => {
+      const { data } = await supabase
+        .from("reservations")
+        .select("vehicle_id")
+        .eq("driver_name", driver.fullName)
+        .eq("status", "schváleno")
+        .lte("date_from", today)
+        .gte("date_to", today)
+        .order("date_from", { ascending: true })
+        .limit(1);
+      const vid = data?.[0]?.vehicle_id;
+      if (!vid) { setBorrowed(null); return; }
+      const { data: v } = await supabase
+        .from("vehicles_basic").select("id, znacka, rz, nazev_vozu").eq("id", vid).maybeSingle();
+      setBorrowed(v || null);
+    })();
+  }, [driver?.id, primary?.id]);
+
+  const sideVehicle = primary || borrowed;
+  const sideLabel = primary
+    ? primary.nazev_vozu || primary.znacka || null
+    : borrowed
+      ? `Vypůjčený: ${borrowed.nazev_vozu || borrowed.znacka || ""} ${borrowed.rz || ""}`.trim()
+      : null;
 
   return (
     <SidebarProvider>
       <div className="min-h-screen bg-background flex w-full">
         <DriverSidebar
-          primaryVehicleId={primary?.id ?? null}
-          primaryVehicleLabel={primary?.nazev_vozu || primary?.znacka || null}
+          primaryVehicleId={sideVehicle?.id ?? null}
+          primaryVehicleLabel={sideLabel}
           onIncident={() => setIncidentOpen(true)}
         />
         <div className="flex-1 flex flex-col min-w-0">

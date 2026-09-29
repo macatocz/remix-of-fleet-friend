@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobileResolved } from "@/hooks/use-mobile";
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { session, loading, roles } = useAuth();
+  const { session, loading, roles, needsRoleChoice } = useAuth();
   const location = useLocation();
   const resolvedMobile = useIsMobileResolved();
   const isMobile = !!resolvedMobile;
@@ -18,6 +18,10 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (!session) {
     return <Navigate to="/prihlaseni" replace />;
+  }
+
+  if (needsRoleChoice) {
+    return <Navigate to="/vyber-role" replace />;
   }
 
   const preferDesktop =

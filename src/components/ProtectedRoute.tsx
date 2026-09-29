@@ -71,7 +71,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   // Řidiče na desktopu vracíme z mobilních rout do řidičského rozvržení
   if (isDriverOnly && !isMobile && onMobileRoute && !preferDesktop) {
     const rest = location.pathname.replace(/^\/m/, "");
-    if (["", "/rezervace", "/jizdy"].includes(rest) || /^\/vozidla\/[^/]+$/.test(rest)) {
+    if (["", "/rezervace", "/jizdy", "/cestovni-prikazy"].includes(rest) || /^\/(vozidla|cestovni-prikazy)\/[^/]+$/.test(rest)) {
       return <Navigate to={`/ridic${rest}`} replace />;
     }
   }

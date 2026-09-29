@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { FileText, Plus, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,7 @@ import { formatCZK } from "@/lib/travel/calc";
 
 export default function MobileTravelOrders() {
   const navigate = useNavigate();
+  const base = useLocation().pathname.startsWith("/ridic") ? "/ridic/cestovni-prikazy" : "/m/cestovni-prikazy";
   const { data, isLoading } = useQuery({
     queryKey: ["travel_orders"],
     queryFn: async () => {
@@ -29,7 +30,7 @@ export default function MobileTravelOrders() {
           <h1 className="font-semibold text-lg">Cestovní příkazy</h1>
           {data && <span className="text-muted-foreground text-sm">({data.length})</span>}
         </div>
-        <Button size="sm" onClick={() => navigate("/m/cestovni-prikazy/novy")}>
+        <Button size="sm" onClick={() => navigate(`${base}/novy`)}>
           <Plus className="h-4 w-4" />Nový
         </Button>
       </div>
@@ -45,7 +46,7 @@ export default function MobileTravelOrders() {
         data?.map((o: any) => (
           <Card
             key={o.id}
-            onClick={() => navigate(`/m/cestovni-prikazy/${o.id}`)}
+            onClick={() => navigate(`${base}/${o.id}`)}
             className="p-3 active:bg-accent cursor-pointer"
           >
             <div className="flex items-start justify-between gap-2">

@@ -92,6 +92,8 @@ const App = () => (
               <Route path="rezervace" element={<MyReservations />} />
               <Route path="jizdy" element={<MyTrips />} />
               <Route path="vozidla/:id" element={<VehicleDetail />} />
+              <Route path="cestovni-prikazy" element={<MobileTravelOrders />} />
+              <Route path="cestovni-prikazy/:id" element={<TravelOrderDetail />} />
             </Route>
             <Route
               path="/m"

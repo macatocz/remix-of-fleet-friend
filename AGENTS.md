@@ -1,0 +1,1 @@
+- Active role (multi-role users) lives in AuthContext; `roles` = [activeRole] for UI, real roles in `availableRoles` — so existing role checks adapt without changes; DB permissions stay on real roles.

@@ -1,4 +1,4 @@
-import { LogOut, User, Monitor, Smartphone } from "lucide-react";
+import { LogOut, User, Monitor, Smartphone, Repeat } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +22,7 @@ function useOptionalSidebarState(): "expanded" | "collapsed" {
 }
 
 export function UserMenu() {
-  const { user, roles, signOut } = useAuth();
+  const { user, roles, availableRoles, activeRole, signOut } = useAuth();
   const state = useOptionalSidebarState();
   const collapsed = state === "collapsed";
   const location = useLocation();
@@ -57,14 +57,29 @@ export function UserMenu() {
             <User className="h-4 w-4 shrink-0" />
             <span className="truncate">{user.email}</span>
           </div>
-          {roles.length > 0 && (
+          {availableRoles.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              {roles.map((r) => (
-                <Badge key={r} variant="secondary" className="text-xs">
+              {availableRoles.map((r) => (
+                <Badge
+                  key={r}
+                  variant={availableRoles.length > 1 && r === activeRole ? "default" : "secondary"}
+                  className="text-xs"
+                >
                   {roleLabels[r] || r}
                 </Badge>
               ))}
             </div>
+          )}
+          {availableRoles.length > 1 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start text-sidebar-foreground"
+              onClick={() => navigate("/vyber-role")}
+            >
+              <Repeat className="mr-2 h-4 w-4" />
+              Přepnout roli
+            </Button>
           )}
           {showToggle && (
             <Button

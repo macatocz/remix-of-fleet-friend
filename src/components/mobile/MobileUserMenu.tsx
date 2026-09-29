@@ -1,4 +1,4 @@
-import { LogOut, User as UserIcon, Monitor } from "lucide-react";
+import { LogOut, User as UserIcon, Monitor, Repeat } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +19,7 @@ const roleLabels: Record<string, string> = {
 };
 
 export function MobileUserMenu() {
-  const { user, roles, signOut } = useAuth();
+  const { user, roles, availableRoles, activeRole, signOut } = useAuth();
   const navigate = useNavigate();
 
   if (!user) return null;
@@ -55,10 +55,14 @@ export function MobileUserMenu() {
             <UserIcon className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium truncate">{user.email}</p>
-              {roles.length > 0 && (
+              {availableRoles.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-1.5">
-                  {roles.map((r) => (
-                    <Badge key={r} variant="secondary" className="text-[10px] py-0">
+                  {availableRoles.map((r) => (
+                    <Badge
+                      key={r}
+                      variant={availableRoles.length > 1 && r === activeRole ? "default" : "secondary"}
+                      className="text-[10px] py-0"
+                    >
                       {roleLabels[r] || r}
                     </Badge>
                   ))}
@@ -68,6 +72,12 @@ export function MobileUserMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {availableRoles.length > 1 && (
+          <DropdownMenuItem onClick={() => navigate("/vyber-role")} className="py-3">
+            <Repeat className="mr-2 h-4 w-4" />
+            Přepnout roli
+          </DropdownMenuItem>
+        )}
         {!isDriverOnly && (
           <DropdownMenuItem onClick={switchToDesktop} className="py-3">
             <Monitor className="mr-2 h-4 w-4" />

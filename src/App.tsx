@@ -40,6 +40,7 @@ import MyTrips from "@/pages/mobile/MyTrips";
 import DriverDesktopHome from "@/pages/DriverDesktopHome";
 import { DriverLayout } from "@/components/DriverLayout";
 import NotFound from "@/pages/NotFound";
+import RoleSelect from "@/pages/RoleSelect";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="/prihlaseni" element={<Login />} />
             <Route path="/nastaveni-hesla" element={<SetPassword />} />
             <Route path="/instalace" element={<InstallGuide />} />
+            <Route path="/vyber-role" element={<RoleSelect />} />
             <Route path="/m/instalace" element={<InstallGuide />} />
             <Route
               element={

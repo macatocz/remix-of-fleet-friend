@@ -36,7 +36,7 @@ export default function TravelOrderDetail() {
   const isNew = !id || id === "novy";
   const navigate = useNavigate();
   const location = useLocation();
-  const base = location.pathname.startsWith("/m/") ? "/m/cestovni-prikazy" : "/cestovni-prikazy";
+  const base = location.pathname.startsWith("/m/") ? "/m/cestovni-prikazy" : location.pathname.startsWith("/ridic/") ? "/ridic/cestovni-prikazy" : "/cestovni-prikazy";
   const qc = useQueryClient();
   const { toast } = useToast();
   const { data: companyOv } = useCompanySettings();

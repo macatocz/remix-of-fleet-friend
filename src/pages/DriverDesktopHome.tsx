@@ -16,6 +16,7 @@ import QuickIncidentDialog from "@/components/mobile/QuickIncidentDialog";
 import ReservationFuelCardWidget from "@/components/mobile/ReservationFuelCardWidget";
 import VehicleParkingWidget from "@/components/mobile/VehicleParkingWidget";
 import { localDateStr } from "@/lib/utils";
+import { NowBanner, VehicleDeadlinesCard, TravelOrdersCard } from "@/components/driver/DriverHomeWidgets";
 import { reservationEnd, reservationStart } from "@/lib/reservationRules";
 
 interface Res {
@@ -102,6 +103,8 @@ export default function DriverDesktopHome() {
           <p className="text-sm text-muted-foreground">Vítejte zpět</p>
           <h2 className="text-3xl font-semibold">{greeting}</h2>
         </div>
+
+        <NowBanner reservations={reservations as any} onTrip={() => setTripOpen(true)} />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Můj vůz */}
@@ -197,6 +200,11 @@ export default function DriverDesktopHome() {
           <Button variant="outline" className="h-16 text-base" onClick={() => setTripOpen(true)}>
             <RouteIcon className="h-5 w-5 mr-2" /> Zapsat jízdu
           </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {primary && <VehicleDeadlinesCard vehicleId={primary.id} />}
+          {driver && <TravelOrdersCard driverId={driver.id} />}
         </div>
 
         {/* Moje jízdy */}

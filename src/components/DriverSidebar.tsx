@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Car, Home, CalendarDays, Route as RouteIcon, AlertTriangle } from "lucide-react";
+import { Car, Home, CalendarDays, Route as RouteIcon, AlertTriangle, FileText } from "lucide-react";
+import { UserMenu } from "@/components/UserMenu";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
-  SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar,
+  SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar, SidebarFooter,
 } from "@/components/ui/sidebar";
 
 interface DriverSidebarProps {
@@ -24,6 +25,7 @@ export function DriverSidebar({ primaryVehicleId, primaryVehicleLabel, onInciden
       : []),
     { title: "Rezervace", url: "/ridic/rezervace", icon: CalendarDays, end: false },
     { title: "Jízdy", url: "/ridic/jizdy", icon: RouteIcon, end: false },
+    { title: "Cestovní příkazy", url: "/ridic/cestovni-prikazy", icon: FileText, end: false },
   ];
 
   return (
@@ -86,6 +88,9 @@ export function DriverSidebar({ primaryVehicleId, primaryVehicleLabel, onInciden
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter>
+        <UserMenu />
+      </SidebarFooter>
     </Sidebar>
   );
 }

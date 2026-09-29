@@ -87,6 +87,7 @@ export default function DriverDesktopHome() {
 
   const currentReservation = reservations.find(
     (r) => r.status === "schváleno" && reservationEnd(r.date_to, r.time_to) > new Date()
+      && r.date_from <= localDateStr()
   );
 
   if (loading) {

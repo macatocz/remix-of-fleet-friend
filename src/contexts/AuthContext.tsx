@@ -45,6 +45,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        if (session?.user) {
+          // Po přihlášení znovu zakryj chráněné routy, dokud neznáme role.
+          // Jinak se mezi navigací z Login a dokončením fetchRoles krátce
+          // vykreslí celé rozhraní aplikace.
+          setLoading(true);
+        }
         setSession(session);
         if (session?.user) {
           setTimeout(async () => {

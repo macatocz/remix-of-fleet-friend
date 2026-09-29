@@ -110,7 +110,9 @@ export default function DriverDesktopHome() {
           {/* Můj vůz */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Můj vůz</CardTitle>
+              <CardTitle className="text-base">
+                {primary ? "Můj vůz" : currentReservation ? "Vypůjčený vůz" : "Můj vůz"}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {primary ? (
@@ -130,10 +132,33 @@ export default function DriverDesktopHome() {
                   </button>
                   <VehicleParkingWidget vehicleId={primary.id} />
                 </>
+              ) : currentReservation ? (
+                <button
+                  onClick={() => navigate(`/ridic/vozidla/${currentReservation.vehicle_id}`)}
+                  className="w-full flex items-center gap-3 text-left rounded-lg p-2 -m-2 hover:bg-accent/50 transition-colors"
+                >
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <Car className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold truncate">
+                      {currentReservation.vehicle?.nazev_vozu || currentReservation.vehicle?.znacka || "—"}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {currentReservation.vehicle?.rz || "—"} · do {currentReservation.date_to} {currentReservation.time_to?.slice(0, 5) || ""}
+                    </p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+                </button>
               ) : (
-                <p className="text-sm text-muted-foreground py-2">
-                  Nemáte přiřazené vlastní vozidlo.
-                </p>
+                <div className="py-2 space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Momentálně nemáte rezervované žádné vozidlo.
+                  </p>
+                  <Button onClick={() => setFindOpen(true)}>
+                    <Search className="h-4 w-4 mr-2" /> Najít a zarezervovat vůz z POOLu
+                  </Button>
+                </div>
               )}
               {currentReservation && (
                 <div className="space-y-4 pt-1">

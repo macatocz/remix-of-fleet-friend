@@ -181,14 +181,15 @@ export function computeLeasingMileage(
     projectedOverrun = projectedEndKm - (startKm + totalContractKm);
   }
 
+  // Percentage = driven km vs. plan to date. 100 % = exactly on plan, below = saving km.
   let status: LeasingMileageResult["status"] = "no-data";
   if (percentageUsed === null) {
     status = "no-data";
-  } else if (percentageUsed > 95) {
+  } else if (percentageUsed > 115) {
     status = "critical";
-  } else if (percentageUsed >= 80) {
+  } else if (percentageUsed > 105) {
     status = "warning";
-  } else if (percentageUsed >= 70) {
+  } else if (percentageUsed > 100) {
     status = "watch";
   } else {
     status = "ok";
@@ -224,10 +225,10 @@ export function statusColor(status: LeasingMileageResult["status"]): string {
 
 export function statusText(status: LeasingMileageResult["status"]): string {
   switch (status) {
-    case "ok": return "V pořádku";
-    case "watch": return "Sledovat";
-    case "warning": return "Varování";
-    case "critical": return "Překročeno";
+    case "ok": return "V pořádku – pod plánem";
+    case "watch": return "Mírně nad plánem";
+    case "warning": return "Varování – nad plánem";
+    case "critical": return "Riziko překročení";
     default: return "Bez dat";
   }
 }

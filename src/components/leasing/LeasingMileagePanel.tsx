@@ -173,14 +173,9 @@ export default function LeasingMileagePanel({ vehicleId, vehicle }: Props) {
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex-1 min-w-[200px]">
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-muted-foreground">Čerpání</span>
+                  <span className="text-muted-foreground">Čerpání plánu k dnešku</span>
                   <span className="font-medium">
-                    {result.percentageUsed !== null ? `${result.percentageUsed}%` : "—"}
-                    {" "}
-                    <span className="text-xs text-muted-foreground">
-                      ({result.currentKm !== null ? result.currentKm.toLocaleString("cs-CZ") : "—"} km
-                      {result.currentKmAt ? ` k ${format(parseISO(result.currentKmAt), "d.M.yyyy", { locale: cs })}` : ""})
-                    </span>
+                    {result.percentageUsed !== null ? `${result.percentageUsed} %` : "—"}
                   </span>
                 </div>
                 <div className="h-3 w-full rounded-full bg-muted overflow-hidden">
@@ -190,8 +185,8 @@ export default function LeasingMileagePanel({ vehicleId, vehicle }: Props) {
                   />
                 </div>
                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>0 km</span>
-                  <span>{result.totalContractKm?.toLocaleString("cs-CZ") ?? "—"} km</span>
+                  <span>0 %</span>
+                  <span>100 % = přesně podle plánu</span>
                 </div>
               </div>
 
@@ -202,35 +197,53 @@ export default function LeasingMileagePanel({ vehicleId, vehicle }: Props) {
                   {result.differenceKm !== null && (
                     <div className={cn("text-xs", result.differenceKm > 0 ? "text-destructive" : "text-success")}>
                       {result.differenceKm > 0 ? "+" : ""}
-                      {result.differenceKm.toLocaleString("cs-CZ")} km oproti plánu
+                      {result.differenceKm.toLocaleString("cs-CZ")} km vůči plánu k dnešku
                     </div>
                   )}
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-              <div className="rounded-lg border p-3">
-                <div className="text-muted-foreground text-xs">Smluvní nájezd</div>
-                <div className="font-medium">{result.totalContractKm?.toLocaleString("cs-CZ") ?? "—"} km</div>
-              </div>
-              <div className="rounded-lg border p-3">
-                <div className="text-muted-foreground text-xs">Plán k dnešku</div>
-                <div className="font-medium">{result.expectedKmNow?.toLocaleString("cs-CZ") ?? "—"} km</div>
-              </div>
-              <div className="rounded-lg border p-3">
-                <div className="text-muted-foreground text-xs">Ujeto od začátku</div>
-                <div className="font-medium">
-                  {result.currentKm !== null && result.startKm !== null
-                    ? (result.currentKm - result.startKm).toLocaleString("cs-CZ")
-                    : "—"} km
+            {(() => {
+              const fmt = (n: number | null | undefined) => (n === null || n === undefined ? "—" : `${n.toLocaleString("cs-CZ")} km`);
+              const driven = result.currentKm !== null && result.startKm !== null ? result.currentKm - result.startKm : null;
+              const maxOdo = result.startKm !== null && result.totalContractKm !== null ? result.startKm + result.totalContractKm : null;
+              const planOdo = result.startKm !== null && result.expectedKmNow !== null ? result.startKm + result.expectedKmNow : null;
+              const remaining = maxOdo !== null && result.currentKm !== null ? maxOdo - result.currentKm : null;
+              const Tile = ({ label, value, hint }: { label: string; value: string; hint?: string }) => (
+                <div className="rounded-lg border p-3">
+                  <div className="text-muted-foreground text-xs">{label}</div>
+                  <div className="font-medium">{value}</div>
+                  {hint && <div className="text-[11px] text-muted-foreground mt-0.5">{hint}</div>}
                 </div>
-              </div>
-              <div className="rounded-lg border p-3">
-                <div className="text-muted-foreground text-xs">Průměr/měsíc</div>
-                <div className="font-medium">{result.monthlyAverage?.toLocaleString("cs-CZ") ?? "—"} km</div>
-              </div>
-            </div>
+              );
+              return (
+                <div className="space-y-3">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">Stav tachometru</div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                      <Tile label="Počáteční stav (převzetí)" value={fmt(result.startKm)} />
+                      <Tile
+                        label="Aktuální stav"
+                        value={fmt(result.currentKm)}
+                        hint={result.currentKmAt ? `k ${format(parseISO(result.currentKmAt), "d.M.yyyy", { locale: cs })}` : undefined}
+                      />
+                      <Tile label="Plánovaný stav k dnešku" value={fmt(planOdo)} />
+                      <Tile label="Max. stav při vrácení" value={fmt(maxOdo)} hint="počáteční + smluvní limit" />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">Kilometry v rámci leasingu</div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                      <Tile label="Ujeto v leasingu" value={fmt(driven)} hint="aktuální − počáteční stav" />
+                      <Tile label="Smluvní limit celkem" value={fmt(result.totalContractKm)} />
+                      <Tile label="Zbývá do limitu" value={fmt(remaining)} />
+                      <Tile label="Průměr za měsíc" value={fmt(result.monthlyAverage)} />
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
             {result.projectedEndKm !== null && (
               <div className={cn(

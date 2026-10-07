@@ -41,6 +41,13 @@ function parseDate(val: string | null): Date | null {
   }
 }
 
+// Lease end date is inclusive (22.12.2020–21.12.2026 = 72 months).
+function contractMonths(from: Date, to: Date): number {
+  const end = new Date(to.getTime());
+  end.setDate(end.getDate() + 1);
+  return differenceInMonths(end, from);
+}
+
 export function isLeasingVehicle(input: LeasingMileageInput): boolean {
   return input.typ_vlastnictvi === "operativni_leasing" || input.typ_vlastnictvi === "financni_leasing";
 }
@@ -50,7 +57,7 @@ export function computeTotalContractKm(input: LeasingMileageInput): number | nul
   const from = parseDate(input.datum_zahajeni_leasingu);
   const to = parseDate(input.datum_ukonceni_leasingu);
   if (!najezdRocni || !from || !to) return null;
-  const months = (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth()) + 1;
+  const months = contractMonths(from, to);
   if (months <= 0) return null;
   return Math.round((najezdRocni * months) / 12);
 }
@@ -153,7 +160,7 @@ export function computeLeasingMileage(
     };
   }
 
-  const totalMonths = Math.max(1, (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth()) + 1);
+  const totalMonths = Math.max(1, contractMonths(from, to));
   const elapsedDays = Math.max(0, differenceInDays(referenceDate, from));
   const totalDays = Math.max(1, differenceInDays(to, from));
   const elapsedMonths = elapsedDays / 30.44;
@@ -181,14 +188,15 @@ export function computeLeasingMileage(
     projectedOverrun = projectedEndKm - (startKm + totalContractKm);
   }
 
+  // Percentage = driven km vs. plan to date. 100 % = exactly on plan, below = saving km.
   let status: LeasingMileageResult["status"] = "no-data";
   if (percentageUsed === null) {
     status = "no-data";
-  } else if (percentageUsed > 95) {
+  } else if (percentageUsed > 115) {
     status = "critical";
-  } else if (percentageUsed >= 80) {
+  } else if (percentageUsed > 105) {
     status = "warning";
-  } else if (percentageUsed >= 70) {
+  } else if (percentageUsed > 100) {
     status = "watch";
   } else {
     status = "ok";
@@ -224,10 +232,10 @@ export function statusColor(status: LeasingMileageResult["status"]): string {
 
 export function statusText(status: LeasingMileageResult["status"]): string {
   switch (status) {
-    case "ok": return "V pořádku";
-    case "watch": return "Sledovat";
-    case "warning": return "Varování";
-    case "critical": return "Překročeno";
+    case "ok": return "V pořádku – pod plánem";
+    case "watch": return "Mírně nad plánem";
+    case "warning": return "Varování – nad plánem";
+    case "critical": return "Riziko překročení";
     default: return "Bez dat";
   }
 }

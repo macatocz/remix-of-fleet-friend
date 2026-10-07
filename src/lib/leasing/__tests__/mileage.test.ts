@@ -107,7 +107,7 @@ describe("computeLeasingMileage", () => {
     expect(result.percentageUsed).toBeGreaterThan(95);
   });
 
-  it("marks ok when under 70%", () => {
+  it("marks ok when under plan", () => {
     const ref = new Date("2025-01-01");
     const current = { km: 25000, recordedAt: "2025-01-01" }; // 15k driven -> 50%
     const result = computeLeasingMileage(baseInput, current, ref);

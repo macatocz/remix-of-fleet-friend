@@ -321,7 +321,7 @@ export default function Dashboard() {
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Notifikace</h2>
           <div className="h-px flex-1 bg-border" />
         </div>
-        <VehicleNotifications />
+        <VehicleNotifications excludeDashboardMonitoring />
       </section>
 
       {/* ---------- Termíny, leasing a rezervace ---------- */}

@@ -57,7 +57,7 @@ function formatDate(d: Date): string {
   return d.toISOString().split("T")[0];
 }
 
-export default function VehicleNotifications() {
+export default function VehicleNotifications({ excludeDashboardMonitoring = false }: { excludeDashboardMonitoring?: boolean }) {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [mileageRecords, setMileageRecords] = useState<MileageSource[]>([]);
   const [tripLogs, setTripLogs] = useState<TripLogMileage[]>([]);
@@ -90,7 +90,7 @@ export default function VehicleNotifications() {
 
       // STK check
       const stkDate = parseDateString(v.stk);
-      if (stkDate) {
+      if (stkDate && !excludeDashboardMonitoring) {
         const days = daysDiff(stkDate);
         if (days <= 180) {
           result.push({
@@ -125,7 +125,7 @@ export default function VehicleNotifications() {
       }
 
       // Leasing
-      if (v.typ_vlastnictvi && v.typ_vlastnictvi !== "majetek") {
+      if (!excludeDashboardMonitoring && v.typ_vlastnictvi && v.typ_vlastnictvi !== "majetek") {
         const lDate = parseDateString(v.datum_ukonceni_leasingu);
         if (lDate) {
           const days = daysDiff(lDate);
@@ -145,7 +145,7 @@ export default function VehicleNotifications() {
       }
 
       // Mileage check for leasing vehicles
-      if (v.typ_vlastnictvi && v.typ_vlastnictvi !== "majetek") {
+      if (!excludeDashboardMonitoring && v.typ_vlastnictvi && v.typ_vlastnictvi !== "majetek") {
         const input: LeasingMileageInput = {
           typ_vlastnictvi: v.typ_vlastnictvi ?? null,
           najezd_za_rok: v.najezd_za_rok ?? null,
@@ -173,7 +173,7 @@ export default function VehicleNotifications() {
     }
 
     return result.sort((a, b) => a.daysLeft - b.daysLeft);
-  }, [vehicles, mileageRecords, tripLogs]);
+  }, [excludeDashboardMonitoring, vehicles, mileageRecords, tripLogs]);
 
   const critical = alerts.filter(a => a.type === "critical");
   const warning = alerts.filter(a => a.type === "warning");

@@ -1,1 +1,2 @@
 - Active role (multi-role users) lives in AuthContext; `roles` = [activeRole] for UI, real roles in `availableRoles` — so existing role checks adapt without changes; DB permissions stay on real roles.
+- Fleet monitoring aggregates stay in the dashboard presentation layer and reuse `src/lib/leasing/mileage.ts` — this keeps summary cards, charts, and vehicle detail calculations consistent.

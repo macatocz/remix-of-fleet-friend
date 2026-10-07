@@ -17,6 +17,7 @@ import ChartCard from "@/components/dashboard/ChartCard";
 import ChartTooltip from "@/components/dashboard/ChartTooltip";
 import EmptyState from "@/components/dashboard/EmptyState";
 import DeadlinesCard, { DeadlineGroup } from "@/components/dashboard/DeadlinesCard";
+import FleetHealthSummary, { MonitoringFocus } from "@/components/dashboard/FleetHealthSummary";
 import DashboardFilters, { PeriodKey, PERIODS } from "@/components/dashboard/DashboardFilters";
 import { CHART_COLORS, axisProps, gridProps, formatCzk } from "@/components/dashboard/chartTheme";
 
@@ -52,6 +53,7 @@ export default function Dashboard() {
   const [period, setPeriod] = useState<PeriodKey>("6");
   const [vehicleFilter, setVehicleFilter] = useState("all");
   const [driverFilter, setDriverFilter] = useState("all");
+  const [monitoringFocus, setMonitoringFocus] = useState<MonitoringFocus>(null);
   const periodTitle = PERIODS.find((p) => p.key === period)?.title || "";
   const months = period === "all" ? 0 : Number(period);
 
@@ -319,7 +321,7 @@ export default function Dashboard() {
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Notifikace</h2>
           <div className="h-px flex-1 bg-border" />
         </div>
-        <VehicleNotifications />
+        <VehicleNotifications excludeDashboardMonitoring />
       </section>
 
       {/* ---------- Termíny, leasing a rezervace ---------- */}
@@ -329,10 +331,14 @@ export default function Dashboard() {
           <div className="h-px flex-1 bg-border" />
         </div>
 
-        <div className="grid grid-cols-1 items-start gap-3 md:grid-cols-2 lg:grid-cols-3">
-          <DeadlinesCard groups={deadlineGroups} />
-          <LeasingMileageWidget />
-          <PendingReservationsWidget />
+        <div className="flex flex-col gap-3">
+          <FleetHealthSummary deadlineGroups={deadlineGroups} focus={monitoringFocus} onFocusChange={setMonitoringFocus} />
+
+          <div className="order-2 grid grid-cols-1 items-stretch gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <DeadlinesCard groups={deadlineGroups} focus={monitoringFocus} />
+            <LeasingMileageWidget focus={monitoringFocus} />
+            <PendingReservationsWidget />
+          </div>
         </div>
       </section>
 

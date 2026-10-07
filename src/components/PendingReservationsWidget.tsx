@@ -79,10 +79,10 @@ export default function PendingReservationsWidget() {
   };
 
   return (
-    <Card>
-      <CardHeader className="border-b border-border/60 bg-muted/30 px-4 py-2.5">
+    <Card className="h-full overflow-hidden shadow-card">
+      <CardHeader className="border-b border-border/60 px-4 py-3">
         <CardTitle className="text-sm flex items-center gap-2">
-          <CalendarDays className="h-4 w-4" />
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10"><CalendarDays className="h-4 w-4 text-primary" /></span>
           Čekající rezervace
           {rows.length > 0 && <Badge variant="secondary" className="text-[10px]">{rows.length}</Badge>}
         </CardTitle>
@@ -91,11 +91,11 @@ export default function PendingReservationsWidget() {
         {loading ? (
           <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
         ) : rows.length === 0 ? (
-          <div className="text-xs text-muted-foreground py-2 text-center">Žádné čekající rezervace.</div>
+          <div className="py-6 text-center"><p className="text-xs font-medium">Žádné nové žádosti</p><p className="mt-1 text-[11px] text-muted-foreground">Všechny rezervace jsou vyřízené.</p></div>
         ) : (
           <div className="space-y-1.5">
             {rows.map((r) => (
-              <div key={r.id} className="flex items-center justify-between gap-2 p-1.5 border rounded-md">
+              <div key={r.id} className="rounded-lg border bg-muted/30 p-2.5">
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-medium truncate">
                     {r.vehicles?.znacka || "—"} ({r.vehicles?.rz || "—"}) • {r.driver_name}
@@ -107,7 +107,7 @@ export default function PendingReservationsWidget() {
                     {r.purpose && ` • ${r.purpose}`}
                   </div>
                 </div>
-                <div className="flex shrink-0 gap-1">
+                <div className="mt-2 flex shrink-0 gap-1">
                   <Button size="sm" variant="outline" className="h-6 px-2 text-[11px]" onClick={() => update(r.id, "schváleno")}>Schválit</Button>
                   <Button size="sm" variant="outline" className="h-6 px-2 text-[11px] text-destructive" onClick={() => update(r.id, "zamítnuto")}>Zamítnout</Button>
                 </div>

@@ -1,8 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarClock } from "lucide-react";
+import { CalendarClock, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { useMemo, useState } from "react";
+import type { MonitoringFocus } from "@/components/dashboard/FleetHealthSummary";
 
 export interface DeadlineItem {
   id: string;
@@ -33,67 +35,72 @@ const STRIPE: Record<string, string> = {
   info: "bg-info",
 };
 
-export default function DeadlinesCard({ groups }: { groups: DeadlineGroup[] }) {
+export default function DeadlinesCard({ groups, focus }: { groups: DeadlineGroup[]; focus?: MonitoringFocus }) {
   const total = groups.reduce((s, g) => s + g.items.length, 0);
-  const first = groups[0]?.key ?? "";
+  const [groupKey, setGroupKey] = useState("all");
+  const items = useMemo(() => groups
+    .filter((group) => groupKey === "all" || group.key === groupKey)
+    .flatMap((group) => group.items.map((item) => ({ ...item, groupLabel: group.label })))
+    .filter((item) => {
+      if (focus === "overdue") return item.overdue || (item.days !== null && item.days < 0);
+      if (focus === "soon") return !item.overdue && item.days !== null && item.days >= 0 && item.days <= 30;
+      return true;
+    })
+    .sort((a, b) => {
+      const aValue = a.overdue ? -10000 : a.days ?? 9999;
+      const bValue = b.overdue ? -10000 : b.days ?? 9999;
+      return aValue - bValue;
+    }), [focus, groupKey, groups]);
+  const critical = groups.flatMap((group) => group.items).filter((item) => item.overdue || (item.days !== null && item.days <= 30)).length;
 
   return (
-    <Card className="shadow-card">
-      <CardHeader className="border-b border-border/60 bg-muted/30 px-4 py-2.5">
-        <CardTitle className="flex items-center gap-2 text-sm">
-          <CalendarClock className="h-4 w-4 text-warning" />
-          Blížící se termíny
-          {total > 0 && <Badge variant="secondary" className="text-[10px]">{total}</Badge>}
+    <Card className="h-full overflow-hidden shadow-card">
+      <CardHeader className="border-b border-border/60 px-4 py-3">
+        <CardTitle className="flex items-center justify-between gap-2 text-sm">
+          <span className="flex min-w-0 items-center gap-2">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-warning/10">
+              <CalendarClock className="h-4 w-4 text-warning" />
+            </span>
+            <span className="truncate">Blížící se termíny</span>
+          </span>
+          {critical > 0 && <Badge variant="destructive" className="shrink-0 text-[10px]">{critical} kritické</Badge>}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-3">
-        <Tabs defaultValue={first}>
-          <TabsList className="mb-2 flex h-auto w-full flex-wrap justify-start gap-1 p-0.5">
-            {groups.map((g) => (
-              <TabsTrigger key={g.key} value={g.key} className="gap-1 px-2 py-1 text-[11px]">
-                {g.label}
-                <span className="rounded-full bg-muted px-1.5 text-[10px] font-semibold tabular-nums">
-                  {g.items.length}
-                </span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          {groups.map((g) => (
-            <TabsContent key={g.key} value={g.key} className="mt-0">
-              {g.items.length === 0 ? (
-                <p className="py-4 text-center text-xs text-muted-foreground">{g.emptyText}</p>
-              ) : (
-                <div className="max-h-[220px] space-y-1 overflow-y-auto pr-1">
-                  {g.items.map((item) => {
-                    const u = urgency(item);
-                    return (
-                      <div
-                        key={item.id}
-                        onClick={item.onClick}
-                        className={cn(
-                          "relative flex items-center justify-between gap-2 overflow-hidden rounded-md bg-muted/40 py-1.5 pl-3 pr-2 transition-colors",
-                          item.onClick && "cursor-pointer hover:bg-muted"
-                        )}
-                      >
-                        <span className={cn("absolute inset-y-0 left-0 w-1", STRIPE[u])} />
-                        <div className="flex min-w-0 items-center gap-2">
-                          <span className="truncate text-xs font-medium">{item.label}</span>
-                          {item.tag && <Badge variant="outline" className="shrink-0 text-[10px]">{item.tag}</Badge>}
-                        </div>
-                        <Badge
-                          variant={u === "destructive" ? "destructive" : "secondary"}
-                          className="shrink-0 text-[10px] tabular-nums"
-                        >
-                          {item.badge}
-                        </Badge>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </TabsContent>
+        <div className="mb-3 flex flex-wrap gap-1">
+          <Button variant={groupKey === "all" ? "secondary" : "ghost"} size="sm" className="h-7 shrink-0 px-2 text-[11px]" onClick={() => setGroupKey("all")}>
+            <SlidersHorizontal className="mr-1 h-3 w-3" /> Vše {total}
+          </Button>
+          {groups.map((group) => (
+            <Button key={group.key} variant={groupKey === group.key ? "secondary" : "ghost"} size="sm" className="h-7 shrink-0 px-2 text-[11px]" onClick={() => setGroupKey(group.key)}>
+              {group.label} {group.items.length}
+            </Button>
           ))}
-        </Tabs>
+        </div>
+        {items.length === 0 ? (
+          <p className="py-8 text-center text-xs text-muted-foreground">Žádné termíny v tomto výběru</p>
+        ) : (
+          <div className="max-h-[248px] space-y-1 overflow-y-auto pr-1">
+            {items.map((item) => {
+              const u = urgency(item);
+              return (
+                <div key={`${item.groupLabel}-${item.id}`} onClick={item.onClick} className={cn("flex items-center gap-3 rounded-lg px-2 py-2 transition-colors", item.onClick && "cursor-pointer hover:bg-muted/60")}>
+                  <span className={cn(
+                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[11px] font-bold tabular-nums",
+                    u === "destructive" && "bg-destructive/10 text-destructive",
+                    u === "warning" && "bg-warning/10 text-warning",
+                    u === "info" && "bg-muted text-muted-foreground",
+                  )}>{item.badge}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-xs font-semibold">{item.label}</span>
+                    <span className="block truncate text-[11px] text-muted-foreground">{item.groupLabel}{item.tag ? ` · ${item.tag}` : ""}</span>
+                  </span>
+                  <span className={cn("h-2 w-2 shrink-0 rounded-full", STRIPE[u])} />
+                </div>
+              );
+            })}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

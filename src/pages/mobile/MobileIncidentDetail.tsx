@@ -14,7 +14,9 @@ import {
   ChevronRight,
   MapPin,
   ReceiptText,
+  User,
 } from "lucide-react";
+import { reporterName } from "@/components/incidents/ReporterSelect";
 
 interface Incident {
   id: string;
@@ -24,6 +26,7 @@ interface Incident {
   description: string | null;
   estimated_cost: number | null;
   status: string;
+  drivers?: { first_name: string; last_name: string } | null;
   vehicles?: {
     znacka: string | null;
     rz: string | null;
@@ -57,7 +60,7 @@ export default function MobileIncidentDetail() {
 
       const { data, error: fetchError } = await supabase
         .from("incidents")
-        .select("*, vehicles(znacka, rz, nazev_vozu)")
+        .select("*, vehicles(znacka, rz, nazev_vozu), drivers(first_name, last_name)")
         .eq("id", id)
         .maybeSingle();
 
@@ -170,6 +173,13 @@ export default function MobileIncidentDetail() {
             <div className="mt-0.5 text-sm font-medium">
               {new Date(incident.date).toLocaleDateString("cs-CZ")}
             </div>
+          </div>
+        </div>
+        <div className="flex items-start gap-3 p-4">
+          <User className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+          <div className="min-w-0">
+            <div className="text-xs text-muted-foreground">Nahlásil</div>
+            <div className="mt-0.5 text-sm font-medium break-words">{reporterName(incident.drivers)}</div>
           </div>
         </div>
         <div className="flex items-start gap-3 p-4">

@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { AlertTriangle, Loader2, Search, Plus, ChevronRight, MapPin, CalendarDays } from "lucide-react";
 import { vehicleLabel } from "@/lib/vehicleName";
+import ReporterSelect, { reporterName } from "@/components/incidents/ReporterSelect";
 import { localDateStr } from "@/lib/utils";
 
 interface Row {
@@ -27,6 +28,7 @@ interface Row {
   description: string | null;
   estimated_cost: number | null;
   status: string;
+  drivers?: { first_name: string; last_name: string } | null;
   vehicles?: { znacka: string | null; rz: string | null; nazev_vozu?: string | null };
 }
 
@@ -52,13 +54,14 @@ export default function MobileIncidents() {
     description: "",
     estimated_cost: "",
     status: "nahlaseno",
+    driver_id: "",
   };
   const [form, setForm] = useState(emptyForm);
 
   const fetchRows = async () => {
     const { data } = await supabase
       .from("incidents")
-      .select("*, vehicles(znacka, rz, nazev_vozu)")
+      .select("*, vehicles(znacka, rz, nazev_vozu), drivers(first_name, last_name)")
       .order("date", { ascending: false });
     setRows((data || []) as any);
     setLoading(false);
@@ -87,6 +90,7 @@ export default function MobileIncidents() {
       description: form.description || null,
       estimated_cost: form.estimated_cost ? Number(form.estimated_cost) : null,
       status: form.status,
+      driver_id: form.driver_id || null,
     });
     setSaving(false);
     if (error) { toast.error("Chyba: " + error.message); return; }
@@ -104,7 +108,8 @@ export default function MobileIncidents() {
         !(r.location || "").toLowerCase().includes(s) &&
         !(r.description || "").toLowerCase().includes(s) &&
         !(`${r.vehicles?.nazev_vozu || ""} ${r.vehicles?.znacka || ""}`).toLowerCase().includes(s) &&
-        !(r.vehicles?.rz || "").toLowerCase().includes(s)
+        !(r.vehicles?.rz || "").toLowerCase().includes(s) &&
+        !(r.drivers ? reporterName(r.drivers) : "").toLowerCase().includes(s)
       )
         return false;
     }
@@ -184,6 +189,7 @@ export default function MobileIncidents() {
                         <CalendarDays className="h-3.5 w-3.5" />
                         {new Date(r.date).toLocaleDateString("cs-CZ")}
                       </span>
+                      <span>Nahlásil: {reporterName(r.drivers)}</span>
                       {r.location && (
                         <span className="inline-flex items-center gap-1 min-w-0">
                           <MapPin className="h-3.5 w-3.5 shrink-0" />
@@ -237,6 +243,7 @@ export default function MobileIncidents() {
               <Label>Odhad nákladů (Kč)</Label>
               <Input type="number" inputMode="numeric" value={form.estimated_cost} onChange={(e) => setForm((p) => ({ ...p, estimated_cost: e.target.value }))} />
             </div>
+            <ReporterSelect value={form.driver_id} onChange={(v) => setForm((p) => ({ ...p, driver_id: v }))} />
             <div>
               <Label>Místo</Label>
               <Input value={form.location} onChange={(e) => setForm((p) => ({ ...p, location: e.target.value }))} placeholder="Praha, parkoviště…" />

@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { AlertTriangle, Loader2, Search, Plus } from "lucide-react";
 import { vehicleLabel } from "@/lib/vehicleName";
+import ReporterSelect, { reporterName, useActiveDrivers } from "@/components/incidents/ReporterSelect";
 
 interface Row {
   id: string;
@@ -28,6 +29,8 @@ interface Row {
   description: string | null;
   estimated_cost: number | null;
   status: string;
+  driver_id?: string | null;
+  drivers?: { first_name: string; last_name: string } | null;
   vehicles?: { znacka: string | null; rz: string | null; nazev_vozu?: string | null };
 }
 
@@ -42,6 +45,8 @@ export default function Incidents() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [driverFilter, setDriverFilter] = useState("all");
+  const drivers = useActiveDrivers();
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -52,13 +57,14 @@ export default function Incidents() {
     description: "",
     estimated_cost: "",
     status: "nahlaseno",
+    driver_id: "",
   };
   const [form, setForm] = useState(emptyForm);
 
   const fetchRows = async () => {
     const { data } = await supabase
       .from("incidents")
-      .select("*, vehicles(znacka, rz, nazev_vozu)")
+      .select("*, vehicles(znacka, rz, nazev_vozu), drivers(first_name, last_name)")
       .order("date", { ascending: false });
     setRows((data || []) as any);
     setLoading(false);
@@ -87,6 +93,7 @@ export default function Incidents() {
       description: form.description || null,
       estimated_cost: form.estimated_cost ? Number(form.estimated_cost) : null,
       status: form.status,
+      driver_id: form.driver_id || null,
     });
     setSaving(false);
     if (error) { toast.error("Chyba: " + error.message); return; }
@@ -98,13 +105,16 @@ export default function Incidents() {
 
   const filtered = rows.filter((r) => {
     if (statusFilter !== "all" && r.status !== statusFilter) return false;
+    if (driverFilter === "none" && r.driver_id) return false;
+    if (driverFilter !== "all" && driverFilter !== "none" && r.driver_id !== driverFilter) return false;
     if (search) {
       const s = search.toLowerCase();
       if (
         !(r.location || "").toLowerCase().includes(s) &&
         !(r.description || "").toLowerCase().includes(s) &&
         !(`${r.vehicles?.nazev_vozu || ""} ${r.vehicles?.znacka || ""}`).toLowerCase().includes(s) &&
-        !(r.vehicles?.rz || "").toLowerCase().includes(s)
+        !(r.vehicles?.rz || "").toLowerCase().includes(s) &&
+        !(r.drivers ? reporterName(r.drivers) : "").toLowerCase().includes(s)
       )
         return false;
     }
@@ -160,6 +170,7 @@ export default function Incidents() {
                 <Input type="number" value={form.estimated_cost} onChange={(e) => setForm((p) => ({ ...p, estimated_cost: e.target.value }))} />
               </div>
             </div>
+            <ReporterSelect value={form.driver_id} onChange={(v) => setForm((p) => ({ ...p, driver_id: v }))} />
             <div>
               <Label>Místo</Label>
               <Input value={form.location} onChange={(e) => setForm((p) => ({ ...p, location: e.target.value }))} placeholder="Praha, parkoviště…" />
@@ -224,6 +235,16 @@ export default function Incidents() {
                 <SelectItem value="uzavreno">Uzavřeno</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={driverFilter} onValueChange={setDriverFilter}>
+              <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Všichni řidiči</SelectItem>
+                <SelectItem value="none">Neuvedeno</SelectItem>
+                {drivers.map((d) => (
+                  <SelectItem key={d.id} value={d.id}>{reporterName(d)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
         <CardContent>
@@ -237,6 +258,7 @@ export default function Incidents() {
                 <TableRow>
                   <TableHead>Datum</TableHead>
                   <TableHead>Vozidlo</TableHead>
+                  <TableHead>Nahlásil</TableHead>
                   <TableHead>Místo</TableHead>
                   <TableHead>Popis</TableHead>
                   <TableHead>Odhad (Kč)</TableHead>
@@ -251,6 +273,7 @@ export default function Incidents() {
                     <TableRow key={r.id}>
                       <TableCell>{new Date(r.date).toLocaleDateString("cs-CZ")}</TableCell>
                       <TableCell className="font-medium">{vehicleLabel(r.vehicles)}</TableCell>
+                      <TableCell>{reporterName(r.drivers)}</TableCell>
                       <TableCell>{r.location || "—"}</TableCell>
                       <TableCell className="max-w-xs truncate">{r.description || "—"}</TableCell>
                       <TableCell>{r.estimated_cost ? Number(r.estimated_cost).toLocaleString("cs-CZ") : "—"}</TableCell>

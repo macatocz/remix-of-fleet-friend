@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Gauge, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
+import { Gauge, ArrowRight, ChevronDown, ChevronUp, DatabaseZap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   computeLeasingMileage,
@@ -13,10 +13,11 @@ import {
   MileageSource,
   TripLogMileage,
 } from "@/lib/leasing/mileage";
+import type { MonitoringFocus } from "@/components/dashboard/FleetHealthSummary";
 
 const PREVIEW_COUNT = 5;
 
-export default function LeasingMileageWidget() {
+export default function LeasingMileageWidget({ focus }: { focus?: MonitoringFocus }) {
   const navigate = useNavigate();
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [records, setRecords] = useState<MileageSource[]>([]);
@@ -74,17 +75,22 @@ export default function LeasingMileageWidget() {
       .sort((a, b) => b.percentage - a.percentage);
   }, [vehicles, records, tripLogs]);
 
-  const visibleRows = expanded ? rows : rows.slice(0, PREVIEW_COUNT);
-  const hasMore = rows.length > PREVIEW_COUNT;
+  const filteredRows = rows.filter((row) => {
+    if (focus === "risk") return row.result.status === "warning" || row.result.status === "critical";
+    if (focus === "missing") return row.result.status === "no-data";
+    return true;
+  });
+  const visibleRows = expanded ? filteredRows : filteredRows.slice(0, PREVIEW_COUNT);
+  const hasMore = filteredRows.length > PREVIEW_COUNT;
 
 
   return (
-    <Card>
-      <CardHeader className="border-b border-border/60 bg-muted/30 px-4 py-2.5">
+    <Card className="h-full overflow-hidden shadow-card">
+      <CardHeader className="border-b border-border/60 px-4 py-3">
         <CardTitle className="text-sm flex items-center justify-between gap-2">
           <span className="flex items-center gap-2">
-            <Gauge className="h-4 w-4" />
-            Čerpání nájezdu leasingových vozů
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-info/10"><Gauge className="h-4 w-4 text-info" /></span>
+            Čerpání nájezdu leasingu
           </span>
           {!loading && rows.length > 0 && (
             <span className="text-[10px] font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
@@ -96,24 +102,24 @@ export default function LeasingMileageWidget() {
       <CardContent className="p-3">
         {loading ? (
           <div className="text-sm text-muted-foreground">Načítání…</div>
-        ) : rows.length === 0 ? (
+        ) : filteredRows.length === 0 ? (
           <div className="text-sm text-muted-foreground">Žádná aktivní leasingová vozidla s údaji o nájezdu.</div>
         ) : (
           <div className="space-y-1.5">
             {visibleRows.map((row) => (
               <div
                 key={row.id}
-                className="group cursor-pointer rounded-md border p-2 hover:bg-muted/50 transition-colors"
+                className="group cursor-pointer rounded-lg px-2 py-2.5 hover:bg-muted/50 transition-colors"
                 onClick={() => navigate(`/vozidla/${row.id}`)}
               >
                 <div className="flex items-center justify-between text-xs mb-1">
                   <span className="font-medium truncate">{row.label}</span>
-                  <span className="text-[11px] text-muted-foreground flex items-center gap-1 tabular-nums">
-                    {row.percentage}%
+                  <span className={cn("text-[11px] flex items-center gap-1 tabular-nums", row.result.status === "critical" ? "font-bold text-destructive" : row.result.status === "warning" ? "font-semibold text-warning" : "text-muted-foreground")}>
+                    {row.result.status === "no-data" ? <DatabaseZap className="h-3 w-3" /> : `${row.percentage}% plánu`}
                     <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </span>
                 </div>
-                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                 <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
                   <div
                     className={cn("h-full transition-all", statusColor(row.result.status))}
                     style={{ width: `${Math.min(100, row.percentage)}%` }}
@@ -129,7 +135,11 @@ export default function LeasingMileageWidget() {
                       </span>
                     )}
                   </span>
-                  <span>{row.result.totalContractKm?.toLocaleString("cs-CZ") ?? "—"} km</span>
+                   <span>
+                     {row.result.projectedOverrun !== null
+                       ? `${row.result.projectedOverrun > 0 ? "+" : ""}${row.result.projectedOverrun.toLocaleString("cs-CZ")} km odhad`
+                       : `limit ${row.result.totalContractKm?.toLocaleString("cs-CZ") ?? "—"} km`}
+                   </span>
                 </div>
               </div>
             ))}
@@ -148,7 +158,7 @@ export default function LeasingMileageWidget() {
                 ) : (
                   <>
                     <ChevronDown className="h-3.5 w-3.5 mr-1" />
-                    Zobrazit vše ({rows.length})
+                     Zobrazit vše ({filteredRows.length})
                   </>
                 )}
               </Button>

@@ -67,7 +67,7 @@ export default function DeadlinesCard({ groups, focus }: { groups: DeadlineGroup
         </CardTitle>
       </CardHeader>
       <CardContent className="p-3">
-        <div className="mb-3 flex gap-1 overflow-x-auto pb-1">
+        <div className="mb-3 flex flex-wrap gap-1">
           <Button variant={groupKey === "all" ? "secondary" : "ghost"} size="sm" className="h-7 shrink-0 px-2 text-[11px]" onClick={() => setGroupKey("all")}>
             <SlidersHorizontal className="mr-1 h-3 w-3" /> Vše {total}
           </Button>

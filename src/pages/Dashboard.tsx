@@ -331,12 +331,14 @@ export default function Dashboard() {
           <div className="h-px flex-1 bg-border" />
         </div>
 
-        <FleetHealthSummary deadlineGroups={deadlineGroups} focus={monitoringFocus} onFocusChange={setMonitoringFocus} />
+        <div className="flex flex-col gap-3">
+          <FleetHealthSummary deadlineGroups={deadlineGroups} focus={monitoringFocus} onFocusChange={setMonitoringFocus} />
 
-        <div className="grid grid-cols-1 items-stretch gap-3 md:grid-cols-2 xl:grid-cols-3">
-          <DeadlinesCard groups={deadlineGroups} focus={monitoringFocus} />
-          <LeasingMileageWidget focus={monitoringFocus} />
-          <PendingReservationsWidget />
+          <div className="order-2 grid grid-cols-1 items-stretch gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <DeadlinesCard groups={deadlineGroups} focus={monitoringFocus} />
+            <LeasingMileageWidget focus={monitoringFocus} />
+            <PendingReservationsWidget />
+          </div>
         </div>
       </section>
 

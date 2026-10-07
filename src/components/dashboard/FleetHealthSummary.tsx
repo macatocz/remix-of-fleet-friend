@@ -4,6 +4,7 @@ import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer,
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import ChartTooltip from "@/components/dashboard/ChartTooltip";
 import { axisProps, gridProps } from "@/components/dashboard/chartTheme";
 import type { DeadlineGroup } from "@/components/dashboard/DeadlinesCard";
@@ -91,19 +92,20 @@ export default function FleetHealthSummary({ deadlineGroups, focus, onFocusChang
   ];
 
   return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="contents">
+      <div className="order-1 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {metrics.map((metric) => {
           const Icon = metric.icon;
           const active = focus === metric.key;
           return (
-            <button
+            <Button
               key={metric.key}
               type="button"
+              variant="outline"
               aria-pressed={active}
               onClick={() => onFocusChange(active ? null : metric.key)}
               className={cn(
-                "flex min-h-16 items-center gap-3 rounded-lg border bg-card px-3 py-2 text-left shadow-card transition-colors hover:bg-muted/40",
+                "h-auto min-h-16 justify-start gap-3 bg-card px-3 py-2 text-left font-normal shadow-card hover:bg-muted/40",
                 active && "border-primary ring-1 ring-primary/20",
               )}
             >
@@ -114,12 +116,12 @@ export default function FleetHealthSummary({ deadlineGroups, focus, onFocusChang
                 <span className={cn("block text-xl font-bold tabular-nums", metric.tone)}>{metric.value}</span>
                 <span className="block truncate text-xs text-muted-foreground">{metric.label}</span>
               </span>
-            </button>
+            </Button>
           );
         })}
       </div>
 
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+      <div className="order-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
         <Card className="shadow-card">
           <CardHeader className="border-b border-border/60 px-4 py-3">
             <CardTitle className="text-sm">Termíny v následujících měsících</CardTitle>

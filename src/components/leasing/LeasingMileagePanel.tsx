@@ -256,7 +256,7 @@ export default function LeasingMileagePanel({ vehicleId, vehicle }: Props) {
                   <Info className="h-4 w-4 text-success shrink-0 mt-0.5" />
                 )}
                 <div className="text-sm">
-                  <span className="font-medium">Odhad ke konci leasingu:</span>{" "}
+                  <span className="font-medium">Odhad stavu tachometru při vrácení:</span>{" "}
                   {result.projectedEndKm.toLocaleString("cs-CZ")} km
                   {result.projectedOverrun !== null && result.projectedOverrun !== 0 && (
                     <span className={result.projectedOverrun > 0 ? "text-destructive" : "text-success"}>

@@ -13,6 +13,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import ReporterSelect, { reporterName } from "@/components/incidents/ReporterSelect";
 import { Plus, Loader2, Trash2, X, AlertTriangle } from "lucide-react";
 
 interface Props {
@@ -26,6 +27,7 @@ interface Incident {
   description: string | null;
   estimated_cost: number | null;
   status: string;
+  drivers?: { first_name: string; last_name: string } | null;
 }
 
 interface Photo {
@@ -55,13 +57,14 @@ export default function VehicleIncidents({ vehicleId }: Props) {
     description: "",
     estimated_cost: "",
     status: "nahlaseno",
+    driver_id: "",
   });
 
   const fetchData = async () => {
     setLoading(true);
     const { data: list } = await supabase
       .from("incidents")
-      .select("*")
+      .select("*, drivers(first_name, last_name)")
       .eq("vehicle_id", vehicleId)
       .order("date", { ascending: false });
 
@@ -96,6 +99,7 @@ export default function VehicleIncidents({ vehicleId }: Props) {
       description: "",
       estimated_cost: "",
       status: "nahlaseno",
+      driver_id: "",
     });
     setPendingFiles([]);
   };
@@ -112,6 +116,7 @@ export default function VehicleIncidents({ vehicleId }: Props) {
           description: form.description || null,
           estimated_cost: form.estimated_cost ? parseFloat(form.estimated_cost) : 0,
           status: form.status,
+          driver_id: form.driver_id || null,
         })
         .select()
         .single();
@@ -189,6 +194,7 @@ export default function VehicleIncidents({ vehicleId }: Props) {
                     </SelectContent>
                   </Select>
                 </div>
+                <ReporterSelect className="col-span-2" value={form.driver_id} onChange={(v) => setForm({ ...form, driver_id: v })} />
                 <div className="col-span-2">
                   <Label>Místo</Label>
                   <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="např. Parkoviště Praha 5" />
@@ -249,6 +255,7 @@ export default function VehicleIncidents({ vehicleId }: Props) {
                         {new Date(it.date).toLocaleDateString("cs-CZ")}
                       </CardTitle>
                       <div className="text-sm text-muted-foreground mt-1">{it.location || "—"}</div>
+                      <div className="text-xs text-muted-foreground">Nahlásil: {reporterName(it.drivers)}</div>
                     </div>
                     <div className="flex gap-1">
                       <Select value={it.status} onValueChange={(v) => updateStatus(it.id, v)}>

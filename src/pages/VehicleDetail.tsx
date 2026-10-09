@@ -419,7 +419,7 @@ function FieldRow({ field, vehicle, editing, editData, onEdit }: {
   );
 }
 
-function LeasingProgress({ vehicle }: { vehicle: any }) {
+function LeasingProgress({ vehicle, mileageRecords }: { vehicle: any; mileageRecords?: { vehicle_id: string; km: number; recorded_at: string }[] }) {
   const from = vehicle.datum_zahajeni_leasingu;
   const to = vehicle.datum_ukonceni_leasingu;
   if (!isValidDateStr(from) || !isValidDateStr(to)) return null;
@@ -435,7 +435,12 @@ function LeasingProgress({ vehicle }: { vehicle: any }) {
 
   const najezd = parseFloat(String(vehicle.najezd_za_rok ?? "").replace(/\s/g, "").replace(",", ".").replace(/[^\d.-]/g, ""));
   const totalKm = najezd ? Math.round(najezd * totalMonths / 12) : 0;
-  const planKm = totalKm ? Math.round(totalKm * elapsed / totalMonths) : 0;
+  const startKm = parseFloat(String(vehicle.vychozi_stav_tachometru ?? "").replace(/\s/g, "").replace(",", ".").replace(/[^\d.-]/g, "")) || 0;
+  const latest = (mileageRecords ?? [])
+    .filter((m) => m.vehicle_id === vehicle.id)
+    .sort((a, b) => b.recorded_at.localeCompare(a.recorded_at))[0];
+  const drivenKm = latest ? Math.max(0, latest.km - startKm) : null;
+  const leftKm = drivenKm !== null ? totalKm - drivenKm : null;
 
   return (
     <div className="space-y-3 rounded-lg bg-muted/40 p-3">
@@ -446,10 +451,9 @@ function LeasingProgress({ vehicle }: { vehicle: any }) {
       />
       {totalKm > 0 && (
         <MiniProgress
-          label="Časový plán nájezdu (k dnešku)"
-          valueText={`${planKm.toLocaleString("cs-CZ")} / ${totalKm.toLocaleString("cs-CZ")} km`}
-          percent={(planKm / totalKm) * 100}
-          tone="muted"
+          label={leftKm !== null ? `Skutečně ujeto v leasingu (zbývá ${leftKm.toLocaleString("cs-CZ")} km)` : "Skutečně ujeto v leasingu"}
+          valueText={drivenKm !== null ? `${drivenKm.toLocaleString("cs-CZ")} / ${totalKm.toLocaleString("cs-CZ")} km` : `— / ${totalKm.toLocaleString("cs-CZ")} km`}
+          percent={drivenKm !== null ? (drivenKm / totalKm) * 100 : 0}
         />
       )}
     </div>
@@ -574,11 +578,14 @@ export default function VehicleDetail() {
 
   useEffect(() => {
     if (!id) return;
-    supabase.from("trip_logs").select("vehicle_id, km_end, date")
-      .eq("vehicle_id", id).not("km_end", "is", null).order("date", { ascending: false })
-      .then(({ data }) => setMileageRecords(
-        ((data as any[]) || []).map(r => ({ vehicle_id: id, km: r.km_end, recorded_at: r.date, source: "trip_log" as const }))
-      ));
+    Promise.all([
+      supabase.from("trip_logs").select("vehicle_id, km_end, date")
+        .eq("vehicle_id", id).not("km_end", "is", null).order("date", { ascending: false }),
+      supabase.from("vehicle_mileage").select("km, recorded_at").eq("vehicle_id", id),
+    ]).then(([trips, manual]) => setMileageRecords([
+      ...((trips.data as any[]) || []).map(r => ({ vehicle_id: id, km: r.km_end, recorded_at: r.date, source: "trip_log" as const })),
+      ...((manual.data as any[]) || []).map(r => ({ vehicle_id: id, km: r.km, recorded_at: r.recorded_at, source: "vehicle_mileage" as const })),
+    ].sort((a, b) => b.recorded_at.localeCompare(a.recorded_at))));
   }, [id]);
 
   const startEditing = () => {
@@ -818,7 +825,7 @@ export default function VehicleDetail() {
               <EditableCard
                 title="Leasing"
                 icon={<FileSignature className="h-4 w-4" />}
-                header={<div className="mb-3"><LeasingProgress vehicle={vehicle} /></div>}
+                header={<div className="mb-3"><LeasingProgress vehicle={vehicle} mileageRecords={mileageRecords} /></div>}
                 fields={LEASING_FIELDS} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit}
               />
             )}

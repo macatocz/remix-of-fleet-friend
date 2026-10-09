@@ -8,6 +8,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import QuickTripDialog from "@/components/mobile/QuickTripDialog";
 import QuickIncidentDialog from "@/components/mobile/QuickIncidentDialog";
+import FuelReceiptDialog from "@/components/fuel/FuelReceiptDialog";
+import { Fuel } from "lucide-react";
 import SpravceCalendarStrip from "@/components/mobile/SpravceCalendarStrip";
 import VehicleParkingWidget from "@/components/mobile/VehicleParkingWidget";
 import { toast } from "sonner";
@@ -175,6 +177,11 @@ export default function MyVehicle() {
               <AlertTriangle className="h-4 w-4 mr-2 text-destructive" /> Hlásit škodu
             </Button>
           </div>
+          <div className="px-3 pb-2">
+            <Button className="w-full h-11" onClick={() => setFuelFor(v.id)}>
+              <Fuel className="h-4 w-4 mr-2" /> Tankování
+            </Button>
+          </div>
           <div className="px-3 pb-3">
             <Button
               variant="ghost"
@@ -189,6 +196,7 @@ export default function MyVehicle() {
 
       <QuickTripDialog open={tripOpen} onOpenChange={setTripOpen} />
       <QuickIncidentDialog open={incidentOpen} onOpenChange={setIncidentOpen} />
+      <FuelReceiptDialog open={!!fuelFor} onOpenChange={(o) => !o && setFuelFor(null)} vehicleId={fuelFor ?? undefined} />
 
       <Drawer open={!!calendarFor} onOpenChange={(o) => !o && setCalendarFor(null)}>
         <DrawerContent className="max-h-[92vh]">

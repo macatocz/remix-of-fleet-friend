@@ -8,6 +8,7 @@ import { useDriverContext } from "@/hooks/useDriverContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Camera, MapPin, X, Loader2, WifiOff } from "lucide-react";
+import { compressImage } from "@/lib/compressImage";
 
 export const RECEIPT_FOLDER = "Účtenky – tankování";
 const MAX_PHOTOS = 4;
@@ -134,8 +135,9 @@ export default function FuelReceiptDialog({ open, onOpenChange, vehicleId: prese
   };
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[92vh] md:mx-auto md:max-w-lg">
+    <Drawer open={open} onOpenChange={onOpenChange} dismissible={false}>
+      <DrawerContent className="max-h-[92vh] md:mx-auto md:max-w-lg"
+        onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
         <DrawerHeader><DrawerTitle>Tankování</DrawerTitle></DrawerHeader>
         <div className="px-4 space-y-4 overflow-y-auto">
           <div className="space-y-1.5">
@@ -166,8 +168,14 @@ export default function FuelReceiptDialog({ open, onOpenChange, vehicleId: prese
           </div>
           <div className="space-y-1.5">
             <Label>Účtenka *</Label>
-            <input id="fuel-receipt-input" type="file" accept="image/*" capture="environment" multiple className="hidden"
-              onChange={(e) => { if (e.target.files) setPhotos([...photos, ...Array.from(e.target.files)].slice(0, MAX_PHOTOS)); e.target.value = ""; }} />
+            <input id="fuel-receipt-input" type="file" accept="image/*" className="hidden"
+              onChange={async (e) => {
+                const files = e.target.files ? Array.from(e.target.files) : [];
+                e.target.value = "";
+                if (!files.length) return;
+                const small = await Promise.all(files.map((f) => compressImage(f)));
+                setPhotos((prev) => [...prev, ...small].slice(0, MAX_PHOTOS));
+              }} />
             <div className="flex flex-wrap gap-2">
               {photos.map((f, i) => (
                 <div key={i} className="relative h-20 w-20 overflow-hidden rounded-lg border bg-muted">

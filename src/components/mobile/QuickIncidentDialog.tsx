@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { insertOrQueue } from "@/lib/offline/tripQueue";
 import { WifiOff, Camera, X } from "lucide-react";
 import { localDateStr } from "@/lib/utils";
+import { compressImage } from "@/lib/compressImage";
 
 const MAX_PHOTOS = 5;
 
@@ -97,15 +98,10 @@ export default function QuickIncidentDialog({ open, onOpenChange }: Props) {
     setPhotos([]);
   };
 
-  const addPhotos = (files: FileList | null) => {
-    if (!files) return;
-    const next = [...photos, ...Array.from(files)].slice(0, MAX_PHOTOS);
-    setPhotos(next);
-  };
-
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[92vh]">
+    <Drawer open={open} onOpenChange={onOpenChange} dismissible={false}>
+      <DrawerContent className="max-h-[92vh]"
+        onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
         <DrawerHeader>
           <DrawerTitle>Nahlásit škodu</DrawerTitle>
         </DrawerHeader>
@@ -141,10 +137,14 @@ export default function QuickIncidentDialog({ open, onOpenChange }: Props) {
               id="incident-photos-input"
               type="file"
               accept="image/*"
-              capture="environment"
-              multiple
               className="hidden"
-              onChange={(e) => { addPhotos(e.target.files); e.target.value = ""; }}
+              onChange={async (e) => {
+                const files = e.target.files ? Array.from(e.target.files) : [];
+                e.target.value = "";
+                if (!files.length) return;
+                const small = await Promise.all(files.map((f) => compressImage(f)));
+                setPhotos((prev) => [...prev, ...small].slice(0, MAX_PHOTOS));
+              }}
             />
             <div className="flex flex-wrap gap-2">
               {photos.map((f, i) => (

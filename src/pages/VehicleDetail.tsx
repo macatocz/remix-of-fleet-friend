@@ -425,12 +425,15 @@ function LeasingProgress({ vehicle }: { vehicle: any }) {
   if (!isValidDateStr(from) || !isValidDateStr(to)) return null;
   const start = parseISO(from);
   const end = parseISO(to);
-  const totalMonths = differenceInMonths(end, start);
+  // Lease end date is inclusive (same rule as src/lib/leasing/mileage.ts).
+  const endInclusive = new Date(end.getTime());
+  endInclusive.setDate(endInclusive.getDate() + 1);
+  const totalMonths = differenceInMonths(endInclusive, start);
   if (totalMonths <= 0) return null;
   const elapsed = Math.max(0, Math.min(totalMonths, differenceInMonths(new Date(), start)));
   const remaining = totalMonths - elapsed;
 
-  const najezd = parseFloat(String(vehicle.najezd_za_rok ?? "").replace(/[^\d.,-]/g, "").replace(",", "."));
+  const najezd = parseFloat(String(vehicle.najezd_za_rok ?? "").replace(/\s/g, "").replace(",", ".").replace(/[^\d.-]/g, ""));
   const totalKm = najezd ? Math.round(najezd * totalMonths / 12) : 0;
   const planKm = totalKm ? Math.round(totalKm * elapsed / totalMonths) : 0;
 
@@ -443,7 +446,7 @@ function LeasingProgress({ vehicle }: { vehicle: any }) {
       />
       {totalKm > 0 && (
         <MiniProgress
-          label="Plánovaný nájezd"
+          label="Časový plán nájezdu (k dnešku)"
           valueText={`${planKm.toLocaleString("cs-CZ")} / ${totalKm.toLocaleString("cs-CZ")} km`}
           percent={(planKm / totalKm) * 100}
           tone="muted"

@@ -29,6 +29,13 @@ function urgency(item: DeadlineItem) {
   return "info";
 }
 
+// How close the deadline is, as a percentage of a 90-day window.
+function deadlinePercent(item: DeadlineItem) {
+  if (item.days === null) return 0;
+  if (item.days <= 0) return 100;
+  return Math.min(100, Math.round((1 - item.days / 90) * 100));
+}
+
 const STRIPE: Record<string, string> = {
   destructive: "bg-destructive",
   warning: "bg-warning",
@@ -94,6 +101,12 @@ export default function DeadlinesCard({ groups, focus }: { groups: DeadlineGroup
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-xs font-semibold">{item.label}</span>
                     <span className="block truncate text-[11px] text-muted-foreground">{item.groupLabel}{item.tag ? ` · ${item.tag}` : ""}</span>
+                    <span className="mt-1 block h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <span
+                        className={cn("block h-full transition-all", STRIPE[u])}
+                        style={{ width: `${deadlinePercent(item)}%` }}
+                      />
+                    </span>
                   </span>
                   <span className={cn("h-2 w-2 shrink-0 rounded-full", STRIPE[u])} />
                 </div>

@@ -12,6 +12,7 @@ import { compressImage } from "@/lib/compressImage";
 
 export const RECEIPT_FOLDER = "Účtenky – tankování";
 const MAX_PHOTOS = 4;
+const DRAFT_KEY = "fuel-draft";
 
 interface Props {
   open: boolean;
@@ -40,13 +41,39 @@ export default function FuelReceiptDialog({ open, onOpenChange, vehicleId: prese
 
   useEffect(() => {
     if (!open) return;
-    setWhen(localDT());
-    setVehicleId(presetId || vehicles[0]?.id || "");
+    let d: any = null;
+    try { d = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || "null"); } catch {}
+    if (d) {
+      setWhen(d.when || localDT()); setVehicleId(d.vehicleId || presetId || vehicles[0]?.id || "");
+      setLocation(d.location || ""); setCoords(d.coords || null);
+      setLiters(d.liters || ""); setPrice(d.price || ""); setKm(d.km || "");
+    } else {
+      setWhen(localDT());
+      setVehicleId(presetId || vehicles[0]?.id || "");
+    }
   }, [open, presetId, vehicles.length]);
 
+  useEffect(() => {
+    if (!open) return;
+    try {
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ vehicleId, when, location, coords, liters, price, km }));
+    } catch {}
+  }, [open, vehicleId, when, location, coords, liters, price, km]);
+
   const reset = () => {
+    try { sessionStorage.removeItem(DRAFT_KEY); } catch {}
     setLocation(""); setCoords(null); setLiters(""); setPrice(""); setKm(""); setPhotos([]);
   };
+
+  const onPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    e.target.value = "";
+    if (!files.length) return;
+    const small = await Promise.all(files.map((f) => compressImage(f)));
+    setPhotos((prev) => [...prev, ...small].slice(0, MAX_PHOTOS));
+  };
+
+  const cancel = () => { reset(); onOpenChange(false); };
 
   const locate = () => {
     if (!navigator.geolocation) { toast.error("Zařízení nepodporuje zjištění polohy"); return; }

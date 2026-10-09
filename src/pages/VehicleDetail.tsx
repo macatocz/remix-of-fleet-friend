@@ -435,7 +435,12 @@ function LeasingProgress({ vehicle }: { vehicle: any }) {
 
   const najezd = parseFloat(String(vehicle.najezd_za_rok ?? "").replace(/\s/g, "").replace(",", ".").replace(/[^\d.-]/g, ""));
   const totalKm = najezd ? Math.round(najezd * totalMonths / 12) : 0;
-  const planKm = totalKm ? Math.round(totalKm * elapsed / totalMonths) : 0;
+  const startKm = parseFloat(String(vehicle.vychozi_stav_tachometru ?? "").replace(/\s/g, "").replace(",", ".").replace(/[^\d.-]/g, "")) || 0;
+  const latest = (mileageRecords ?? [])
+    .filter((m) => m.vehicle_id === vehicle.id)
+    .sort((a, b) => b.recorded_at.localeCompare(a.recorded_at))[0];
+  const drivenKm = latest ? Math.max(0, latest.km - startKm) : null;
+  const leftKm = drivenKm !== null ? totalKm - drivenKm : null;
 
   return (
     <div className="space-y-3 rounded-lg bg-muted/40 p-3">
@@ -446,10 +451,9 @@ function LeasingProgress({ vehicle }: { vehicle: any }) {
       />
       {totalKm > 0 && (
         <MiniProgress
-          label="Časový plán nájezdu (k dnešku)"
-          valueText={`${planKm.toLocaleString("cs-CZ")} / ${totalKm.toLocaleString("cs-CZ")} km`}
-          percent={(planKm / totalKm) * 100}
-          tone="muted"
+          label={leftKm !== null ? `Skutečně ujeto v leasingu (zbývá ${leftKm.toLocaleString("cs-CZ")} km)` : "Skutečně ujeto v leasingu"}
+          valueText={drivenKm !== null ? `${drivenKm.toLocaleString("cs-CZ")} / ${totalKm.toLocaleString("cs-CZ")} km` : `— / ${totalKm.toLocaleString("cs-CZ")} km`}
+          percent={drivenKm !== null ? (drivenKm / totalKm) * 100 : 0}
         />
       )}
     </div>

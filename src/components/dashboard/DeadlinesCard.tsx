@@ -13,6 +13,9 @@ export interface DeadlineItem {
   days: number | null;
   badge: string;
   overdue?: boolean;
+  // Full duration of the term (start -> end) in days, when known.
+  // The progress bar is then proportional to the whole term, not a 90-day window.
+  totalDays?: number | null;
   onClick?: () => void;
 }
 
@@ -29,10 +32,14 @@ function urgency(item: DeadlineItem) {
   return "info";
 }
 
-// How close the deadline is, as a percentage of a 90-day window.
+// Progress within the term: proportional to the total duration when known,
+// otherwise relative to a 90-day window.
 function deadlinePercent(item: DeadlineItem) {
   if (item.days === null) return 0;
   if (item.days <= 0) return 100;
+  if (item.totalDays && item.totalDays > 0) {
+    return Math.min(100, Math.max(0, Math.round((1 - item.days / item.totalDays) * 100)));
+  }
   return Math.min(100, Math.round((1 - item.days / 90) * 100));
 }
 

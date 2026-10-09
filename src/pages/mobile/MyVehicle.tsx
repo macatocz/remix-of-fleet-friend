@@ -37,6 +37,7 @@ export default function MyVehicle() {
   const [tripOpen, setTripOpen] = useState(false);
   const [incidentOpen, setIncidentOpen] = useState(false);
   const [calendarFor, setCalendarFor] = useState<string | null>(null);
+  const [fuelFor, setFuelFor] = useState<string | null>(null);
   const [resByVehicle, setResByVehicle] = useState<Record<string, MiniRes[]>>({});
   const [reloadKey, setReloadKey] = useState(0);
 

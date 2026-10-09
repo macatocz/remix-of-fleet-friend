@@ -908,10 +908,16 @@ export default function VehicleDetail() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="fuelcards" className="mt-6 max-w-full overflow-x-auto">
+        <TabsContent value="fuelcards" className="mt-6 max-w-full space-y-6 overflow-x-auto">
           <Card>
             <CardContent className="pt-6">
               <VehicleFuelCards vehicleId={vehicle.id} defaultOwner={vehicle.spravce} />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6 space-y-3">
+              <h3 className="text-sm font-semibold">Tankování a účtenky</h3>
+              <VehicleFuelRecords vehicleId={vehicle.id} />
             </CardContent>
           </Card>
         </TabsContent>

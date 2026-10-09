@@ -13,6 +13,8 @@ import FindVehicleSheet from "@/components/mobile/FindVehicleSheet";
 import NewReservationDialog from "@/components/mobile/NewReservationDialog";
 import QuickTripDialog from "@/components/mobile/QuickTripDialog";
 import QuickIncidentDialog from "@/components/mobile/QuickIncidentDialog";
+import FuelReceiptDialog from "@/components/fuel/FuelReceiptDialog";
+import { Fuel } from "lucide-react";
 import ReservationFuelCardWidget from "@/components/mobile/ReservationFuelCardWidget";
 import VehicleParkingWidget from "@/components/mobile/VehicleParkingWidget";
 import { localDateStr } from "@/lib/utils";
@@ -41,6 +43,7 @@ export default function DriverDesktopHome() {
   const [newResOpen, setNewResOpen] = useState(false);
   const [tripOpen, setTripOpen] = useState(false);
   const [incidentOpen, setIncidentOpen] = useState(false);
+  const [fuelOpen, setFuelOpen] = useState(false);
   const [preset, setPreset] = useState<{
     vehicleId: string; dateFrom: string; dateTo: string; timeFrom: string; timeTo: string;
   } | null>(null);
@@ -226,6 +229,9 @@ export default function DriverDesktopHome() {
           <Button variant="outline" className="h-16 text-base" onClick={() => setTripOpen(true)}>
             <RouteIcon className="h-5 w-5 mr-2" /> Zapsat jízdu
           </Button>
+          <Button variant="outline" className="h-16 text-base" onClick={() => setFuelOpen(true)}>
+            <Fuel className="h-5 w-5 mr-2 text-primary" /> Tankování
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -269,6 +275,7 @@ export default function DriverDesktopHome() {
       />
       <QuickTripDialog open={tripOpen} onOpenChange={setTripOpen} />
       <QuickIncidentDialog open={incidentOpen} onOpenChange={setIncidentOpen} />
+      <FuelReceiptDialog open={fuelOpen} onOpenChange={setFuelOpen} vehicleId={primary?.id} />
     </div>
   );
 }

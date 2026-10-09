@@ -34,11 +34,14 @@ export function DriverSidebar({ primaryVehicleId, primaryVehicleLabel, onInciden
       <SidebarContent>
         <div className="p-4">
           {!collapsed && (
-            <h1 className="text-lg font-bold text-sidebar-foreground">🚗 Vozový park</h1>
+            <h1 className="text-lg font-bold text-sidebar-foreground flex items-center gap-2">
+              <img src="/icon-192.png" alt="" className="h-7 w-7 rounded-md object-cover" />
+              Vozový park
+            </h1>
           )}
           {collapsed && (
             <div className="flex justify-center">
-              <span className="text-xl">🚗</span>
+              <img src="/icon-192.png" alt="Vozový park" className="h-7 w-7 rounded-md object-cover" />
             </div>
           )}
         </div>

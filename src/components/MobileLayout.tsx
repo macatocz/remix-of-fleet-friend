@@ -62,7 +62,9 @@ export function MobileLayout() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [tripOpen, setTripOpen] = useState(false);
   const [incidentOpen, setIncidentOpen] = useState(false);
-  const [fuelOpen, setFuelOpen] = useState(false);
+  const [fuelOpen, setFuelOpen] = useState(() => {
+    try { return !!sessionStorage.getItem("fuel-draft"); } catch { return false; }
+  });
   const [findOpen, setFindOpen] = useState(false);
   const [newResOpen, setNewResOpen] = useState(false);
   const [nowResOpen, setNowResOpen] = useState(false);

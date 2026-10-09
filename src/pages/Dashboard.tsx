@@ -46,8 +46,8 @@ export default function Dashboard() {
   const [reservationsByVehicle, setReservationsByVehicle] = useState<{ name: string; value: number }[]>([]);
   const [monthlyKpi, setMonthlyKpi] = useState({ fuelCost: 0, serviceCost: 0, totalKm: 0, tripCount: 0 });
   const [monthlyCostTrend, setMonthlyCostTrend] = useState<any[]>([]);
-  const [insuranceSoon, setInsuranceSoon] = useState<{ id: string; label: string; days: number; type: string }[]>([]);
-  const [leasingSoon, setLeasingSoon] = useState<{ id: string; label: string; days: number }[]>([]);
+  const [insuranceSoon, setInsuranceSoon] = useState<{ id: string; label: string; days: number; type: string; total: number | null }[]>([]);
+  const [leasingSoon, setLeasingSoon] = useState<{ id: string; label: string; days: number; total: number | null }[]>([]);
   const [serviceSoon, setServiceSoon] = useState<{ id: string; vehicleId: string; label: string; type: string; daysOrKm: string; overdue: boolean }[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<PeriodKey>("6");
@@ -59,7 +59,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     // Fetch vehicles
-    supabase.from("vehicles").select("id, znacka, rz, spravce, stk, status, datum_ukonceni_leasingu, typ_vlastnictvi").then(({ data }) => {
+    supabase.from("vehicles").select("id, znacka, rz, spravce, stk, status, typ_vlastnictvi, datum_zahajeni_leasingu, datum_ukonceni_leasingu, doba_leasingu").then(({ data }) => {
       setLoading(false);
       if (!data) return;
       setVehicleStats({
@@ -90,7 +90,11 @@ export default function Dashboard() {
           if (!d) return null;
           const days = daysDiff(d);
           if (days > 180 || days < -30) return null;
-          return { id: v.id, label: `${v.rz || "?"} – ${v.znacka || "?"}`, days };
+          const start = parseDateString(v.datum_zahajeni_leasingu);
+          const total = start
+            ? Math.round((d.getTime() - start.getTime()) / 86400000)
+            : v.doba_leasingu ? Math.round(Number(v.doba_leasingu) * 30.44) : null;
+          return { id: v.id, label: `${v.rz || "?"} – ${v.znacka || "?"}`, days, total };
         })
         .filter(Boolean) as any[];
       setLeasingSoon(leasing.sort((a, b) => a.days - b.days));
@@ -141,14 +145,16 @@ export default function Dashboard() {
     });
 
     // Fetch insurance approaching
-    supabase.from("insurance").select("id, vehicle_id, type, valid_until, vehicles(znacka, rz)").then(({ data }) => {
+    supabase.from("insurance").select("id, vehicle_id, type, valid_from, valid_until, vehicles(znacka, rz)").then(({ data }) => {
       if (!data) return;
       const ins = data.map((i: any) => {
         const d = new Date(i.valid_until);
         const days = daysDiff(d);
         if (days > 90 || days < -30) return null;
+        const start = i.valid_from ? new Date(i.valid_from) : null;
+        const total = start ? Math.round((d.getTime() - start.getTime()) / 86400000) : null;
         const label = i.vehicles ? `${i.vehicles.rz || "?"} – ${i.vehicles.znacka || "?"}` : "?";
-        return { id: i.id, label, days, type: i.type };
+        return { id: i.id, label, days, type: i.type, total };
       }).filter(Boolean) as any[];
       setInsuranceSoon(ins.sort((a, b) => a.days - b.days));
     });
@@ -275,6 +281,7 @@ export default function Dashboard() {
         label: s.label,
         tag: s.type,
         days: s.days,
+        totalDays: s.total,
         badge: s.days < 0 ? `${Math.abs(s.days)} d po` : `${s.days} d`,
       })),
     },
@@ -286,6 +293,7 @@ export default function Dashboard() {
         id: s.id,
         label: s.label,
         days: s.days,
+        totalDays: s.total,
         badge: s.days < 0 ? `${Math.abs(s.days)} d po` : `${s.days} d`,
         onClick: () => navigate(`/vozidla/${s.id}`),
       })),

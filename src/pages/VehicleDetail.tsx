@@ -578,11 +578,14 @@ export default function VehicleDetail() {
 
   useEffect(() => {
     if (!id) return;
-    supabase.from("trip_logs").select("vehicle_id, km_end, date")
-      .eq("vehicle_id", id).not("km_end", "is", null).order("date", { ascending: false })
-      .then(({ data }) => setMileageRecords(
-        ((data as any[]) || []).map(r => ({ vehicle_id: id, km: r.km_end, recorded_at: r.date, source: "trip_log" as const }))
-      ));
+    Promise.all([
+      supabase.from("trip_logs").select("vehicle_id, km_end, date")
+        .eq("vehicle_id", id).not("km_end", "is", null).order("date", { ascending: false }),
+      supabase.from("vehicle_mileage").select("km, recorded_at").eq("vehicle_id", id),
+    ]).then(([trips, manual]) => setMileageRecords([
+      ...((trips.data as any[]) || []).map(r => ({ vehicle_id: id, km: r.km_end, recorded_at: r.date, source: "trip_log" as const })),
+      ...((manual.data as any[]) || []).map(r => ({ vehicle_id: id, km: r.km, recorded_at: r.recorded_at, source: "vehicle_mileage" as const })),
+    ]));
   }, [id]);
 
   const startEditing = () => {

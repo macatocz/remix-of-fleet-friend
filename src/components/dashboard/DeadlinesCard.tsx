@@ -16,6 +16,8 @@ export interface DeadlineItem {
   // Full duration of the term (start -> end) in days, when known.
   // The progress bar is then proportional to the whole term, not a 90-day window.
   totalDays?: number | null;
+  // Days before the deadline when the item becomes critical (default 30).
+  criticalDays?: number;
   onClick?: () => void;
 }
 
@@ -28,7 +30,7 @@ export interface DeadlineGroup {
 
 function urgency(item: DeadlineItem) {
   if (item.overdue || (item.days !== null && item.days < 0)) return "destructive";
-  if (item.days !== null && item.days <= 30) return "warning";
+  if (item.days !== null && item.days <= (item.criticalDays ?? 30)) return "warning";
   return "info";
 }
 
@@ -65,7 +67,7 @@ export default function DeadlinesCard({ groups, focus }: { groups: DeadlineGroup
       const bValue = b.overdue ? -10000 : b.days ?? 9999;
       return aValue - bValue;
     }), [focus, groupKey, groups]);
-  const critical = groups.flatMap((group) => group.items).filter((item) => item.overdue || (item.days !== null && item.days <= 30)).length;
+  const critical = groups.flatMap((group) => group.items).filter((item) => item.overdue || (item.days !== null && item.days <= (item.criticalDays ?? 30))).length;
 
   return (
     <Card className="h-full overflow-hidden shadow-card">

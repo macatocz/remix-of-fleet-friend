@@ -13,7 +13,7 @@ import { useDriverContext } from "@/hooks/useDriverContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { insertOrQueue } from "@/lib/offline/tripQueue";
-import { WifiOff, Camera, X } from "lucide-react";
+import { WifiOff, Camera, X, Image as ImageIcon } from "lucide-react";
 import { localDateStr } from "@/lib/utils";
 import { compressImage } from "@/lib/compressImage";
 
@@ -133,19 +133,23 @@ export default function QuickIncidentDialog({ open, onOpenChange }: Props) {
           </div>
           <div className="space-y-1.5">
             <Label>Fotky (max {MAX_PHOTOS})</Label>
-            <input
-              id="incident-photos-input"
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={async (e) => {
-                const files = e.target.files ? Array.from(e.target.files) : [];
-                e.target.value = "";
-                if (!files.length) return;
-                const small = await Promise.all(files.map((f) => compressImage(f)));
-                setPhotos((prev) => [...prev, ...small].slice(0, MAX_PHOTOS));
-              }}
-            />
+            {["camera", "gallery"].map((k) => (
+              <input
+                key={k}
+                id={`incident-photos-${k}`}
+                type="file"
+                accept="image/*"
+                {...(k === "camera" ? { capture: "environment" as const } : {})}
+                className="hidden"
+                onChange={async (e) => {
+                  const files = e.target.files ? Array.from(e.target.files) : [];
+                  e.target.value = "";
+                  if (!files.length) return;
+                  const small = await Promise.all(files.map((f) => compressImage(f)));
+                  setPhotos((prev) => [...prev, ...small].slice(0, MAX_PHOTOS));
+                }}
+              />
+            ))}
             <div className="flex flex-wrap gap-2">
               {photos.map((f, i) => (
                 <div key={i} className="relative h-20 w-20 rounded-lg overflow-hidden border bg-muted">
@@ -153,7 +157,7 @@ export default function QuickIncidentDialog({ open, onOpenChange }: Props) {
                   <button
                     type="button"
                     onClick={() => setPhotos(photos.filter((_, j) => j !== i))}
-                    className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-black/60 text-white flex items-center justify-center"
+                    className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-background/80 text-foreground flex items-center justify-center"
                     aria-label="Odebrat fotku"
                   >
                     <X className="h-3 w-3" />
@@ -161,13 +165,16 @@ export default function QuickIncidentDialog({ open, onOpenChange }: Props) {
                 </div>
               ))}
               {photos.length < MAX_PHOTOS && (
-                <label
-                  htmlFor="incident-photos-input"
-                  className="h-20 w-20 rounded-lg border border-dashed flex flex-col items-center justify-center gap-1 text-muted-foreground cursor-pointer active:bg-accent"
-                >
-                  <Camera className="h-5 w-5" />
-                  <span className="text-[10px]">Přidat</span>
-                </label>
+                <>
+                  <label htmlFor="incident-photos-camera" className="h-20 w-20 rounded-lg border border-dashed flex flex-col items-center justify-center gap-1 text-muted-foreground cursor-pointer active:bg-accent">
+                    <Camera className="h-5 w-5" />
+                    <span className="text-[10px]">Vyfotit</span>
+                  </label>
+                  <label htmlFor="incident-photos-gallery" className="h-20 w-20 rounded-lg border border-dashed flex flex-col items-center justify-center gap-1 text-muted-foreground cursor-pointer active:bg-accent">
+                    <ImageIcon className="h-5 w-5" />
+                    <span className="text-[10px]">Z galerie</span>
+                  </label>
+                </>
               )}
             </div>
             {photos.length > 0 && typeof navigator !== "undefined" && !navigator.onLine && (

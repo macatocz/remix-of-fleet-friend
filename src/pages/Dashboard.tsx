@@ -294,6 +294,7 @@ export default function Dashboard() {
         label: s.label,
         days: s.days,
         totalDays: s.total,
+        criticalDays: 90,
         badge: s.days < 0 ? `${Math.abs(s.days)} d po` : `${s.days} d`,
         onClick: () => navigate(`/vozidla/${s.id}`),
       })),

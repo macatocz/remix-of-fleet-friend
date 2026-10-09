@@ -278,6 +278,86 @@ export type Database = {
           },
         ]
       }
+      fuel_records: {
+        Row: {
+          created_at: string
+          document_id: string | null
+          driver_id: string | null
+          fueled_at: string
+          id: string
+          km: number | null
+          lat: number | null
+          liters: number | null
+          lng: number | null
+          location: string | null
+          note: string | null
+          total_price: number | null
+          user_id: string
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_id?: string | null
+          driver_id?: string | null
+          fueled_at?: string
+          id?: string
+          km?: number | null
+          lat?: number | null
+          liters?: number | null
+          lng?: number | null
+          location?: string | null
+          note?: string | null
+          total_price?: number | null
+          user_id?: string
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string
+          document_id?: string | null
+          driver_id?: string | null
+          fueled_at?: string
+          id?: string
+          km?: number | null
+          lat?: number | null
+          liters?: number | null
+          lng?: number | null
+          location?: string | null
+          note?: string | null
+          total_price?: number | null
+          user_id?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fuel_records_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fuel_records_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fuel_records_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_key_status"
+            referencedColumns: ["vehicle_id"]
+          },
+          {
+            foreignKeyName: "fuel_records_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       handover_photos: {
         Row: {
           caption: string | null

@@ -7,11 +7,13 @@ import { DriverSidebar } from "@/components/DriverSidebar";
 import { NotificationBell } from "@/components/NotificationBell";
 import { MobileUserMenu } from "@/components/mobile/MobileUserMenu";
 import QuickIncidentDialog from "@/components/mobile/QuickIncidentDialog";
+import FuelReceiptDialog from "@/components/fuel/FuelReceiptDialog";
 import { useDriverContext } from "@/hooks/useDriverContext";
 
 export function DriverLayout() {
   const { myVehicles, driver } = useDriverContext();
   const [incidentOpen, setIncidentOpen] = useState(false);
+  const [fuelOpen, setFuelOpen] = useState(false);
   const [borrowed, setBorrowed] = useState<any | null>(null);
   const primary = myVehicles[0] as any | undefined;
 
@@ -50,6 +52,7 @@ export function DriverLayout() {
           primaryVehicleId={sideVehicle?.id ?? null}
           primaryVehicleLabel={sideLabel}
           onIncident={() => setIncidentOpen(true)}
+          onFuel={() => setFuelOpen(true)}
         />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="border-b bg-card sticky top-0 z-30">
@@ -71,6 +74,7 @@ export function DriverLayout() {
         </div>
       </div>
       <QuickIncidentDialog open={incidentOpen} onOpenChange={setIncidentOpen} />
+      <FuelReceiptDialog open={fuelOpen} onOpenChange={setFuelOpen} vehicleId={sideVehicle?.id} />
     </SidebarProvider>
   );
 }

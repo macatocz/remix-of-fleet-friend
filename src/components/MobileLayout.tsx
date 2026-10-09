@@ -13,6 +13,8 @@ import {
 import { Button } from "@/components/ui/button";
 import QuickTripDialog from "@/components/mobile/QuickTripDialog";
 import QuickIncidentDialog from "@/components/mobile/QuickIncidentDialog";
+import FuelReceiptDialog from "@/components/fuel/FuelReceiptDialog";
+import { Fuel } from "lucide-react";
 import FindVehicleSheet from "@/components/mobile/FindVehicleSheet";
 import NewReservationDialog from "@/components/mobile/NewReservationDialog";
 import QuickNowReservation from "@/components/mobile/QuickNowReservation";
@@ -60,6 +62,7 @@ export function MobileLayout() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [tripOpen, setTripOpen] = useState(false);
   const [incidentOpen, setIncidentOpen] = useState(false);
+  const [fuelOpen, setFuelOpen] = useState(false);
   const [findOpen, setFindOpen] = useState(false);
   const [newResOpen, setNewResOpen] = useState(false);
   const [nowResOpen, setNowResOpen] = useState(false);
@@ -128,6 +131,14 @@ export function MobileLayout() {
             >
               <AlertTriangle className="h-7 w-7 text-destructive" />
               <span>Hlásit škodu</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-28 flex-col gap-2 text-base"
+              onClick={() => { setFabOpen(false); setFuelOpen(true); }}
+            >
+              <Fuel className="h-7 w-7 text-primary" />
+              <span>Tankování</span>
             </Button>
             <Button
               variant="outline"
@@ -217,6 +228,7 @@ export function MobileLayout() {
 
       <QuickTripDialog open={tripOpen} onOpenChange={setTripOpen} />
       <QuickIncidentDialog open={incidentOpen} onOpenChange={setIncidentOpen} />
+      <FuelReceiptDialog open={fuelOpen} onOpenChange={setFuelOpen} />
       <QuickNowReservation open={nowResOpen} onOpenChange={setNowResOpen} />
       {primaryVehicle && (
         <>

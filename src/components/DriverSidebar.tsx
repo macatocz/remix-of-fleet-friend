@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Car, Home, CalendarDays, Route as RouteIcon, AlertTriangle, FileText } from "lucide-react";
+import { Car, Home, CalendarDays, Route as RouteIcon, AlertTriangle, FileText, Fuel } from "lucide-react";
 import { UserMenu } from "@/components/UserMenu";
 import { NavLink } from "@/components/NavLink";
 import {
@@ -11,9 +11,10 @@ interface DriverSidebarProps {
   primaryVehicleId?: string | null;
   primaryVehicleLabel?: string | null;
   onIncident: () => void;
+  onFuel?: () => void;
 }
 
-export function DriverSidebar({ primaryVehicleId, primaryVehicleLabel, onIncident }: DriverSidebarProps) {
+export function DriverSidebar({ primaryVehicleId, primaryVehicleLabel, onIncident, onFuel }: DriverSidebarProps) {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const [incidentClicked, setIncidentClicked] = useState(false);
@@ -84,6 +85,14 @@ export function DriverSidebar({ primaryVehicleId, primaryVehicleLabel, onInciden
                   {!collapsed && <span className="text-sm truncate">Nahlásit závadu</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              {onFuel && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton className={"h-auto py-2 " + (collapsed ? "justify-center" : "")} onClick={onFuel} title="Tankování">
+                    <Fuel className={(collapsed ? "h-4 w-4 shrink-0" : "mr-2 h-4 w-4 shrink-0") + " text-primary"} />
+                    {!collapsed && <span className="text-sm truncate">Tankování</span>}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

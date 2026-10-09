@@ -101,6 +101,12 @@ export default function DeadlinesCard({ groups, focus }: { groups: DeadlineGroup
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-xs font-semibold">{item.label}</span>
                     <span className="block truncate text-[11px] text-muted-foreground">{item.groupLabel}{item.tag ? ` · ${item.tag}` : ""}</span>
+                    <span className="mt-1 block h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <span
+                        className={cn("block h-full transition-all", STRIPE[u])}
+                        style={{ width: `${deadlinePercent(item)}%` }}
+                      />
+                    </span>
                   </span>
                   <span className={cn("h-2 w-2 shrink-0 rounded-full", STRIPE[u])} />
                 </div>

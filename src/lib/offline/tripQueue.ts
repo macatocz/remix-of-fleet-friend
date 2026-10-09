@@ -88,25 +88,37 @@ export async function listPending(): Promise<QueuedTrip[]> {
   return d.getAll(STORE);
 }
 
-export async function flushQueue(): Promise<{ ok: number; fail: number }> {
+const isNetworkError = (msg?: string) => /fetch|network|Failed to fetch|timeout|JWT|token/i.test(msg || "");
+
+export async function flushQueue(): Promise<{ ok: number; fail: number; errors: string[] }> {
   const d = await db();
-  const items = (await d.getAll(STORE)) as QueuedTrip[];
   let ok = 0, fail = 0;
+  const errors: string[] = [];
+  const items = (await d.getAll(STORE)) as QueuedTrip[];
   for (const item of items) {
     const { error } = await supabase.from("trip_logs").insert(item.payload as any);
-    if (!error) { await d.delete(STORE, item.id!); ok++; }
-    else { fail++; }
+    if (!error) { await d.delete(STORE, item.id!); ok++; continue; }
+    fail++;
+    errors.push(error.message);
+    console.warn("[offline] trip sync failed", error, item.payload);
+    // permanent error – drop so the queue does not get stuck forever
+    if (!isNetworkError(error.message)) await d.delete(STORE, item.id!);
   }
   const ops = (await d.getAll(OPS)) as QueuedOp[];
   for (const op of ops) {
     const { error } = await supabase.from(op.table).insert(op.payload as any);
-    if (!error) { await d.delete(OPS, op.id!); ok++; }
-    else if (!/fetch|network|Failed to fetch|timeout/i.test(error.message || "")) {
-      // permanent error – drop it so the queue does not get stuck
-      await d.delete(OPS, op.id!); fail++;
-    } else { fail++; }
+    if (!error) { await d.delete(OPS, op.id!); ok++; continue; }
+    fail++;
+    errors.push(error.message);
+    console.warn(`[offline] ${op.table} sync failed`, error, op.payload);
+    if (!isNetworkError(error.message)) await d.delete(OPS, op.id!);
   }
-  return { ok, fail };
+  return { ok, fail, errors };
+}
+
+export async function clearQueue() {
+  const d = await db();
+  await Promise.all([d.clear(STORE), d.clear(OPS)]);
 }
 
 let started = false;
@@ -115,13 +127,22 @@ export function startOfflineSync() {
   started = true;
   const tryFlush = async () => {
     if (!navigator.onLine) return;
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) return; // wait until signed in, otherwise RLS rejects
     const n = await pendingCount();
     if (n === 0) return;
-    const { ok, fail } = await flushQueue();
+    const { ok, fail, errors } = await flushQueue();
     if (ok > 0) toast.success(`Synchronizováno ${ok} offline ${ok > 1 ? "záznamů" : "záznam"}`);
-    if (fail > 0) toast.error(`${fail} záznamů se nepodařilo synchronizovat`);
+    if (fail > 0) {
+      const left = await pendingCount();
+      toast.error(`${fail} ${fail > 1 ? "záznamů se nepodařilo" : "záznam se nepodařilo"} synchronizovat`, {
+        description: left > 0 ? `${errors[0] ?? ""} – zkusí se znovu.` : `Záznam byl odmítnut a vyřazen: ${errors[0] ?? ""}`,
+        action: left > 0 ? { label: "Zahodit", onClick: () => { clearQueue().then(() => window.dispatchEvent(new CustomEvent("offline-queue-changed"))); } } : undefined,
+      });
+    }
     window.dispatchEvent(new CustomEvent("offline-queue-changed"));
   };
+  supabase.auth.onAuthStateChange((event) => { if (event === "SIGNED_IN") setTimeout(tryFlush, 500); });
   window.addEventListener("online", tryFlush);
   // Try once on startup
   setTimeout(tryFlush, 1500);

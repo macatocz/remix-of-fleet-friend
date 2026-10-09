@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useDriverContext } from "@/hooks/useDriverContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Camera, MapPin, X, Loader2, WifiOff } from "lucide-react";
+import { Camera, MapPin, X, Loader2, WifiOff, Image as ImageIcon } from "lucide-react";
 import { compressImage } from "@/lib/compressImage";
 
 export const RECEIPT_FOLDER = "Účtenky – tankování";
@@ -195,14 +195,8 @@ export default function FuelReceiptDialog({ open, onOpenChange, vehicleId: prese
           </div>
           <div className="space-y-1.5">
             <Label>Účtenka *</Label>
-            <input id="fuel-receipt-input" type="file" accept="image/*" className="hidden"
-              onChange={async (e) => {
-                const files = e.target.files ? Array.from(e.target.files) : [];
-                e.target.value = "";
-                if (!files.length) return;
-                const small = await Promise.all(files.map((f) => compressImage(f)));
-                setPhotos((prev) => [...prev, ...small].slice(0, MAX_PHOTOS));
-              }} />
+            <input id="fuel-receipt-camera" type="file" accept="image/*" capture="environment" className="hidden" onChange={onPick} />
+            <input id="fuel-receipt-gallery" type="file" accept="image/*" className="hidden" onChange={onPick} />
             <div className="flex flex-wrap gap-2">
               {photos.map((f, i) => (
                 <div key={i} className="relative h-20 w-20 overflow-hidden rounded-lg border bg-muted">
@@ -214,9 +208,14 @@ export default function FuelReceiptDialog({ open, onOpenChange, vehicleId: prese
                 </div>
               ))}
               {photos.length < MAX_PHOTOS && (
-                <label htmlFor="fuel-receipt-input" className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed text-muted-foreground active:bg-accent">
-                  <Camera className="h-5 w-5" /><span className="text-[10px]">Vyfotit</span>
-                </label>
+                <>
+                  <label htmlFor="fuel-receipt-camera" className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed text-muted-foreground active:bg-accent">
+                    <Camera className="h-5 w-5" /><span className="text-[10px]">Vyfotit</span>
+                  </label>
+                  <label htmlFor="fuel-receipt-gallery" className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed text-muted-foreground active:bg-accent">
+                    <ImageIcon className="h-5 w-5" /><span className="text-[10px]">Z galerie</span>
+                  </label>
+                </>
               )}
             </div>
           </div>
@@ -236,7 +235,7 @@ export default function FuelReceiptDialog({ open, onOpenChange, vehicleId: prese
         </div>
         <DrawerFooter className="pb-safe gap-2">
           <Button className="h-12 w-full text-base" onClick={submit} disabled={saving}>{saving ? "Ukládám…" : "Uložit tankování"}</Button>
-          <Button variant="outline" className="h-12 w-full" onClick={() => onOpenChange(false)}>Zrušit</Button>
+          <Button variant="outline" className="h-12 w-full" onClick={cancel}>Zrušit</Button>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>

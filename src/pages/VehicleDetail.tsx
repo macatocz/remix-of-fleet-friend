@@ -419,7 +419,7 @@ function FieldRow({ field, vehicle, editing, editData, onEdit }: {
   );
 }
 
-function LeasingProgress({ vehicle }: { vehicle: any }) {
+function LeasingProgress({ vehicle, mileageRecords }: { vehicle: any; mileageRecords?: { vehicle_id: string; km: number; recorded_at: string }[] }) {
   const from = vehicle.datum_zahajeni_leasingu;
   const to = vehicle.datum_ukonceni_leasingu;
   if (!isValidDateStr(from) || !isValidDateStr(to)) return null;
@@ -585,7 +585,7 @@ export default function VehicleDetail() {
     ]).then(([trips, manual]) => setMileageRecords([
       ...((trips.data as any[]) || []).map(r => ({ vehicle_id: id, km: r.km_end, recorded_at: r.date, source: "trip_log" as const })),
       ...((manual.data as any[]) || []).map(r => ({ vehicle_id: id, km: r.km, recorded_at: r.recorded_at, source: "vehicle_mileage" as const })),
-    ]));
+    ].sort((a, b) => b.recorded_at.localeCompare(a.recorded_at))));
   }, [id]);
 
   const startEditing = () => {
@@ -825,7 +825,7 @@ export default function VehicleDetail() {
               <EditableCard
                 title="Leasing"
                 icon={<FileSignature className="h-4 w-4" />}
-                header={<div className="mb-3"><LeasingProgress vehicle={vehicle} /></div>}
+                header={<div className="mb-3"><LeasingProgress vehicle={vehicle} mileageRecords={mileageRecords} /></div>}
                 fields={LEASING_FIELDS} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit}
               />
             )}

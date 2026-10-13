@@ -39,8 +39,11 @@ export default function FuelReceiptDialog({ open, onOpenChange, vehicleId: prese
   const [photos, setPhotos] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
 
+  const [camOpen, setCamOpen] = useState(false);
+  const [photosLoaded, setPhotosLoaded] = useState(false);
+
   useEffect(() => {
-    if (!open) return;
+    if (!open) { setPhotosLoaded(false); return; }
     let d: any = null;
     try { d = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || "null"); } catch {}
     if (d) {
@@ -51,7 +54,12 @@ export default function FuelReceiptDialog({ open, onOpenChange, vehicleId: prese
       setWhen(localDT());
       setVehicleId(presetId || vehicles[0]?.id || "");
     }
+    loadDraftPhotos(DRAFT_KEY).then((p) => { if (p.length) setPhotos(p); setPhotosLoaded(true); });
   }, [open, presetId, vehicles.length]);
+
+  useEffect(() => {
+    if (open && photosLoaded) saveDraftPhotos(DRAFT_KEY, photos);
+  }, [open, photosLoaded, photos]);
 
   useEffect(() => {
     if (!open) return;
@@ -62,8 +70,11 @@ export default function FuelReceiptDialog({ open, onOpenChange, vehicleId: prese
 
   const reset = () => {
     try { sessionStorage.removeItem(DRAFT_KEY); } catch {}
+    clearDraftPhotos(DRAFT_KEY);
     setLocation(""); setCoords(null); setLiters(""); setPrice(""); setKm(""); setPhotos([]);
   };
+
+  const addPhoto = (f: File) => setPhotos((prev) => [...prev, f].slice(0, MAX_PHOTOS));
 
   const onPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files ? Array.from(e.target.files) : [];

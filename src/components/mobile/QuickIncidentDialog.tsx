@@ -16,6 +16,7 @@ import { insertOrQueue } from "@/lib/offline/tripQueue";
 import { WifiOff, Camera, X, Image as ImageIcon } from "lucide-react";
 import { localDateStr } from "@/lib/utils";
 import { compressImage } from "@/lib/compressImage";
+import InAppCamera from "@/components/camera/InAppCamera";
 
 const MAX_PHOTOS = 5;
 
@@ -32,6 +33,7 @@ export default function QuickIncidentDialog({ open, onOpenChange }: Props) {
   const [estimatedCost, setEstimatedCost] = useState("");
   const [photos, setPhotos] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
+  const [camOpen, setCamOpen] = useState(false);
 
   const vehicles = myVehicles.length ? myVehicles : allVehicles;
 
@@ -166,10 +168,10 @@ export default function QuickIncidentDialog({ open, onOpenChange }: Props) {
               ))}
               {photos.length < MAX_PHOTOS && (
                 <>
-                  <label htmlFor="incident-photos-camera" className="h-20 w-20 rounded-lg border border-dashed flex flex-col items-center justify-center gap-1 text-muted-foreground cursor-pointer active:bg-accent">
+                  <button type="button" onClick={() => setCamOpen(true)} className="h-20 w-20 rounded-lg border border-dashed flex flex-col items-center justify-center gap-1 text-muted-foreground cursor-pointer active:bg-accent">
                     <Camera className="h-5 w-5" />
                     <span className="text-[10px]">Vyfotit</span>
-                  </label>
+                  </button>
                   <label htmlFor="incident-photos-gallery" className="h-20 w-20 rounded-lg border border-dashed flex flex-col items-center justify-center gap-1 text-muted-foreground cursor-pointer active:bg-accent">
                     <ImageIcon className="h-5 w-5" />
                     <span className="text-[10px]">Z galerie</span>
@@ -198,6 +200,9 @@ export default function QuickIncidentDialog({ open, onOpenChange }: Props) {
           </Button>
         </DrawerFooter>
       </DrawerContent>
+      <InAppCamera open={camOpen} onOpenChange={setCamOpen}
+        onCapture={(f) => setPhotos((p) => [...p, f].slice(0, MAX_PHOTOS))}
+        onFallback={() => document.getElementById("incident-photos-camera")?.click()} />
     </Drawer>
   );
 }

@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Camera, MapPin, X, Loader2, WifiOff, Image as ImageIcon } from "lucide-react";
 import { compressImage } from "@/lib/compressImage";
+import InAppCamera from "@/components/camera/InAppCamera";
+import { saveDraftPhotos, loadDraftPhotos, clearDraftPhotos } from "@/lib/draftPhotos";
 
 export const RECEIPT_FOLDER = "Účtenky – tankování";
 const MAX_PHOTOS = 4;
@@ -39,8 +41,11 @@ export default function FuelReceiptDialog({ open, onOpenChange, vehicleId: prese
   const [photos, setPhotos] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
 
+  const [camOpen, setCamOpen] = useState(false);
+  const [photosLoaded, setPhotosLoaded] = useState(false);
+
   useEffect(() => {
-    if (!open) return;
+    if (!open) { setPhotosLoaded(false); return; }
     let d: any = null;
     try { d = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || "null"); } catch {}
     if (d) {
@@ -51,7 +56,12 @@ export default function FuelReceiptDialog({ open, onOpenChange, vehicleId: prese
       setWhen(localDT());
       setVehicleId(presetId || vehicles[0]?.id || "");
     }
+    loadDraftPhotos(DRAFT_KEY).then((p) => { if (p.length) setPhotos(p); setPhotosLoaded(true); });
   }, [open, presetId, vehicles.length]);
+
+  useEffect(() => {
+    if (open && photosLoaded) saveDraftPhotos(DRAFT_KEY, photos);
+  }, [open, photosLoaded, photos]);
 
   useEffect(() => {
     if (!open) return;
@@ -62,8 +72,11 @@ export default function FuelReceiptDialog({ open, onOpenChange, vehicleId: prese
 
   const reset = () => {
     try { sessionStorage.removeItem(DRAFT_KEY); } catch {}
+    clearDraftPhotos(DRAFT_KEY);
     setLocation(""); setCoords(null); setLiters(""); setPrice(""); setKm(""); setPhotos([]);
   };
+
+  const addPhoto = (f: File) => setPhotos((prev) => [...prev, f].slice(0, MAX_PHOTOS));
 
   const onPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
@@ -209,9 +222,9 @@ export default function FuelReceiptDialog({ open, onOpenChange, vehicleId: prese
               ))}
               {photos.length < MAX_PHOTOS && (
                 <>
-                  <label htmlFor="fuel-receipt-camera" className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed text-muted-foreground active:bg-accent">
+                  <button type="button" onClick={() => setCamOpen(true)} className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed text-muted-foreground active:bg-accent">
                     <Camera className="h-5 w-5" /><span className="text-[10px]">Vyfotit</span>
-                  </label>
+                  </button>
                   <label htmlFor="fuel-receipt-gallery" className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed text-muted-foreground active:bg-accent">
                     <ImageIcon className="h-5 w-5" /><span className="text-[10px]">Z galerie</span>
                   </label>
@@ -238,6 +251,8 @@ export default function FuelReceiptDialog({ open, onOpenChange, vehicleId: prese
           <Button variant="outline" className="h-12 w-full" onClick={cancel}>Zrušit</Button>
         </DrawerFooter>
       </DrawerContent>
+      <InAppCamera open={camOpen} onOpenChange={setCamOpen} onCapture={addPhoto}
+        onFallback={() => document.getElementById("fuel-receipt-camera")?.click()} />
     </Drawer>
   );
 }

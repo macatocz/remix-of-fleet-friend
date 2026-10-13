@@ -15,12 +15,27 @@ import {
   type QuarterSummary, type ReservationRow, type ServiceRow, type TripRow,
 } from "@/lib/report/quarterly";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import FuelReport from "@/components/fuel/FuelReport";
 
 const czk = (n: number) => `${Math.round(n).toLocaleString("cs-CZ")} Kč`;
 const num = (n: number) => Math.round(n).toLocaleString("cs-CZ");
 const MONTH_LABELS = ["Led", "Úno", "Bře", "Dub", "Kvě", "Čer", "Čvc", "Srp", "Zář", "Říj", "Lis", "Pro"];
 
 export default function FleetReport() {
+  return (
+    <Tabs defaultValue="quarter" className="space-y-4">
+      <TabsList>
+        <TabsTrigger value="quarter">Kvartální přehled</TabsTrigger>
+        <TabsTrigger value="fuel">Přehled tankování</TabsTrigger>
+      </TabsList>
+      <TabsContent value="quarter"><QuarterlyReport /></TabsContent>
+      <TabsContent value="fuel"><FuelReport /></TabsContent>
+    </Tabs>
+  );
+}
+
+function QuarterlyReport() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [quarter, setQuarter] = useState(Math.floor(now.getMonth() / 3) + 1);

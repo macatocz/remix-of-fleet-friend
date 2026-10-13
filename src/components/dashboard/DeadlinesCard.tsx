@@ -59,7 +59,7 @@ export default function DeadlinesCard({ groups, focus }: { groups: DeadlineGroup
     .flatMap((group) => group.items.map((item) => ({ ...item, groupLabel: group.label })))
     .filter((item) => {
       if (focus === "overdue") return item.overdue || (item.days !== null && item.days < 0);
-      if (focus === "soon") return !item.overdue && item.days !== null && item.days >= 0 && item.days <= 30;
+      if (focus === "soon") return !item.overdue && item.days !== null && item.days >= 0 && item.days <= (item.criticalDays ?? 30);
       return true;
     })
     .sort((a, b) => {
@@ -102,7 +102,7 @@ export default function DeadlinesCard({ groups, focus }: { groups: DeadlineGroup
               return (
                 <div key={`${item.groupLabel}-${item.id}`} onClick={item.onClick} className={cn("flex items-center gap-3 rounded-lg px-2 py-2 transition-colors", item.onClick && "cursor-pointer hover:bg-muted/60")}>
                   <span className={cn(
-                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[11px] font-bold tabular-nums",
+                    "flex min-h-9 min-w-12 max-w-24 shrink-0 items-center justify-center rounded-md px-1 text-[11px] font-bold tabular-nums",
                     u === "destructive" && "bg-destructive/10 text-destructive",
                     u === "warning" && "bg-warning/10 text-warning",
                     u === "info" && "bg-muted text-muted-foreground",

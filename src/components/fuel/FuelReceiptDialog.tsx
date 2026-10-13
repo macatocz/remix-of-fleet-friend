@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Camera, MapPin, X, Loader2, WifiOff, Image as ImageIcon } from "lucide-react";
 import { compressImage } from "@/lib/compressImage";
+import InAppCamera from "@/components/camera/InAppCamera";
+import { saveDraftPhotos, loadDraftPhotos, clearDraftPhotos } from "@/lib/draftPhotos";
 
 export const RECEIPT_FOLDER = "Účtenky – tankování";
 const MAX_PHOTOS = 4;
@@ -220,9 +222,9 @@ export default function FuelReceiptDialog({ open, onOpenChange, vehicleId: prese
               ))}
               {photos.length < MAX_PHOTOS && (
                 <>
-                  <label htmlFor="fuel-receipt-camera" className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed text-muted-foreground active:bg-accent">
+                  <button type="button" onClick={() => setCamOpen(true)} className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed text-muted-foreground active:bg-accent">
                     <Camera className="h-5 w-5" /><span className="text-[10px]">Vyfotit</span>
-                  </label>
+                  </button>
                   <label htmlFor="fuel-receipt-gallery" className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed text-muted-foreground active:bg-accent">
                     <ImageIcon className="h-5 w-5" /><span className="text-[10px]">Z galerie</span>
                   </label>
@@ -249,6 +251,8 @@ export default function FuelReceiptDialog({ open, onOpenChange, vehicleId: prese
           <Button variant="outline" className="h-12 w-full" onClick={cancel}>Zrušit</Button>
         </DrawerFooter>
       </DrawerContent>
+      <InAppCamera open={camOpen} onOpenChange={setCamOpen} onCapture={addPhoto}
+        onFallback={() => document.getElementById("fuel-receipt-camera")?.click()} />
     </Drawer>
   );
 }

@@ -5,12 +5,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Car, CheckCircle, Wrench, CalendarDays, DollarSign, Fuel, TrendingUp, Route, PieChart as PieIcon } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend
+  Legend
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
-import VehicleNotifications from "@/components/VehicleNotifications";
+import AttentionStrip from "@/components/dashboard/AttentionStrip";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import RankList from "@/components/dashboard/RankList";
 import LeasingMileageWidget from "@/components/leasing/LeasingMileageWidget";
-import DashboardExtraWidgets from "@/components/DashboardExtraWidgets";
+
 import PendingReservationsWidget from "@/components/PendingReservationsWidget";
 import StatCard from "@/components/dashboard/StatCard";
 import ChartCard from "@/components/dashboard/ChartCard";
@@ -19,7 +22,7 @@ import EmptyState from "@/components/dashboard/EmptyState";
 import DeadlinesCard, { DeadlineGroup } from "@/components/dashboard/DeadlinesCard";
 import FleetHealthSummary, { MonitoringFocus } from "@/components/dashboard/FleetHealthSummary";
 import DashboardFilters, { PeriodKey, PERIODS } from "@/components/dashboard/DashboardFilters";
-import { CHART_COLORS, axisProps, gridProps, formatCzk } from "@/components/dashboard/chartTheme";
+import { axisProps, gridProps, formatCzk } from "@/components/dashboard/chartTheme";
 
 function parseDateString(s: string | null): Date | null {
   if (!s) return null;
@@ -43,11 +46,14 @@ export default function Dashboard() {
   const [vehicleStats, setVehicleStats] = useState({ total: 0, active: 0, service: 0, decommissioned: 0 });
   const [reservationStats, setReservationStats] = useState({ active: 0, pending: 0, today: 0 });
   const [stkSoon, setStkSoon] = useState<{ id: string; label: string; days: number; date: string }[]>([]);
-  const [reservationsByVehicle, setReservationsByVehicle] = useState<{ name: string; value: number }[]>([]);
+  const [todayReservations, setTodayReservations] = useState<Array<{ id: string; driver_name: string; label: string; time: string | null }>>([]);
+  const [topCosts, setTopCosts] = useState<Array<{ name: string; value: number }>>([]);
+  const [topKm, setTopKm] = useState<Array<{ name: string; value: number }>>([]);
+  const [greenCardsSoon, setGreenCardsSoon] = useState<Array<{ id: string; label: string; days: number; date: string }>>([]);
   const [monthlyKpi, setMonthlyKpi] = useState({ fuelCost: 0, serviceCost: 0, totalKm: 0, tripCount: 0 });
   const [monthlyCostTrend, setMonthlyCostTrend] = useState<any[]>([]);
-  const [insuranceSoon, setInsuranceSoon] = useState<{ id: string; label: string; days: number; type: string; total: number | null }[]>([]);
-  const [leasingSoon, setLeasingSoon] = useState<{ id: string; label: string; days: number; total: number | null }[]>([]);
+  const [insuranceSoon, setInsuranceSoon] = useState<{ id: string; label: string; days: number; type: string; total: number | null; vehicleId: string; date: string }[]>([]);
+  const [leasingSoon, setLeasingSoon] = useState<{ id: string; label: string; days: number; total: number | null; date: string }[]>([]);
   const [serviceSoon, setServiceSoon] = useState<{ id: string; vehicleId: string; label: string; type: string; daysOrKm: string; overdue: boolean }[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<PeriodKey>("6");
@@ -59,7 +65,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     // Fetch vehicles
-    supabase.from("vehicles").select("id, znacka, rz, spravce, stk, status, typ_vlastnictvi, datum_zahajeni_leasingu, datum_ukonceni_leasingu, doba_leasingu").then(({ data }) => {
+    supabase.from("vehicles").select("id, znacka, rz, spravce, stk, zelena_karta, status, typ_vlastnictvi, datum_zahajeni_leasingu, datum_ukonceni_leasingu, doba_leasingu").then(({ data }) => {
       setLoading(false);
       if (!data) return;
       setVehicleStats({
@@ -69,6 +75,12 @@ export default function Dashboard() {
         decommissioned: data.filter(v => v.status === "vyřazeno").length,
       });
 
+      setGreenCardsSoon(data.filter(v => v.status === "aktivní").flatMap(v => {
+        const date = parseDateString(v.zelena_karta);
+        if (!date || !Number.isFinite(date.getTime())) return [];
+        const days = daysDiff(date);
+        return days <= 180 ? [{ id: v.id, label: `${v.rz || "?"} – ${v.znacka || "?"}`, days, date: date.toLocaleDateString("cs-CZ") }] : [];
+      }).sort((a, b) => a.days - b.days));
       // STK approaching (within 90 days)
       const stks = data
         .filter(v => v.status === "aktivní" && v.stk)
@@ -89,12 +101,12 @@ export default function Dashboard() {
           const d = parseDateString(v.datum_ukonceni_leasingu);
           if (!d) return null;
           const days = daysDiff(d);
-          if (days > 180 || days < -30) return null;
+          if (days > 180) return null;
           const start = parseDateString(v.datum_zahajeni_leasingu);
           const total = start
             ? Math.round((d.getTime() - start.getTime()) / 86400000)
             : v.doba_leasingu ? Math.round(Number(v.doba_leasingu) * 30.44) : null;
-          return { id: v.id, label: `${v.rz || "?"} – ${v.znacka || "?"}`, days, total };
+          return { id: v.id, label: `${v.rz || "?"} – ${v.znacka || "?"}`, days, total, date: d.toLocaleDateString("cs-CZ") };
         })
         .filter(Boolean) as any[];
       setLeasingSoon(leasing.sort((a, b) => a.days - b.days));
@@ -150,15 +162,28 @@ export default function Dashboard() {
       const ins = data.map((i: any) => {
         const d = new Date(i.valid_until);
         const days = daysDiff(d);
-        if (days > 90 || days < -30) return null;
+        if (days > 90) return null;
         const start = i.valid_from ? new Date(i.valid_from) : null;
         const total = start ? Math.round((d.getTime() - start.getTime()) / 86400000) : null;
         const label = i.vehicles ? `${i.vehicles.rz || "?"} – ${i.vehicles.znacka || "?"}` : "?";
-        return { id: i.id, label, days, type: i.type, total };
+        return { id: i.id, vehicleId: i.vehicle_id, label, days, type: i.type, total, date: d.toLocaleDateString("cs-CZ") };
       }).filter(Boolean) as any[];
       setInsuranceSoon(ins.sort((a, b) => a.days - b.days));
     });
 
+    const loadReservations = async () => {
+      const { data } = await supabase.from("reservations").select("id, status, date_from, date_to, time_from, vehicle_id, driver_name, vehicles(znacka, rz)").in("status", ["čeká", "schváleno"]);
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      const rows = data || [];
+      const current = rows.filter(r => r.status === "schváleno" && r.date_from <= today && r.date_to >= today);
+      setReservationStats({ active: rows.filter(r => r.status === "schváleno").length, pending: rows.filter(r => r.status === "čeká").length, today: current.length });
+      setTodayReservations(current.map(r => ({ id: r.id, driver_name: r.driver_name, label: `${r.vehicles?.rz || "?"} – ${r.vehicles?.znacka || "?"}`, time: r.time_from })));
+    };
+    loadReservations();
+    const refresh = () => { loadReservations(); };
+    window.addEventListener("dashboard-reservations-changed", refresh);
+    return () => window.removeEventListener("dashboard-reservations-changed", refresh);
   }, []);
 
   // Period / vehicle / driver filtered data
@@ -166,12 +191,6 @@ export default function Dashboard() {
     let cancelled = false;
 
     const run = async () => {
-      let driverName: string | null = null;
-      if (driverFilter !== "all") {
-        const { data } = await supabase.from("drivers").select("first_name, last_name").eq("id", driverFilter).maybeSingle();
-        if (data) driverName = `${data.first_name || ""} ${data.last_name || ""}`.trim();
-      }
-
       const now = new Date();
       const allTime = months === 0;
       const rangeStart = new Date(now.getFullYear(), now.getMonth() - (Math.max(months, 1) - 1), 1);
@@ -188,12 +207,7 @@ export default function Dashboard() {
       if (!allTime) svcQ = svcQ.gte("date", startStr).lte("date", endStr);
       if (vehicleFilter !== "all") svcQ = svcQ.eq("vehicle_id", vehicleFilter);
 
-      let resQ = supabase.from("reservations").select("id, status, date_from, date_to, vehicle_id, driver_name, vehicles(znacka, rz, nazev_vozu)")
-        .in("status", ["čeká", "schváleno"]);
-      if (vehicleFilter !== "all") resQ = resQ.eq("vehicle_id", vehicleFilter);
-      if (driverName) resQ = resQ.eq("driver_name", driverName);
-
-      const [tripRes, svcRes, resRes] = await Promise.all([tripQ, svcQ, resQ]);
+      const [tripRes, svcRes, vehicleRes] = await Promise.all([tripQ, svcQ, supabase.from("vehicles").select("id, znacka, rz, nazev_vozu")]);
       if (cancelled) return;
 
       const trips = (tripRes.data || []) as any[];
@@ -225,28 +239,21 @@ export default function Dashboard() {
         const ms = inMonth(svcs);
         results.push({
           month: `${d.getMonth() + 1}/${d.getFullYear()}`,
-          PHM: Math.round(mt.reduce((s, r) => s + (Number(r.fuel_price) || 0) + (Number(r.other_price) || 0), 0)),
+          PHM: Math.round(mt.reduce((s, r) => s + (Number(r.fuel_price) || 0) , 0)),
           Servis: Math.round(ms.reduce((s, r) => s + (Number(r.cost) || 0), 0)),
           Km: mt.reduce((s, r) => s + (r.km_total || 0), 0),
         });
       }
       setMonthlyCostTrend(results);
 
-      const reservations = (resRes.data || []) as any[];
-      const todayStr = new Date().toISOString().split("T")[0];
-      setReservationStats({
-        active: reservations.filter((r) => r.status === "schváleno").length,
-        pending: reservations.filter((r) => r.status === "čeká").length,
-        today: reservations.filter((r) => r.date_from <= todayStr && r.date_to >= todayStr && r.status === "schváleno").length,
-      });
-      const byVehicle: Record<string, { name: string; value: number }> = {};
-      reservations.forEach((r) => {
-        const v = r.vehicles;
-        const label = v ? (v.nazev_vozu || `${v.znacka || "?"} (${v.rz || "?"})`) : r.vehicle_id;
-        if (!byVehicle[r.vehicle_id]) byVehicle[r.vehicle_id] = { name: label, value: 0 };
-        byVehicle[r.vehicle_id].value++;
-      });
-      setReservationsByVehicle(Object.values(byVehicle).sort((a, b) => b.value - a.value).slice(0, 6));
+      const labels = new Map((vehicleRes.data || []).map(v => [v.id, `${v.nazev_vozu || v.znacka || "?"} (${v.rz || "?"})`]));
+      const costs: Record<string, number> = {};
+      const kms: Record<string, number> = {};
+      trips.forEach(r => { costs[r.vehicle_id] = (costs[r.vehicle_id] || 0) + (Number(r.fuel_price) || 0); kms[r.vehicle_id] = (kms[r.vehicle_id] || 0) + (Number(r.km_total) || 0); });
+      svcs.forEach(r => { costs[r.vehicle_id] = (costs[r.vehicle_id] || 0) + (Number(r.cost) || 0); });
+      const rank = (values: Record<string, number>) => Object.entries(values).filter(([, value]) => value > 0).map(([id, value]) => ({ name: labels.get(id) || "?", value: Math.round(value) })).sort((a, b) => b.value - a.value).slice(0, 5);
+      setTopCosts(rank(costs));
+      setTopKm(rank(kms));
     };
 
     run();
@@ -273,13 +280,20 @@ export default function Dashboard() {
       })),
     },
     {
+      key: "zelena-karta",
+      label: "Zelené karty",
+      emptyText: "Žádná zelená karta nekončí do 180 dní",
+      items: greenCardsSoon.map(s => ({ id: s.id, label: s.label, tag: s.date, days: s.days, criticalDays: 60, badge: `${s.days} d`, onClick: () => navigate(`/vozidla/${s.id}`) })),
+    },
+    {
       key: "pojisteni",
       label: "Pojištění",
       emptyText: "Žádné pojištění neexpiruje do 90 dnů",
       items: insuranceSoon.map((s) => ({
         id: s.id,
         label: s.label,
-        tag: s.type,
+        tag: `${s.type} · ${s.date}`,
+        onClick: () => navigate(`/vozidla/${s.vehicleId}`),
         days: s.days,
         totalDays: s.total,
         badge: s.days < 0 ? `${Math.abs(s.days)} d po` : `${s.days} d`,
@@ -294,6 +308,7 @@ export default function Dashboard() {
         label: s.label,
         days: s.days,
         totalDays: s.total,
+        tag: s.date,
         criticalDays: 90,
         badge: s.days < 0 ? `${Math.abs(s.days)} d po` : `${s.days} d`,
         onClick: () => navigate(`/vozidla/${s.id}`),
@@ -315,203 +330,63 @@ export default function Dashboard() {
     },
   ];
 
+  const totalCost = monthlyKpi.fuelCost + monthlyKpi.serviceCost;
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="text-xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
-          Přehled vozového parku, statistiky a notifikace.
-        </p>
-      </div>
-
-      {/* ---------- Notifikace ---------- */}
-      <section className="space-y-2">
-        <div className="flex items-center gap-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Notifikace</h2>
-          <div className="h-px flex-1 bg-border" />
-        </div>
-        <VehicleNotifications excludeDashboardMonitoring />
-      </section>
-
-      {/* ---------- Termíny, leasing a rezervace ---------- */}
-      <section className="space-y-2">
-        <div className="flex items-center gap-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Termíny, leasing a rezervace</h2>
-          <div className="h-px flex-1 bg-border" />
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <FleetHealthSummary deadlineGroups={deadlineGroups} focus={monitoringFocus} onFocusChange={setMonitoringFocus} />
-
-          <div className="order-2 grid grid-cols-1 items-stretch gap-3 md:grid-cols-2 xl:grid-cols-3">
+    <div className="space-y-4">
+      <h1 className="text-xl font-bold">Dashboard</h1>
+      <AttentionStrip groups={deadlineGroups} loading={loading} />
+      <Tabs defaultValue="operations" className="space-y-4">
+        <TabsList className="grid h-auto w-full grid-cols-2 sm:inline-flex sm:w-auto">
+          <TabsTrigger value="operations" className="gap-2 whitespace-normal py-2"><CalendarDays className="hidden h-4 w-4 sm:block" />Operativa a termíny</TabsTrigger>
+          <TabsTrigger value="analytics" className="gap-2 whitespace-normal py-2"><TrendingUp className="hidden h-4 w-4 sm:block" />Náklady a analytika</TabsTrigger>
+        </TabsList>
+        <TabsContent value="operations" className="space-y-4">
+          {loading ? <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{[0, 1, 2, 3].map(i => <Skeleton key={i} className="h-20" />)}</div> :
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <StatCard label="Celkem vozidel" value={vehicleStats.total} hint={`${vehicleStats.decommissioned} vyřazených`} icon={Car} tone="primary" onClick={() => navigate("/vozidla")} />
+              <StatCard label="Aktivní vozidla" value={vehicleStats.active} hint="v provozu" icon={CheckCircle} tone="success" />
+              <StatCard label="V servisu" value={vehicleStats.service} hint="vozidel" icon={Wrench} tone="warning" />
+              <StatCard label="Ke schválení" value={reservationStats.pending} hint={`${reservationStats.today} rezervací dnes`} icon={CalendarDays} tone="info" onClick={() => navigate("/rezervace")} />
+            </div>}
+          <FleetHealthSummary compact deadlineGroups={deadlineGroups} focus={monitoringFocus} onFocusChange={setMonitoringFocus} />
+          <div className="grid grid-cols-1 items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
             <DeadlinesCard groups={deadlineGroups} focus={monitoringFocus} />
             <LeasingMileageWidget focus={monitoringFocus} />
-            <PendingReservationsWidget />
+            <div className="space-y-3 md:col-span-2 xl:col-span-1">
+              <PendingReservationsWidget />
+              <ChartCard title="Dnešní výpůjčky" icon={CalendarDays} count={todayReservations.length}>
+                {todayReservations.length === 0 ? <p className="py-4 text-center text-xs text-muted-foreground">Dnes nejsou žádné schválené rezervace.</p> :
+                  <div className="max-h-48 space-y-2 overflow-y-auto">{todayReservations.map(r => <Button key={r.id} variant="ghost" className="h-auto w-full justify-start py-2 text-left whitespace-normal" onClick={() => navigate("/rezervace")}><span><span className="block text-xs font-medium">{r.driver_name} · {r.time?.slice(0, 5) || "Celý den"}</span><span className="block text-[11px] font-normal text-muted-foreground">{r.label}</span></span></Button>)}</div>}
+                <Button variant="link" size="sm" className="mt-2 h-7 px-0 text-xs" onClick={() => navigate("/rezervace")}>Kalendář rezervací →</Button>
+              </ChartCard>
+            </div>
           </div>
-        </div>
-      </section>
-
-      <DashboardFilters
-        period={period}
-        onPeriodChange={setPeriod}
-        vehicleId={vehicleFilter}
-        onVehicleChange={setVehicleFilter}
-        driverId={driverFilter}
-        onDriverChange={setDriverFilter}
-      />
-
-      {/* ---------- Přehled ---------- */}
-      <section className="space-y-2">
-
-        <div className="flex items-center gap-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Přehled</h2>
-          <div className="h-px flex-1 bg-border" />
-        </div>
-
-        {loading ? (
+        </TabsContent>
+        <TabsContent value="analytics" className="space-y-4">
+          <DashboardFilters period={period} onPeriodChange={setPeriod} vehicleId={vehicleFilter} onVehicleChange={setVehicleFilter} driverId={driverFilter} onDriverChange={setDriverFilter} />
+          {driverFilter !== "all" && <p className="text-xs text-muted-foreground">Filtr řidiče platí pro jízdy a PHM. Servisní náklady se řídí obdobím a vozidlem.</p>}
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-[72px] rounded-lg" />)}
+            <StatCard label="Celkové náklady" value={`${totalCost.toLocaleString("cs-CZ")} Kč`} hint={monthlyKpi.totalKm > 0 ? `${(totalCost / monthlyKpi.totalKm).toLocaleString("cs-CZ", { maximumFractionDigits: 2 })} Kč/km` : "PHM + servis"} icon={DollarSign} tone="primary" />
+            <StatCard label="PHM" value={`${monthlyKpi.fuelCost.toLocaleString("cs-CZ")} Kč`} hint={periodTitle} icon={Fuel} tone="warning" spark={phmSpark} />
+            <StatCard label="Servis" value={`${monthlyKpi.serviceCost.toLocaleString("cs-CZ")} Kč`} hint={periodTitle} icon={Wrench} tone="destructive" spark={servisSpark} />
+            <StatCard label="Najeté kilometry" value={monthlyKpi.totalKm.toLocaleString("cs-CZ")} hint={`${monthlyKpi.tripCount} jízd · km`} icon={Route} tone="success" spark={kmSpark} />
           </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <StatCard
-              label="Celkem vozidel"
-              value={vehicleStats.total}
-              hint={`${vehicleStats.active} aktivních`}
-              icon={Car}
-              tone="primary"
-              delay={0}
-              onClick={() => navigate("/vozidla")}
-            />
-            <StatCard
-              label="Aktivních"
-              value={vehicleStats.active}
-              hint={vehicleStats.decommissioned > 0 ? `${vehicleStats.decommissioned} vyřazeno` : "v provozu"}
-              icon={CheckCircle}
-              tone="success"
-              delay={60}
-            />
-            <StatCard
-              label="V servisu"
-              value={vehicleStats.service}
-              hint={serviceSoon.length > 0 ? `${serviceSoon.length} blížících se úkonů` : "bez odstávek"}
-              icon={Wrench}
-              tone="warning"
-              delay={120}
-            />
-            <StatCard
-              label="Rezervace dnes"
-              value={reservationStats.today}
-              hint={`${reservationStats.pending} čeká na schválení`}
-              icon={CalendarDays}
-              tone="info"
-              delay={180}
-              onClick={() => navigate("/rezervace")}
-            />
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+            <ChartCard title="Vývoj nákladů" subtitle={periodTitle} icon={DollarSign} className="lg:col-span-2">
+              {monthlyCostTrend.every(m => !m.PHM && !m.Servis) ? <EmptyState icon={DollarSign} title="Žádné náklady v tomto období" /> :
+                <div className="h-72"><ResponsiveContainer width="100%" height="100%"><BarChart data={monthlyCostTrend} margin={{ top: 5, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid {...gridProps} /><XAxis dataKey="month" {...axisProps} /><YAxis {...axisProps} width={48} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)} tis.`} />
+                  <Tooltip content={<ChartTooltip formatter={formatCzk} />} /><Legend />
+                  <Bar dataKey="PHM" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} maxBarSize={38} /><Bar dataKey="Servis" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} maxBarSize={38} />
+                </BarChart></ResponsiveContainer></div>}
+            </ChartCard>
+            <div className="space-y-3">
+              <ChartCard title="Top 5 nákladů" subtitle={periodTitle} icon={DollarSign}>{topCosts.length ? <RankList items={topCosts} suffix="Kč" tone="destructive" /> : <p className="py-4 text-center text-xs text-muted-foreground">Žádné náklady</p>}</ChartCard>
+              <ChartCard title="Top 5 nájezdů" subtitle={periodTitle} icon={Route}>{topKm.length ? <RankList items={topKm} suffix="km" tone="success" /> : <p className="py-4 text-center text-xs text-muted-foreground">Žádné jízdy</p>}</ChartCard>
+            </div>
           </div>
-        )}
-      </section>
-
-      {/* ---------- Náklady a provoz ---------- */}
-      <section className="space-y-2">
-        <div className="flex items-center gap-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Náklady a provoz</h2>
-          <span className="text-xs text-muted-foreground">{periodTitle}</span>
-          <div className="h-px flex-1 bg-border" />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatCard label="Najeté km" value={monthlyKpi.totalKm.toLocaleString("cs-CZ")} hint={periodTitle} icon={Route} tone="primary" spark={kmSpark} />
-          <StatCard label="PHM" value={`${monthlyKpi.fuelCost.toLocaleString("cs-CZ")} Kč`} hint={periodTitle} icon={Fuel} tone="warning" spark={phmSpark} delay={60} />
-          <StatCard label="Servis" value={`${monthlyKpi.serviceCost.toLocaleString("cs-CZ")} Kč`} hint={driverFilter !== "all" ? "bez filtru řidiče" : periodTitle} icon={Wrench} tone="destructive" spark={servisSpark} delay={120} />
-          <StatCard label="Počet jízd" value={monthlyKpi.tripCount} hint="záznamů v knize jízd" icon={TrendingUp} tone="success" delay={180} />
-        </div>
-
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-          <ChartCard
-            title="Vývoj nákladů"
-            subtitle="PHM a servis podle měsíců"
-            icon={DollarSign}
-            className="lg:col-span-2"
-          >
-            {monthlyCostTrend.length === 0 ? (
-              <EmptyState icon={DollarSign} title="Zatím žádné náklady" hint="Data se objeví po zápisu jízd a servisů." />
-            ) : (
-              <div className="h-[180px] sm:h-[220px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyCostTrend} margin={{ top: 5, right: 8, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="gradPhm" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--chart-2))" stopOpacity={1} />
-                      <stop offset="100%" stopColor="hsl(var(--chart-2))" stopOpacity={0.8} />
-                    </linearGradient>
-                    <linearGradient id="gradServis" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--chart-1))" stopOpacity={1} />
-                      <stop offset="100%" stopColor="hsl(var(--chart-1))" stopOpacity={0.8} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid {...gridProps} />
-                  <XAxis dataKey="month" {...axisProps} />
-                  <YAxis {...axisProps} width={48} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)} tis.`} />
-                  <Tooltip cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }} content={<ChartTooltip formatter={formatCzk} />} />
-                  <Legend wrapperStyle={{ fontSize: "11px" }} iconType="circle" />
-                  <Bar dataKey="PHM" name="PHM" fill="url(#gradPhm)" radius={[6, 6, 0, 0]} maxBarSize={38} />
-                  <Bar dataKey="Servis" name="Servis" fill="url(#gradServis)" radius={[6, 6, 0, 0]} maxBarSize={38} />
-                </BarChart>
-              </ResponsiveContainer>
-              </div>
-            )}
-          </ChartCard>
-
-          <ChartCard title="Aktivní rezervace podle vozidel" subtitle="Rozložení napříč vozovým parkem" icon={PieIcon} iconClass="text-info">
-            {reservationsByVehicle.length === 0 ? (
-              <EmptyState icon={CalendarDays} title="Žádné aktivní rezervace" />
-            ) : (
-              <div className="h-[200px] sm:h-[220px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={reservationsByVehicle}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="45%"
-                    innerRadius={40}
-                    outerRadius={68}
-                    paddingAngle={2}
-                    stroke="hsl(var(--card))"
-                    strokeWidth={2}
-                  >
-                    {reservationsByVehicle.map((_, i) => (
-                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<ChartTooltip />} />
-                  <Legend wrapperStyle={{ fontSize: "11px" }} iconType="circle" />
-                </PieChart>
-              </ResponsiveContainer>
-              </div>
-            )}
-          </ChartCard>
-        </div>
-
-        <DashboardExtraWidgets />
-      </section>
-
-
-      {reservationStats.today > 0 && (
-        <Card className="border-info/30 bg-info/5 shadow-card">
-          <CardContent className="flex items-center gap-2 px-3 py-2">
-            <CalendarDays className="h-4 w-4 text-info" />
-            <span className="text-xs">
-              Dnes je <strong>{reservationStats.today}</strong> {reservationStats.today === 1 ? "aktivní rezervace" : "aktivních rezervací"}.
-            </span>
-            <button onClick={() => navigate("/rezervace")} className="ml-auto text-xs text-info underline hover:no-underline">
-              Zobrazit rezervace →
-            </button>
-          </CardContent>
-        </Card>
-      )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

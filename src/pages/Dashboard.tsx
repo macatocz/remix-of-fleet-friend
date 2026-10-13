@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Car, CheckCircle, Wrench, CalendarDays, DollarSign, Fuel, TrendingUp, Route, PieChart as PieIcon } from "lucide-react";
+import { Car, CheckCircle, Wrench, CalendarDays, DollarSign, Fuel, TrendingUp, Route } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   Legend
@@ -195,7 +194,7 @@ export default function Dashboard() {
       const allTime = months === 0;
       const rangeStart = new Date(now.getFullYear(), now.getMonth() - (Math.max(months, 1) - 1), 1);
       const startStr = `${rangeStart.getFullYear()}-${String(rangeStart.getMonth() + 1).padStart(2, "0")}-01`;
-      const endStr = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0];
+      const endStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()).padStart(2, "0")}`;
 
       // trips in range
       let tripQ = supabase.from("trip_logs").select("date, km_total, fuel_price, other_price, driver_id, vehicle_id");
@@ -220,8 +219,8 @@ export default function Dashboard() {
         tripCount: trips.filter((r) => r.km_total && r.km_total > 0).length,
       });
 
-      // trend by month over the selected range (min 6 buckets for readability)
-      let buckets = Math.max(months, 6);
+      // Trend uses the same selected period as summaries and rankings.
+      let buckets = Math.max(months, 1);
       if (allTime) {
         const dates = [...trips, ...svcs].map((r) => r.date).filter(Boolean).sort();
         if (dates.length) {

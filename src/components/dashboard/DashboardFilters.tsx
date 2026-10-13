@@ -48,11 +48,14 @@ export default function DashboardFilters({
   const isFiltered = vehicleId !== "all" || driverId !== "all" || period !== "6";
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border bg-card/60 p-2.5 shadow-card sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 sm:p-3">
+    <div className="flex flex-col gap-2 border-b pb-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
       <div className="flex w-full rounded-md border bg-background p-0.5 sm:inline-flex sm:w-auto">
         {PERIODS.map((p) => (
-          <button
+          <Button
             key={p.key}
+            variant="ghost"
+            size="sm"
+            aria-pressed={period === p.key}
             onClick={() => onPeriodChange(p.key)}
             className={cn(
               "flex-1 rounded px-2 py-1.5 text-xs font-medium transition-colors sm:flex-none sm:px-3",
@@ -60,7 +63,7 @@ export default function DashboardFilters({
             )}
           >
             {p.label}
-          </button>
+          </Button>
         ))}
       </div>
 

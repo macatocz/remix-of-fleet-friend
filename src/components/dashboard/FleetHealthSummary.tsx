@@ -22,6 +22,7 @@ interface Props {
   deadlineGroups: DeadlineGroup[];
   focus: MonitoringFocus;
   onFocusChange: (focus: MonitoringFocus) => void;
+  compact?: boolean;
 }
 
 const STATUS_LABELS = {
@@ -40,7 +41,7 @@ const STATUS_COLORS = {
   "no-data": "hsl(var(--muted-foreground))",
 } as const;
 
-export default function FleetHealthSummary({ deadlineGroups, focus, onFocusChange }: Props) {
+export default function FleetHealthSummary({ deadlineGroups, focus, onFocusChange, compact = false }: Props) {
   const [leaseStatuses, setLeaseStatuses] = useState<Array<keyof typeof STATUS_LABELS>>([]);
 
   useEffect(() => {
@@ -63,7 +64,7 @@ export default function FleetHealthSummary({ deadlineGroups, focus, onFocusChang
 
   const deadlineItems = deadlineGroups.flatMap((group) => group.items);
   const overdue = deadlineItems.filter((item) => item.overdue || (item.days !== null && item.days < 0)).length;
-  const soon = deadlineItems.filter((item) => !item.overdue && item.days !== null && item.days >= 0 && item.days <= 30).length;
+  const soon = deadlineItems.filter((item) => !item.overdue && item.days !== null && item.days >= 0 && item.days <= (item.criticalDays ?? 30)).length;
   const risk = leaseStatuses.filter((status) => status === "warning" || status === "critical").length;
   const missing = leaseStatuses.filter((status) => status === "no-data").length;
 
@@ -86,7 +87,7 @@ export default function FleetHealthSummary({ deadlineGroups, focus, onFocusChang
 
   const metrics = [
     { key: "overdue" as const, label: "Po termínu", value: overdue, icon: AlertTriangle, tone: "text-destructive", surface: "bg-destructive/10" },
-    { key: "soon" as const, label: "Do 30 dní", value: soon, icon: CalendarClock, tone: "text-warning", surface: "bg-warning/10" },
+    { key: "soon" as const, label: "Kritické termíny", value: soon, icon: CalendarClock, tone: "text-warning", surface: "bg-warning/10" },
     { key: "risk" as const, label: "Rizikový nájezd", value: risk, icon: CircleGauge, tone: "text-primary", surface: "bg-primary/10" },
     { key: "missing" as const, label: "Chybějící údaje", value: missing, icon: DatabaseZap, tone: "text-muted-foreground", surface: "bg-muted" },
   ];
@@ -121,7 +122,7 @@ export default function FleetHealthSummary({ deadlineGroups, focus, onFocusChang
         })}
       </div>
 
-      <div className="order-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
+      {!compact && <div className="order-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
         <Card className="shadow-card">
           <CardHeader className="border-b border-border/60 px-4 py-3">
             <CardTitle className="text-sm">Termíny v následujících měsících</CardTitle>
@@ -174,7 +175,7 @@ export default function FleetHealthSummary({ deadlineGroups, focus, onFocusChang
             )}
           </CardContent>
         </Card>
-      </div>
+      </div>}
     </div>
   );
 }

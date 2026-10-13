@@ -75,6 +75,7 @@ export default function PendingReservationsWidget() {
         }
       } catch (_) { /* ignore */ }
       load();
+      window.dispatchEvent(new Event("dashboard-reservations-changed"));
     }
   };
 

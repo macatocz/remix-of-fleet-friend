@@ -46,9 +46,9 @@ function deadlinePercent(item: DeadlineItem) {
 }
 
 const STRIPE: Record<string, string> = {
-  destructive: "bg-destructive",
-  warning: "bg-warning",
-  info: "bg-info",
+  destructive: "stripe-destructive",
+  warning: "stripe-warning",
+  info: "stripe-info",
 };
 
 export default function DeadlinesCard({ groups, focus }: { groups: DeadlineGroup[]; focus?: MonitoringFocus }) {
@@ -100,9 +100,9 @@ export default function DeadlinesCard({ groups, focus }: { groups: DeadlineGroup
             {items.map((item) => {
               const u = urgency(item);
               return (
-                <div key={`${item.groupLabel}-${item.id}`} onClick={item.onClick} className={cn("flex items-center gap-3 rounded-lg px-2 py-2 transition-colors", item.onClick && "cursor-pointer hover:bg-muted/60")}>
+                <div key={`${item.groupLabel}-${item.id}`} onClick={item.onClick} className={cn("flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors", item.onClick && "cursor-pointer hover:bg-muted/60")}>
                   <span className={cn(
-                    "flex min-h-9 min-w-12 max-w-24 shrink-0 items-center justify-center rounded-md px-1 text-[11px] font-bold tabular-nums",
+                    "flex min-h-10 min-w-14 max-w-24 shrink-0 items-center justify-center rounded-lg px-1.5 text-xs font-bold tabular-nums",
                     u === "destructive" && "bg-destructive/10 text-destructive",
                     u === "warning" && "bg-warning/10 text-warning",
                     u === "info" && "bg-muted text-muted-foreground",
@@ -110,14 +110,14 @@ export default function DeadlinesCard({ groups, focus }: { groups: DeadlineGroup
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-xs font-semibold">{item.label}</span>
                     <span className="block truncate text-[11px] text-muted-foreground">{item.groupLabel}{item.tag ? ` · ${item.tag}` : ""}</span>
-                    <span className="mt-1 block h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                    <span className="mt-1.5 block h-2 w-full overflow-hidden rounded-full bg-muted">
                       <span
-                        className={cn("block h-full transition-all", STRIPE[u])}
+                        className={cn("block h-full rounded-full transition-all", STRIPE[u])}
                         style={{ width: `${deadlinePercent(item)}%` }}
                       />
                     </span>
                   </span>
-                  <span className={cn("h-2 w-2 shrink-0 rounded-full", STRIPE[u])} />
+                  <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full shadow-sm", STRIPE[u])} />
                 </div>
               );
             })}

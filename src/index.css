@@ -128,4 +128,11 @@
   .h-safe-top { height: env(safe-area-inset-top); }
   .h-safe-bottom { height: env(safe-area-inset-bottom); }
   .bottom-safe { bottom: env(safe-area-inset-bottom); }
+
+  /* Gradient fill for progress bars (semantic tokens only) */
+  .stripe-success { background-image: linear-gradient(90deg, hsl(var(--success) / 0.7), hsl(var(--success))); }
+  .stripe-info { background-image: linear-gradient(90deg, hsl(var(--info) / 0.7), hsl(var(--info))); }
+  .stripe-warning { background-image: linear-gradient(90deg, hsl(var(--warning) / 0.7), hsl(var(--warning))); }
+  .stripe-destructive { background-image: linear-gradient(90deg, hsl(var(--destructive) / 0.7), hsl(var(--destructive))); }
+  .stripe-muted { background-image: linear-gradient(90deg, hsl(var(--muted-foreground) / 0.5), hsl(var(--muted-foreground))); }
 }

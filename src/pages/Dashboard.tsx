@@ -348,10 +348,10 @@ export default function Dashboard() {
               <StatCard label="Ke schválení" value={reservationStats.pending} hint={`${reservationStats.today} rezervací dnes`} icon={CalendarDays} tone="info" onClick={() => navigate("/rezervace")} />
             </div>}
           <FleetHealthSummary compact deadlineGroups={deadlineGroups} focus={monitoringFocus} onFocusChange={setMonitoringFocus} />
-          <div className="grid grid-cols-1 items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             <DeadlinesCard groups={deadlineGroups} focus={monitoringFocus} />
             <LeasingMileageWidget focus={monitoringFocus} />
-            <div className="space-y-3 md:col-span-2 xl:col-span-1">
+            <div className="flex flex-col gap-3 md:col-span-2 xl:col-span-1 [&>*]:flex-1">
               <PendingReservationsWidget />
               <ChartCard title="Dnešní výpůjčky" icon={CalendarDays} count={todayReservations.length}>
                 {todayReservations.length === 0 ? <p className="py-4 text-center text-xs text-muted-foreground">Dnes nejsou žádné schválené rezervace.</p> :
@@ -373,10 +373,20 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
             <ChartCard title="Vývoj nákladů" subtitle={periodTitle} icon={DollarSign} className="lg:col-span-2">
               {monthlyCostTrend.every(m => !m.PHM && !m.Servis) ? <EmptyState icon={DollarSign} title="Žádné náklady v tomto období" /> :
-                <div className="h-72"><ResponsiveContainer width="100%" height="100%"><BarChart data={monthlyCostTrend} margin={{ top: 5, right: 8, left: 0, bottom: 0 }}>
+                <div className="h-80"><ResponsiveContainer width="100%" height="100%"><BarChart data={monthlyCostTrend} margin={{ top: 5, right: 8, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="barServis" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.95} />
+                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.6} />
+                    </linearGradient>
+                    <linearGradient id="barPhm" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--chart-2))" stopOpacity={0.95} />
+                      <stop offset="100%" stopColor="hsl(var(--chart-2))" stopOpacity={0.6} />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid {...gridProps} /><XAxis dataKey="month" {...axisProps} /><YAxis {...axisProps} width={48} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)} tis.`} />
-                  <Tooltip content={<ChartTooltip formatter={formatCzk} />} /><Legend />
-                  <Bar dataKey="PHM" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} maxBarSize={38} /><Bar dataKey="Servis" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} maxBarSize={38} />
+                  <Tooltip content={<ChartTooltip formatter={formatCzk} />} cursor={{ fill: "hsl(var(--muted) / 0.4)" }} /><Legend iconType="circle" iconSize={8} />
+                  <Bar dataKey="PHM" fill="url(#barPhm)" radius={[6, 6, 0, 0]} maxBarSize={38} /><Bar dataKey="Servis" fill="url(#barServis)" radius={[6, 6, 0, 0]} maxBarSize={38} />
                 </BarChart></ResponsiveContainer></div>}
             </ChartCard>
             <div className="space-y-3">

@@ -8,6 +8,7 @@ interface Props {
   title: string;
   icon: LucideIcon;
   iconClass?: string;
+  chipClass?: string;
   count?: number;
   subtitle?: string;
   action?: ReactNode;
@@ -15,13 +16,15 @@ interface Props {
   children: ReactNode;
 }
 
-export default function ChartCard({ title, icon: Icon, iconClass = "text-primary", count, subtitle, action, className, children }: Props) {
+export default function ChartCard({ title, icon: Icon, iconClass = "text-primary", chipClass = "bg-primary/10", count, subtitle, action, className, children }: Props) {
   return (
     <Card className={cn("flex flex-col overflow-hidden shadow-card transition-shadow hover:shadow-card-hover", className)}>
       <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0 border-b border-border/60 bg-muted/30 px-4 py-2.5">
         <div className="min-w-0">
           <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-            <Icon className={cn("h-4 w-4", iconClass)} />
+            <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg shadow-sm", chipClass)}>
+              <Icon className={cn("h-4 w-4", iconClass)} />
+            </span>
             <span className="truncate">{title}</span>
             {count !== undefined && count > 0 && (
               <Badge variant="secondary" className="ml-1 text-[10px]">{count}</Badge>

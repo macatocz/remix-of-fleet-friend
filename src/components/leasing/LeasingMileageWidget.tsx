@@ -17,6 +17,23 @@ import type { MonitoringFocus } from "@/components/dashboard/FleetHealthSummary"
 
 const PREVIEW_COUNT = 5;
 
+// Gradient fill per status (semantic tokens), stronger than flat statusColor
+const BAR_GRAD: Record<string, string> = {
+  ok: "stripe-success",
+  watch: "stripe-info",
+  warning: "stripe-warning",
+  critical: "stripe-destructive",
+  "no-data": "stripe-muted",
+};
+
+const STATUS_TEXT: Record<string, string> = {
+  critical: "text-destructive font-bold",
+  warning: "text-warning font-semibold",
+  ok: "text-success font-semibold",
+  watch: "text-info font-medium",
+  "no-data": "text-muted-foreground",
+};
+
 export default function LeasingMileageWidget({ focus }: { focus?: MonitoringFocus }) {
   const navigate = useNavigate();
   const [vehicles, setVehicles] = useState<any[]>([]);
@@ -112,16 +129,16 @@ export default function LeasingMileageWidget({ focus }: { focus?: MonitoringFocu
                 className="group cursor-pointer rounded-lg px-2 py-2.5 hover:bg-muted/50 transition-colors"
                 onClick={() => navigate(`/vozidla/${row.id}`)}
               >
-                <div className="flex items-center justify-between text-xs mb-1">
+                <div className="flex items-center justify-between text-xs mb-1.5">
                   <span className="font-medium truncate">{row.label}</span>
-                  <span className={cn("text-[11px] flex items-center gap-1 tabular-nums", row.result.status === "critical" ? "font-bold text-destructive" : row.result.status === "warning" ? "font-semibold text-warning" : "text-muted-foreground")}>
+                  <span className={cn("text-[11px] flex items-center gap-1 tabular-nums", STATUS_TEXT[row.result.status] ?? "text-muted-foreground")}>
                     {row.result.status === "no-data" ? <DatabaseZap className="h-3 w-3" /> : `${row.percentage}% plánu`}
                     <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </span>
                 </div>
-                 <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden">
                   <div
-                    className={cn("h-full transition-all", statusColor(row.result.status))}
+                    className={cn("h-full rounded-full transition-all", BAR_GRAD[row.result.status] ?? "stripe-muted")}
                     style={{ width: `${Math.min(100, row.percentage)}%` }}
                   />
                 </div>

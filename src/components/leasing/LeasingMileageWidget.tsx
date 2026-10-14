@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import {
   computeLeasingMileage,
   deriveCurrentMileage,
-  statusColor,
   LeasingMileageInput,
   MileageSource,
   TripLogMileage,

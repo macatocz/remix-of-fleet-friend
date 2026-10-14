@@ -11,17 +11,23 @@ export default function AttentionStrip({ groups, loading }: { groups: DeadlineGr
   const overdue = items.filter(item => item.overdue || (item.days !== null && item.days < 0)).length;
   const critical = items.filter(item => !item.overdue && item.days !== null && item.days >= 0 && item.days <= (item.criticalDays ?? 30)).length;
   return (
-    <section aria-label="Vyžaduje pozornost" className="border-y border-border bg-muted/30 px-3 py-3 sm:px-4">
+    <section aria-label="Vyžaduje pozornost" className="rounded-xl border border-border bg-card px-3 py-3 shadow-card sm:px-4">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <h2 className="flex items-center gap-2 text-sm font-semibold">
           {items.length ? <AlertTriangle className="h-4 w-4 text-warning" /> : <CheckCircle2 className="h-4 w-4 text-success" />}
           Vyžaduje pozornost
         </h2>
-        <div className="flex flex-wrap gap-x-3 text-xs tabular-nums" aria-live="polite">
+        <div className="flex flex-wrap items-center gap-2 text-xs tabular-nums" aria-live="polite">
           {loading ? <span className="text-muted-foreground">Načítání…</span> : <>
-            <span className="text-destructive">{overdue} po termínu</span>
-            <span className="text-warning">{critical} kritické</span>
-            <span className="text-muted-foreground">{items.length - overdue - critical} nadcházející</span>
+            <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold", overdue ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground")}>
+              <span className="h-1.5 w-1.5 rounded-full bg-destructive" />{overdue} po termínu
+            </span>
+            <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold", critical ? "bg-warning/10 text-warning" : "bg-muted text-muted-foreground")}>
+              <span className="h-1.5 w-1.5 rounded-full bg-warning" />{critical} kritické
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-info/10 px-2.5 py-1 text-[11px] font-semibold text-info">
+              <span className="h-1.5 w-1.5 rounded-full bg-info" />{items.length - overdue - critical} nadcházející
+            </span>
           </>}
         </div>
         {items.length > 3 && <Button size="sm" variant="ghost" className="ml-auto h-7 gap-1 text-xs" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>

@@ -5,5 +5,5 @@
 - [x] Ověřit přihlášený přehled a přepínání záložek.
 
 # Sjednocení PDF
-- [ ] Sjednotit reporty, cestovní příkazy, kartu vozidla a QR list přes společnou tiskovou paletu.
-- [ ] Ověřit stažení a vzhled PDF na skutečných datech, více stránek a černobílé QR kódy.
+- [x] Sjednotit reporty, cestovní příkazy, kartu vozidla a QR list přes společnou tiskovou paletu.
+- [x] Ověřit stažení a vzhled PDF na skutečných datech, více stránek a černobílé QR kódy.

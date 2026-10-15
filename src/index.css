@@ -4,6 +4,13 @@
 
 @layer base {
   :root {
+    /* Print palette stays fixed in both screen themes. Exact brand RGB values. */
+    --pdf-primary: 200 33 39;
+    --pdf-foreground: 86 86 86;
+    --pdf-muted-foreground: 118 118 118;
+    --pdf-background: 255 255 255;
+    --pdf-muted: 245 245 245;
+    --pdf-border: 220 220 220;
     --background: 0 0% 98%;
     --foreground: 0 0% 34%;
 

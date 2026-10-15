@@ -1,3 +1,4 @@
 - Active role (multi-role users) lives in AuthContext; `roles` = [activeRole] for UI, real roles in `availableRoles` — so existing role checks adapt without changes; DB permissions stay on real roles.
 - Fleet monitoring aggregates stay in the dashboard presentation layer and reuse `src/lib/leasing/mileage.ts` — this keeps summary cards, charts, and vehicle detail calculations consistent.
 - Dashboard tabs share one deadline dataset with AttentionStrip; financial filters only affect analytics, including its rankings — this prevents inconsistent alerts and operational counts.
+- All PDF generators use the shared PDF theme backed by fixed global print tokens, independent of screen dark mode — this keeps exported documents consistently branded and readable in print.

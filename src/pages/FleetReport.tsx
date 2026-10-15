@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FuelReport from "@/components/fuel/FuelReport";
 import ServiceReport from "@/components/report/ServiceReport";
+import { applyPdfTheme, getPdfTheme } from "@/lib/pdf/theme";
 
 const czk = (n: number) => `${Math.round(n).toLocaleString("cs-CZ")} Kč`;
 const num = (n: number) => Math.round(n).toLocaleString("cs-CZ");
@@ -135,18 +136,23 @@ function QuarterlyReport() {
     const { ensurePdfFont } = await import("@/lib/travel/pdfFont");
     const doc = new jsPDF({ orientation: "landscape" });
     const font = await ensurePdfFont(doc);
+    const { colors, table } = getPdfTheme();
+    applyPdfTheme(doc, colors);
+    doc.setTextColor(...colors.primary);
 
     doc.setFont(font, "bold");
     doc.setFontSize(16);
     doc.text(`Report vozového parku – ${range.label}`, 14, 16);
+    doc.setTextColor(...colors.foreground);
     doc.setFont(font, "normal");
     doc.setFontSize(10);
     doc.text(`Období: ${range.from} – ${range.to}`, 14, 23);
 
     autoTable(doc, {
+      ...table,
       startY: 30,
-      styles: { font, fontSize: 9 },
-      headStyles: { font, fontStyle: "bold" },
+      styles: { ...table.styles, font, fontSize: 9 },
+      headStyles: { ...table.headStyles, font, fontStyle: "bold" },
       head: [["Ukazatel", range.label, prevRange.label]],
       body: [
         ["Najeté km", num(current.km), num(previous?.km || 0)],
@@ -161,9 +167,10 @@ function QuarterlyReport() {
     });
 
     autoTable(doc, {
+      ...table,
       startY: (doc as any).lastAutoTable.finalY + 8,
-      styles: { font, fontSize: 8 },
-      headStyles: { font, fontStyle: "bold" },
+      styles: { ...table.styles, font, fontSize: 8 },
+      headStyles: { ...table.headStyles, font, fontStyle: "bold" },
       head: [["Vozidlo", "Km", "Jízd", "PHM", "Servis", "Celkem", "Kč/km", "Rezervací", "Obsazenost"]],
       body: rows.map((s) => {
         const v = vehMap.get(s.vehicle_id);

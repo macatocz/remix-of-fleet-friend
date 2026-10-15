@@ -413,7 +413,7 @@ function FieldRow({ field, vehicle, editing, editData, onEdit }: {
   }
 
   return (
-    <div className="flex justify-between rounded px-2 py-1.5 transition-colors hover:bg-muted/50">
+    <div className="flex justify-between rounded px-2 py-1 transition-colors hover:bg-muted/50">
       <dt className="text-muted-foreground">{field.label}</dt>
       <dd className="font-semibold text-right max-w-[230px] truncate">{renderValue(field.key, vehicle[field.key])}</dd>
     </div>
@@ -444,7 +444,7 @@ function LeasingProgress({ vehicle, mileageRecords }: { vehicle: any; mileageRec
   const leftKm = drivenKm !== null ? totalKm - drivenKm : null;
 
   return (
-    <div className="space-y-3 rounded-lg bg-muted/40 p-3">
+    <div className="space-y-2.5 rounded-lg bg-muted/40 p-2.5">
       <MiniProgress
         label="Doba leasingu"
         valueText={`${elapsed} / ${totalMonths} měs. (zbývá ${remaining})`}

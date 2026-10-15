@@ -62,7 +62,7 @@ function pluralFiles(count: number): string {
 
 const DEFAULT_FOLDERS = [
   "Technický průkaz", "Pojistná smlouva", "Zelená karta", "STK protokol",
-  "Servisní záznam", "Faktura", "Předávací protokol", "Ostatní",
+  "Servisní záznam", "Faktura", "Předávací protokol", "Účtenky – tankování", "Ostatní",
 ];
 
 export default function VehicleDocuments({ vehicleId }: { vehicleId: string }) {

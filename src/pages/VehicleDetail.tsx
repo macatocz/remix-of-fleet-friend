@@ -806,7 +806,7 @@ export default function VehicleDetail() {
         </div>
 
         <TabsContent value="info" className="mt-6">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 items-start">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4 items-start">
             <EditableCard
               title="Základní informace"
               icon={<Car className="h-4 w-4" />}

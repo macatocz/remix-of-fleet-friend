@@ -14,10 +14,13 @@ export interface DeadlineItem {
   badge: string;
   overdue?: boolean;
   // Full duration of the term (start -> end) in days, when known.
-  // The progress bar is then proportional to the whole term, not a 90-day window.
+  // Kept for reference; the bar no longer uses it (it shows urgency instead).
   totalDays?: number | null;
   // Days before the deadline when the item becomes critical (default 30).
   criticalDays?: number;
+  // Look-ahead window in days: the bar fills from 0 % (entering the window)
+  // to 100 % (deadline reached). Defaults to 90.
+  windowDays?: number;
   onClick?: () => void;
 }
 
@@ -34,15 +37,13 @@ function urgency(item: DeadlineItem) {
   return "info";
 }
 
-// Progress within the term: proportional to the total duration when known,
-// otherwise relative to a 90-day window.
+// Urgency bar: fills from 0 % (item enters its look-ahead window) to 100 %
+// (deadline reached), so a nearly-full bar always means "act now".
 function deadlinePercent(item: DeadlineItem) {
   if (item.days === null) return 0;
   if (item.days <= 0) return 100;
-  if (item.totalDays && item.totalDays > 0) {
-    return Math.min(100, Math.max(0, Math.round((1 - item.days / item.totalDays) * 100)));
-  }
-  return Math.min(100, Math.round((1 - item.days / 90) * 100));
+  const windowDays = item.windowDays && item.windowDays > 0 ? item.windowDays : 90;
+  return Math.min(100, Math.max(0, Math.round((1 - item.days / windowDays) * 100)));
 }
 
 const STRIPE: Record<string, string> = {

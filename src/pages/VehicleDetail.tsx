@@ -485,7 +485,7 @@ function EditableCard({ title, icon, accent, right, header, fields, vehicle, edi
             <dl className="space-y-1 text-sm">
               {fields.filter(f => f.type !== "vignettes").map(f => <FieldRow key={f.key} field={f} vehicle={vehicle} editing={false} editData={editData} onEdit={onEdit} />)}
               {vignetteField && (
-                <div className="flex justify-between rounded px-2 py-1.5 transition-colors hover:bg-muted/50">
+                <div className="flex justify-between rounded px-2 py-1 transition-colors hover:bg-muted/50">
                   <dt className="text-muted-foreground">{vignetteField.label}</dt>
                   <dd className="font-medium text-right">
                     <VehicleVignettes vehicleId={vehicle.id} editing={false} />
@@ -669,13 +669,13 @@ export default function VehicleDetail() {
   return (
     <div className="w-full max-w-full space-y-6 overflow-x-hidden">
       <Card className={cn("overflow-hidden border-l-4 transition-shadow hover:shadow-[var(--shadow-card-hover)]", headerAccentClass(vehicle.status))}>
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 pl-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 pl-4">
           <div className="flex items-start gap-3 min-w-0">
             <Button variant="ghost" size="icon" onClick={() => navigate("/vozidla")} className="shrink-0 mt-1">
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <span className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-full border", headerIconClass(vehicle.status))}>
-              <Car className="h-6 w-6" />
+            <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full border", headerIconClass(vehicle.status))}>
+              <Car className="h-5 w-5" />
             </span>
             <div className="min-w-0 space-y-1.5">
               <div className="flex items-center gap-3 flex-wrap">

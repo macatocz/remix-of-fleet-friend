@@ -130,6 +130,8 @@ export async function generateVehicleCardPdf(v: VehicleCardData, extras: Vehicle
     y += 3;
   };
 
+  // První sekce začíná až pod QR kódem a jeho popiskem (QR: 12–46 mm, popisek 49 mm)
+  y = Math.max(y, 54);
   section("Základní údaje");
   rows([
     ["Kategorie", v.kategorie ? CATEGORY[v.kategorie] || v.kategorie : "—"],

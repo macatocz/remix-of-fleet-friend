@@ -115,7 +115,8 @@ export default function VehicleDocuments({ vehicleId }: { vehicleId: string }) {
 
   // Ensure default folders exist for this vehicle
   useEffect(() => {
-    if (loading || !loadOk || folders.length > 0) return;
+    if (loading || !loadOk) return;
+    if (folders.length > 0 && !(folders.length === 1 && folders[0].name === "Účtenky – tankování")) return;
     if (seededRef.current === vehicleId) return;
     seededRef.current = vehicleId;
     (async () => {

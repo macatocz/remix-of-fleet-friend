@@ -82,7 +82,8 @@ export async function generateVehicleCardPdf(v: VehicleCardData, extras: Vehicle
   doc.setTextColor(...colors.foreground);
   y += 6;
   doc.setDrawColor(...colors.border);
-  doc.line(M, y, W - M, y);
+  // Čára končí před QR kódem (34 mm široký + 6 mm mezera), aby do něj nezasahovala
+  doc.line(M, y, W - M - 40, y);
 
   // QR vpravo nahoře
   try {

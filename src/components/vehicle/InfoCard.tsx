@@ -24,21 +24,21 @@ export function InfoCard({
         className,
       )}
     >
-      <div className="flex items-center justify-between gap-3 border-b px-5 py-3">
-        <div className="flex items-center gap-2.5 min-w-0">
+      <div className="flex items-center justify-between gap-3 border-b px-4 py-2.5">
+        <div className="flex items-center gap-2 min-w-0">
           <span
             className={cn(
-              "flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
+              "flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
               accent === "primary" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
             )}
           >
             {icon}
           </span>
-          <h3 className="truncate text-sm font-bold uppercase tracking-wider text-foreground/80">{title}</h3>
+          <h3 className="truncate text-xs font-bold uppercase tracking-wider text-foreground/80">{title}</h3>
         </div>
         {right}
       </div>
-      <CardContent className="p-5">{children}</CardContent>
+      <CardContent className="p-4">{children}</CardContent>
     </Card>
   );
 }

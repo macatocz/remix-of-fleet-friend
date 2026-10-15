@@ -274,6 +274,7 @@ export default function Dashboard() {
         label: s.label,
         tag: s.date,
         days: s.days,
+        windowDays: 90,
         badge: s.days < 0 ? `${Math.abs(s.days)} d po` : `${s.days} d`,
         onClick: () => navigate(`/vozidla/${s.id}`),
       })),
@@ -282,7 +283,7 @@ export default function Dashboard() {
       key: "zelena-karta",
       label: "Zelené karty",
       emptyText: "Žádná zelená karta nekončí do 180 dní",
-      items: greenCardsSoon.map(s => ({ id: s.id, label: s.label, tag: s.date, days: s.days, criticalDays: 60, badge: `${s.days} d`, onClick: () => navigate(`/vozidla/${s.id}`) })),
+      items: greenCardsSoon.map(s => ({ id: s.id, label: s.label, tag: s.date, days: s.days, criticalDays: 60, windowDays: 180, badge: `${s.days} d`, onClick: () => navigate(`/vozidla/${s.id}`) })),
     },
     {
       key: "pojisteni",

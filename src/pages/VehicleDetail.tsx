@@ -396,7 +396,7 @@ function FieldRow({ field, vehicle, editing, editData, onEdit }: {
       );
     }
     return (
-      <div className="flex justify-between rounded px-2 py-1 transition-colors hover:bg-muted/50">
+      <div className="flex justify-between gap-2 rounded px-1.5 py-0.5 text-[13px] transition-colors hover:bg-muted/50">
         <dt className="text-muted-foreground">{field.label}</dt>
         <dd className="font-medium text-right max-w-[200px] truncate">{computed}</dd>
       </div>
@@ -413,7 +413,7 @@ function FieldRow({ field, vehicle, editing, editData, onEdit }: {
   }
 
   return (
-    <div className="flex justify-between rounded px-2 py-1 transition-colors hover:bg-muted/50">
+    <div className="flex justify-between gap-2 rounded px-1.5 py-0.5 text-[13px] transition-colors hover:bg-muted/50">
       <dt className="text-muted-foreground">{field.label}</dt>
       <dd className="font-semibold text-right max-w-[230px] truncate">{renderValue(field.key, vehicle[field.key])}</dd>
     </div>

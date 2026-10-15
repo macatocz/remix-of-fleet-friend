@@ -1,32 +1,30 @@
-# Oprava pruhu u zelené karty v „Blížících se termínech"
+# Pruh „blížící se termíny" jako ukazatel naléhavosti
 
-## Proč je pruh skoro prázdný
+## Problém
 
-Pruh u termínu se kreslí poměrově k **celkové době** daného termínu:
+Pruh u termínu se dnes kreslí poměrově k **celkové době trvání** (leasing 72 měsíců, pojištění rok) nebo k pevnému 90dennímu oknu (zelená karta, STK — začátek platnosti neznáme). U BMW zelená karta (konec 21. 12. 2026, zbývá 67 dní) tak pruh ukazuje jen ~26 % — vizuálně to nevypadá, že je „nejvyšší čas řešit", přestože termín je za rohem.
 
-- **Leasing** — známe začátek i konec (72 měsíců), pruh se plní plynule.
-- **Pojištění** — známe `valid_from` i `valid_until`, pruh se plní plynule.
-- **Zelená karta a STK** — v evidenci vozidla je uložené **jen datum konce** (`zelena_karta`, `stk`), začátek platnosti neexistuje. Proto se použije nouzové okno **90 dní**: pruh ukazuje, kolik z těch 90 dní už uběhlo.
+## Nové chování — pruh = naléhavost
 
-U BMW končí zelená karta 21. 12. 2026, tedy za **67 dní**. V 90denním okně to vychází na `1 − 67/90 ≈ 26 %` — proto je modrý pruh ani ne do poloviny, přestože je termín „za chvíli". Číslo je technicky správné, ale vizuálně působí, že ještě není spěch.
+Pruh přestane vyjadřovat „kolik uběhlo z celkové doby" a bude vyjadřovat **„jak blízko je konec"**. Jakmile se termín v kartě objeví, pruh se plní od 0 % k 100 % směrem k datu konce:
 
-## Co změníme
+- Každá kategorie má své **okno náhledu** (stejné, podle kterého se termín v kartě vůbec zobrazí):
+  - Leasing: 180 dní
+  - Zelená karta: 180 dní (zobrazení), varovná hranice 60 dní
+  - Pojištění: 90 dní
+  - STK: 90 dní, varovná hranice 30 dní
+  - Servis: dle stávající logiky
+- Plnění pruhu: `1 − zbývající_dny / okno`. Termín, který právě vstoupil do okna, má pruh téměř prázdný; termín za pár dní má pruh téměř plný.
+- **Barva podle naléhavosti** (beze změny oproti dnešku): neutrální/modrá daleko od termínu, oranžová pod varovnou hranicí (zelená karta 60 dní, STK 30 dní, leasing 90 dní), červená po termínu.
 
-U termínů bez známého začátku (zelená karta, STK) se pruh přestane vážit k pevnému 90dennímu oknu a místo toho se bude plnit vůči **varovné hranici** dané kategorie:
-
-- **Zelená karta** — hranice 60 dní: při 60 dnech pruh začíná, při 0 dnech je plný. BMW (67 dní) bude těsně před začátkem plnění, za týden už bude pruh viditelně růst.
-- **STK** — hranice 30 dní (výchozí).
-
-Leasing a pojištění zůstanou poměrové k celé době trvání — tam to dává smysl, protože začátek známe.
-
-Barva pruhu se nemění: po termínu červená, pod varovnou hranicí oranžová, jinak neutrální.
+Výsledek pro BMW zelenou kartu: 67 dní v 180denním okně → pruh ~63 % a za pár dní přejde do oranžové (pod 60 dní). Řidič/správce na první pohled vidí „je to skoro tady".
 
 ## Technické provedení
 
-- `src/components/dashboard/DeadlinesCard.tsx` — `deadlinePercent()`: když chybí `totalDays`, použije se jako základ `criticalDays` (místo pevných 90 dní).
-- `src/pages/Dashboard.tsx` — bez změny dat; zelená karta už `criticalDays: 60` předává.
+- `src/components/dashboard/DeadlinesCard.tsx` — `deadlinePercent()`: nově `1 − days / windowDays`, kde `windowDays` je nové pole na položce (výchozí 90). `totalDays` se přestane používat pro plnění.
+- `src/pages/Dashboard.tsx` — každá skupina termínů předá `windowDays` odpovídající svému filtru zobrazení (leasing 180, zelená karta 180, pojištění 90, STK 90). Zelené kartě doplníme i badge „X d" (už tam je).
 
 ## Ověření
 
 - Typecheck.
-- Playwright: dashboard → karta „Blížící se termíny" → u BMW zelená karta (67 dní) má pruh téměř prázdný, ale u termínu pod 60 dny pruh viditelně roste; leasing a pojištění se chovají stejně jako dnes.
+- Playwright: dashboard → „Blížící se termíny" → BMW zelená karta má pruh přes polovinu; leasing (73 dní v 180denním okně, oranžový) ~59 %; po termínu červený plný pruh.

@@ -806,7 +806,7 @@ export default function VehicleDetail() {
         </div>
 
         <TabsContent value="info" className="mt-6">
-          <div className="grid gap-6 md:grid-cols-2 items-start">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 items-start">
             <EditableCard
               title="Základní informace"
               icon={<Car className="h-4 w-4" />}
@@ -832,14 +832,14 @@ export default function VehicleDetail() {
             )}
             <EditableCard title="Dokumenty a kontroly" icon={<ShieldCheck className="h-4 w-4" />} fields={DOC_FIELDS} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit} />
             <EditableCard title="Provozní údaje" icon={<Settings2 className="h-4 w-4" />} fields={getOpsFields(branchOptions)} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit} />
-            <Card className="md:col-span-2 overflow-hidden border-l-4 border-l-muted-foreground/60">
-              <div className="flex items-center gap-2.5 border-b px-5 py-3">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                  <QrCode className="h-4 w-4" />
+            <Card className="md:col-span-2 xl:col-span-3 overflow-hidden border-l-4 border-l-muted-foreground/60">
+              <div className="flex items-center gap-2 border-b px-4 py-2.5">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                  <QrCode className="h-3.5 w-3.5" />
                 </span>
-                <h3 className="text-sm font-bold uppercase tracking-wider text-foreground/80">QR kód vozidla</h3>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-foreground/80">QR kód vozidla</h3>
               </div>
-              <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center gap-6">
+              <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="shrink-0">
                 <VehicleQRCode vehicleId={vehicle.id} label={`${vehicle.znacka || ""} ${vehicle.rz || ""}`.trim()} />
                 </div>
@@ -847,7 +847,7 @@ export default function VehicleDetail() {
                 <p className="text-xs text-muted-foreground">
                   Vytiskněte a nalepte do vozu — řidič nascanováním ihned otevře kartu vozidla.
                 </p>
-                <div className="mt-4">
+                <div className="mt-3">
                   <Button variant="outline" className="w-full sm:w-auto" onClick={printVehicleCard} disabled={cardPrinting}>
                     {cardPrinting ? "Připravuji PDF…" : "Tisk karty vozidla (PDF)"}
                   </Button>

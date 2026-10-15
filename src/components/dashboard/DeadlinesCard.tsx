@@ -14,10 +14,13 @@ export interface DeadlineItem {
   badge: string;
   overdue?: boolean;
   // Full duration of the term (start -> end) in days, when known.
-  // The progress bar is then proportional to the whole term, not a 90-day window.
+  // Kept for reference; the bar no longer uses it (it shows urgency instead).
   totalDays?: number | null;
   // Days before the deadline when the item becomes critical (default 30).
   criticalDays?: number;
+  // Look-ahead window in days: the bar fills from 0 % (entering the window)
+  // to 100 % (deadline reached). Defaults to 90.
+  windowDays?: number;
   onClick?: () => void;
 }
 

@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FuelReport from "@/components/fuel/FuelReport";
+import ServiceReport from "@/components/report/ServiceReport";
 
 const czk = (n: number) => `${Math.round(n).toLocaleString("cs-CZ")} Kč`;
 const num = (n: number) => Math.round(n).toLocaleString("cs-CZ");
@@ -28,9 +29,11 @@ export default function FleetReport() {
       <TabsList>
         <TabsTrigger value="quarter">Kvartální přehled</TabsTrigger>
         <TabsTrigger value="fuel">Přehled tankování</TabsTrigger>
+        <TabsTrigger value="service">Servisy a údržba</TabsTrigger>
       </TabsList>
       <TabsContent value="quarter"><QuarterlyReport /></TabsContent>
       <TabsContent value="fuel"><FuelReport /></TabsContent>
+      <TabsContent value="service"><ServiceReport /></TabsContent>
     </Tabs>
   );
 }

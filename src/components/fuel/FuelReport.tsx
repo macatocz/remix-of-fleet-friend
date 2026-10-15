@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Receipt, Fuel } from "lucide-react";
+import { Download, Receipt, Fuel, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { vehicleLabel } from "@/lib/vehicleName";
+import { exportTablePdf } from "@/lib/report/tablePdf";
 
 const fmt = (n: number, d = 0) => n.toLocaleString("cs-CZ", { maximumFractionDigits: d });
 const iso = (d: Date) => d.toISOString().slice(0, 10);
@@ -82,6 +83,23 @@ export default function FuelReport() {
     URL.revokeObjectURL(url);
   };
 
+  const exportPdf = () => exportTablePdf({
+    title: "Přehled tankování",
+    subtitle: `Období: ${new Date(from).toLocaleDateString("cs-CZ")} – ${new Date(to).toLocaleDateString("cs-CZ")}`,
+    summary: [`Tankování: ${filtered.length}`, `Litrů celkem: ${fmt(totals.liters, 1)} l`, `Cena celkem: ${fmt(totals.price)} Kč`, `Bez účtenky: ${totals.missing}`],
+    head: ["Datum a čas", "Vozidlo", "RZ", "Řidič", "Místo", "Litry", "Cena Kč", "Tachometr", "Účtenka"],
+    body: filtered.map((r) => {
+      const v = vehMap.get(r.vehicle_id);
+      return [
+        new Date(r.fueled_at).toLocaleString("cs-CZ", { dateStyle: "short", timeStyle: "short" }),
+        vehicleLabel(v), v?.rz || "", drvMap.get(r.driver_id) || "", r.location || "",
+        r.liters ? fmt(Number(r.liters), 2) : "", r.total_price ? fmt(Number(r.total_price), 2) : "",
+        r.km ? fmt(r.km) : "", r.document_id ? "ano" : "ne",
+      ];
+    }),
+    filename: `tankovani-${from}-${to}.pdf`,
+  });
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end gap-2">
@@ -103,6 +121,9 @@ export default function FuelReport() {
         </Select>
         <Button variant="outline" size="sm" className="ml-auto" onClick={exportCsv} disabled={!filtered.length}>
           <Download className="mr-2 h-4 w-4" />CSV
+        </Button>
+        <Button size="sm" onClick={exportPdf} disabled={!filtered.length}>
+          <FileText className="mr-2 h-4 w-4" />PDF
         </Button>
       </div>
 

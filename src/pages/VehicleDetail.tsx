@@ -396,7 +396,7 @@ function FieldRow({ field, vehicle, editing, editData, onEdit }: {
       );
     }
     return (
-      <div className="flex justify-between rounded px-2 py-1.5 transition-colors hover:bg-muted/50">
+      <div className="flex justify-between rounded px-2 py-1 transition-colors hover:bg-muted/50">
         <dt className="text-muted-foreground">{field.label}</dt>
         <dd className="font-medium text-right max-w-[200px] truncate">{computed}</dd>
       </div>

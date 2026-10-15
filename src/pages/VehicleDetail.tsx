@@ -809,14 +809,14 @@ export default function VehicleDetail() {
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4 items-start">
             <EditableCard
               title="Základní informace"
-              icon={<Car className="h-4 w-4" />}
+              icon={<Car className="h-3.5 w-3.5" />}
               accent="primary"
               right={<PlateBadge rz={vehicle.rz} />}
               header={
-                <div className="mb-3 pb-3 border-b">
-                  <p className="text-lg font-bold leading-tight">{vehicle.nazev_vozu || vehicle.znacka || "—"}</p>
+                <div className="mb-2 pb-2 border-b">
+                  <p className="text-base font-bold leading-tight">{vehicle.nazev_vozu || vehicle.znacka || "—"}</p>
                   {vehicle.znacka && vehicle.nazev_vozu && (
-                    <p className="text-sm text-muted-foreground">{vehicle.znacka}</p>
+                    <p className="text-xs text-muted-foreground">{vehicle.znacka}</p>
                   )}
                 </div>
               }
@@ -825,13 +825,13 @@ export default function VehicleDetail() {
             {showLeasing && (
               <EditableCard
                 title="Leasing"
-                icon={<FileSignature className="h-4 w-4" />}
-                header={<div className="mb-3"><LeasingProgress vehicle={vehicle} mileageRecords={mileageRecords} /></div>}
+                icon={<FileSignature className="h-3.5 w-3.5" />}
+                header={<div className="mb-2"><LeasingProgress vehicle={vehicle} mileageRecords={mileageRecords} /></div>}
                 fields={LEASING_FIELDS} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit}
               />
             )}
-            <EditableCard title="Dokumenty a kontroly" icon={<ShieldCheck className="h-4 w-4" />} fields={DOC_FIELDS} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit} />
-            <EditableCard title="Provozní údaje" icon={<Settings2 className="h-4 w-4" />} fields={getOpsFields(branchOptions)} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit} />
+            <EditableCard title="Dokumenty a kontroly" icon={<ShieldCheck className="h-3.5 w-3.5" />} fields={DOC_FIELDS} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit} />
+            <EditableCard title="Provozní údaje" icon={<Settings2 className="h-3.5 w-3.5" />} fields={getOpsFields(branchOptions)} vehicle={vehicle} editing={editing} editData={editData} onEdit={handleEdit} />
             <Card className="md:col-span-2 xl:col-span-4 overflow-hidden border-l-4 border-l-muted-foreground/60">
               <div className="flex items-center gap-1.5 border-b px-3 py-2">
                 <span className="flex h-5 w-5 items-center justify-center text-muted-foreground">

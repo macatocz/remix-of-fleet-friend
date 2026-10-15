@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatCZK, formatCurrency } from "./calc";
 import { ensurePdfFont, PDF_FONT } from "./pdfFont";
+import { applyPdfTheme, getPdfTheme } from "@/lib/pdf/theme";
 
 export type TravelOrderPDFData = {
   number: string;
@@ -37,9 +38,11 @@ function fmtTs(ts?: string): string {
 export async function generateTravelOrderPDF(data: TravelOrderPDFData): Promise<jsPDF> {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   await ensurePdfFont(doc);
+  const { colors, table } = getPdfTheme();
+  applyPdfTheme(doc, colors);
   const tableDefaults = {
-    styles: { font: PDF_FONT, fontSize: 9, cellPadding: 1.5 },
-    headStyles: { font: PDF_FONT, fontStyle: "bold" as const },
+    styles: { ...table.styles, font: PDF_FONT, fontSize: 9, cellPadding: 1.5 },
+    headStyles: { ...table.headStyles, font: PDF_FONT, fontStyle: "bold" as const },
   };
   const pageW = doc.internal.pageSize.getWidth();
   let y = 15;
@@ -56,7 +59,9 @@ export async function generateTravelOrderPDF(data: TravelOrderPDFData): Promise<
   // Titul
   doc.setFontSize(16);
   doc.setFont(PDF_FONT, "bold");
+  doc.setTextColor(...colors.primary);
   doc.text("CESTOVNÍ PŘÍKAZ", pageW / 2, y + 4, { align: "center" });
+  doc.setTextColor(...colors.foreground);
   doc.setFontSize(10);
   doc.setFont(PDF_FONT, "normal");
   doc.text(`č. ${data.number}${data.status ? `  •  ${data.status}` : ""}`, pageW / 2, y + 10, { align: "center" });
@@ -65,6 +70,7 @@ export async function generateTravelOrderPDF(data: TravelOrderPDFData): Promise<
 
   // Základní údaje
   autoTable(doc, {
+    ...table,
     startY: y,
     theme: "grid",
     styles: { ...tableDefaults.styles },
@@ -83,12 +89,15 @@ export async function generateTravelOrderPDF(data: TravelOrderPDFData): Promise<
   y = (doc as any).lastAutoTable.finalY + 6;
   doc.setFont(PDF_FONT, "bold");
   doc.setFontSize(10);
+  doc.setTextColor(...colors.primary);
   doc.text("Průběh cesty", 14, y);
+  doc.setTextColor(...colors.foreground);
   autoTable(doc, {
+    ...table,
     startY: y + 2,
     theme: "striped",
-    styles: { font: PDF_FONT, fontSize: 8, cellPadding: 1.5 },
-    headStyles: { font: PDF_FONT, fontStyle: "bold" },
+    styles: { ...table.styles, font: PDF_FONT, fontSize: 8, cellPadding: 1.5 },
+    headStyles: { ...table.headStyles, font: PDF_FONT, fontStyle: "bold" },
     head: [["Datum", "Od", "Do", "Země", "Z místa", "Do místa", "km", "Doprava"]],
     body: data.legs.length
       ? data.legs.map((l) => [l.date, l.time_from || "", l.time_to || "", l.country || "CZ", l.place_from || "", l.place_to || "", String(l.km || 0), l.transport || ""])
@@ -98,7 +107,9 @@ export async function generateTravelOrderPDF(data: TravelOrderPDFData): Promise<
   // Stravné — rozdělené podle měny
   y = (doc as any).lastAutoTable.finalY + 6;
   doc.setFont(PDF_FONT, "bold");
+  doc.setTextColor(...colors.primary);
   doc.text("Stravné", 14, y);
+  doc.setTextColor(...colors.foreground);
   // Souhrn stravného + kapesného per měna
   const mealsByCurrency: Record<string, number> = {};
   const pocketByCurrency: Record<string, number> = {};
@@ -108,10 +119,11 @@ export async function generateTravelOrderPDF(data: TravelOrderPDFData): Promise<
     pocketByCurrency[cur] = (pocketByCurrency[cur] || 0) + (Number(m.pocket_money_amount) || 0);
   });
   autoTable(doc, {
+    ...table,
     startY: y + 2,
     theme: "striped",
-    styles: { font: PDF_FONT, fontSize: 8, cellPadding: 1.5 },
-    headStyles: { font: PDF_FONT, fontStyle: "bold" },
+    styles: { ...table.styles, font: PDF_FONT, fontSize: 8, cellPadding: 1.5 },
+    headStyles: { ...table.headStyles, font: PDF_FONT, fontStyle: "bold" },
     head: [["Datum", "Hodin", "Země", "Měna", "Stravné", "Kapesné"]],
     body: data.meals.length
       ? data.meals.map((m) => [
@@ -131,10 +143,11 @@ export async function generateTravelOrderPDF(data: TravelOrderPDFData): Promise<
   ]);
   if (subtotalRows.length) {
     autoTable(doc, {
+    ...table,
       startY: y,
       theme: "plain",
-      styles: { font: PDF_FONT, fontSize: 8, cellPadding: 1.5, fontStyle: "bold" },
-      headStyles: { font: PDF_FONT, fontStyle: "bold" },
+      styles: { ...table.styles, font: PDF_FONT, fontSize: 8, cellPadding: 1.5, fontStyle: "bold" },
+      headStyles: { ...table.headStyles, font: PDF_FONT, fontStyle: "bold" },
       head: [["Měna", "Stravné celkem", "Kapesné celkem"]],
       body: subtotalRows,
     });
@@ -143,16 +156,19 @@ export async function generateTravelOrderPDF(data: TravelOrderPDFData): Promise<
   // Výdaje — per měna
   y = (doc as any).lastAutoTable.finalY + 6;
   doc.setFont(PDF_FONT, "bold");
+  doc.setTextColor(...colors.primary);
   doc.text("Další výdaje", 14, y);
+  doc.setTextColor(...colors.foreground);
   const expensesByCurrency: Record<string, number> = {};
   data.expenses.forEach((e) => {
     expensesByCurrency[e.currency || "CZK"] = (expensesByCurrency[e.currency || "CZK"] || 0) + (Number(e.amount) || 0);
   });
   autoTable(doc, {
+    ...table,
     startY: y + 2,
     theme: "striped",
-    styles: { font: PDF_FONT, fontSize: 8, cellPadding: 1.5 },
-    headStyles: { font: PDF_FONT, fontStyle: "bold" },
+    styles: { ...table.styles, font: PDF_FONT, fontSize: 8, cellPadding: 1.5 },
+    headStyles: { ...table.headStyles, font: PDF_FONT, fontStyle: "bold" },
     head: [["Typ", "Popis", "Částka", "Měna"]],
     body: [
       ...(data.expenses.length
@@ -168,7 +184,9 @@ export async function generateTravelOrderPDF(data: TravelOrderPDFData): Promise<
   // Souhrn — per měna
   y = (doc as any).lastAutoTable.finalY + 6;
   doc.setFont(PDF_FONT, "bold");
+  doc.setTextColor(...colors.primary);
   doc.text("Souhrn náhrad podle měn", 14, y);
+  doc.setTextColor(...colors.foreground);
 
   // Sjednoť všechny měny
   const allCurrencies = Array.from(new Set([
@@ -185,10 +203,11 @@ export async function generateTravelOrderPDF(data: TravelOrderPDFData): Promise<
     return [cur, formatCurrency(meal, cur), formatCurrency(pocket, cur), formatCurrency(vehicle, cur), formatCurrency(expense, cur), formatCurrency(sub, cur)];
   });
   autoTable(doc, {
+    ...table,
     startY: y + 2,
     theme: "grid",
-    styles: { font: PDF_FONT, fontSize: 9, cellPadding: 2 },
-    headStyles: { font: PDF_FONT, fontStyle: "bold" },
+    styles: { ...table.styles, font: PDF_FONT, fontSize: 9, cellPadding: 2 },
+    headStyles: { ...table.headStyles, font: PDF_FONT, fontStyle: "bold" },
     head: [["Měna", "Stravné", "Kapesné", "Vozidlo", "Výdaje", "Celkem"]],
     body: summaryRows,
   });
@@ -216,9 +235,10 @@ export async function generateTravelOrderPDF(data: TravelOrderPDFData): Promise<
   }
   const toPayCzk = totalCzk - (data.advance || 0);
   autoTable(doc, {
+    ...table,
     startY: y,
     theme: "grid",
-    styles: { font: PDF_FONT, fontSize: 9, cellPadding: 2 },
+    styles: { ...table.styles, font: PDF_FONT, fontSize: 9, cellPadding: 2 },
     body: [
       [{ content: "Celkem v CZK (přepočet)", styles: { fontStyle: "bold" } }, { content: formatCZK(totalCzk), styles: { fontStyle: "bold" } }],
       ["Záloha", formatCZK(data.advance || 0)],
@@ -263,10 +283,10 @@ export async function generateTravelOrderPDF(data: TravelOrderPDFData): Promise<
     doc.setPage(p);
     doc.setFont(PDF_FONT, "normal");
     doc.setFontSize(8);
-    doc.setTextColor(120);
+    doc.setTextColor(...colors.mutedForeground);
     doc.text(`Cestovní příkaz č. ${data.number}`, 14, pageH - 8);
     doc.text(`Strana ${p} / ${pageCount}`, pageW - 14, pageH - 8, { align: "right" });
-    doc.setTextColor(0);
+    doc.setTextColor(...colors.foreground);
   }
 
   return doc;

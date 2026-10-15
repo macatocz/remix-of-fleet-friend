@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import QRCode from "qrcode";
 import { ensurePdfFont, PDF_FONT } from "@/lib/travel/pdfFont";
 import { vehicleLabel } from "@/lib/vehicleName";
+import { applyPdfTheme, getPdfTheme } from "@/lib/pdf/theme";
 
 export interface VehicleCardData {
   id: string;
@@ -62,6 +63,8 @@ const CATEGORY: Record<string, string> = {
 export async function generateVehicleCardPdf(v: VehicleCardData, extras: VehicleCardExtras = {}) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   await ensurePdfFont(doc);
+  const { colors } = getPdfTheme();
+  applyPdfTheme(doc, colors);
   const W = 210;
   const M = 15;
   let y = 18;
@@ -69,15 +72,16 @@ export async function generateVehicleCardPdf(v: VehicleCardData, extras: Vehicle
   const title = v.nazev_vozu || v.znacka || "Vozidlo";
   doc.setFont(PDF_FONT, "bold");
   doc.setFontSize(20);
+  doc.setTextColor(...colors.primary);
   doc.text(title, M, y);
   y += 7;
   doc.setFont(PDF_FONT, "normal");
   doc.setFontSize(11);
-  doc.setTextColor(90);
+  doc.setTextColor(...colors.mutedForeground);
   doc.text(`${val(v.rz)}   ·   ${val(v.znacka)}`, M, y);
-  doc.setTextColor(0);
+  doc.setTextColor(...colors.foreground);
   y += 6;
-  doc.setDrawColor(200);
+  doc.setDrawColor(...colors.border);
   doc.line(M, y, W - M, y);
 
   // QR vpravo nahoře
@@ -85,9 +89,9 @@ export async function generateVehicleCardPdf(v: VehicleCardData, extras: Vehicle
     const qr = await qrDataUrl(v.id, extras.publicUrl);
     doc.addImage(qr, "PNG", W - M - 34, 12, 34, 34);
     doc.setFontSize(7);
-    doc.setTextColor(120);
+    doc.setTextColor(...colors.mutedForeground);
     doc.text("Naskenujte pro kartu vozu", W - M - 34, 49);
-    doc.setTextColor(0);
+    doc.setTextColor(...colors.foreground);
   } catch { /* QR je nepovinné */ }
 
 
@@ -97,9 +101,11 @@ export async function generateVehicleCardPdf(v: VehicleCardData, extras: Vehicle
     if (y > 262) { doc.addPage(); y = 20; }
     doc.setFont(PDF_FONT, "bold");
     doc.setFontSize(11);
+    doc.setTextColor(...colors.primary);
     doc.text(label, M, y);
+    doc.setTextColor(...colors.foreground);
     y += 2;
-    doc.setDrawColor(220);
+    doc.setDrawColor(...colors.border);
     doc.line(M, y, W - M, y);
     y += 5;
     doc.setFont(PDF_FONT, "normal");
@@ -112,10 +118,10 @@ export async function generateVehicleCardPdf(v: VehicleCardData, extras: Vehicle
       const col = i % 2;
       if (col === 0 && y > 272) { doc.addPage(); y = 20; }
       const x = M + col * colW;
-      doc.setTextColor(120);
+      doc.setTextColor(...colors.mutedForeground);
       doc.setFontSize(8);
       doc.text(p[0], x, y);
-      doc.setTextColor(0);
+      doc.setTextColor(...colors.foreground);
       doc.setFontSize(10);
       doc.text(doc.splitTextToSize(p[1], colW - 4)[0] ?? "—", x, y + 4.5);
       if (col === 1 || i === pairs.length - 1) y += 11;
@@ -171,7 +177,7 @@ export async function generateVehicleCardPdf(v: VehicleCardData, extras: Vehicle
   }
 
   doc.setFontSize(7);
-  doc.setTextColor(140);
+  doc.setTextColor(...colors.mutedForeground);
   doc.text(`Vytištěno ${new Date().toLocaleString("cs-CZ")}`, M, 288);
   doc.save(`karta-vozidla-${(v.rz || v.id).replace(/\s+/g, "-")}.pdf`);
 }
@@ -183,6 +189,8 @@ export async function generateQrSheetPdf(
 ) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   await ensurePdfFont(doc);
+  const { colors } = getPdfTheme();
+  applyPdfTheme(doc, colors);
   const M = 15;
   const cols = 3;
   const rowsPerPage = 4;
@@ -199,7 +207,7 @@ export async function generateQrSheetPdf(
     const y = M + 8 + row * cellH;
     const v = vehicles[i];
 
-    doc.setDrawColor(225);
+    doc.setDrawColor(...colors.border);
     doc.roundedRect(x + 2, y - 4, cellW - 4, cellH - 6, 2, 2);
     try {
       const qr = await qrDataUrl(v.id, publicUrl);
@@ -208,6 +216,7 @@ export async function generateQrSheetPdf(
       doc.addImage(qr, "PNG", x + (cellW - size) / 2, y + 2, size, size);
       doc.setFont(PDF_FONT, "bold");
       doc.setFontSize(9);
+      doc.setTextColor(...colors.primary);
       doc.text(
         doc.splitTextToSize(v.nazev_vozu || v.znacka || "Vozidlo", cellW - 8)[0],
         x + cellW / 2,
@@ -216,14 +225,14 @@ export async function generateQrSheetPdf(
       );
       doc.setFont(PDF_FONT, "normal");
       doc.setFontSize(8);
-      doc.setTextColor(110);
+      doc.setTextColor(...colors.mutedForeground);
       doc.text(v.rz || "—", x + cellW / 2, y + size + 13, { align: "center" });
-      doc.setTextColor(0);
+      doc.setTextColor(...colors.foreground);
     } catch { /* přeskoč */ }
   }
 
   doc.setFontSize(7);
-  doc.setTextColor(140);
+  doc.setTextColor(...colors.mutedForeground);
   doc.text(`QR kódy vozidel · ${vehicles.length} ks · ${new Date().toLocaleDateString("cs-CZ")}`, M, 292);
   doc.save(`qr-kody-vozidel-${new Date().toISOString().slice(0, 10)}.pdf`);
 }

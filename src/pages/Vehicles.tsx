@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { CompletenessBar } from "@/components/CompletenessBadge";
+import { vehicleCompleteness, loadVehicleRelated, emptyRelated, type VehicleRelated } from "@/lib/completeness";
 import { useNavigate } from "react-router-dom";
 import { useSortableTable } from "@/hooks/useSortableTable";
 import { useAppPublicUrl } from "@/hooks/useAppPublicUrl";
@@ -138,6 +140,8 @@ export default function Vehicles() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [lokalitaFilter, setLokalitaFilter] = useState("all");
+  const [onlyIncomplete, setOnlyIncomplete] = useState(false);
+  const [related, setRelated] = useState<Record<string, VehicleRelated>>({});
   const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(getStoredColumns);
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -172,6 +176,7 @@ export default function Vehicles() {
 
   useEffect(() => {
     fetchVehicles();
+    loadVehicleRelated().then(setRelated);
     Promise.all([
       supabase.from("drivers").select("id, first_name, last_name").eq("status", "aktivní"),
       supabase.from("company_settings").select("name").limit(1).maybeSingle(),
@@ -236,7 +241,9 @@ export default function Vehicles() {
 
   const { sortKey, sortDirection, handleSort, sortData } = useSortableTable();
 
-  const filtered = sortData(vehicles.filter((v) => {
+  const withCompl = vehicles.map(v => ({ ...v, _uplnost: vehicleCompleteness(v, related[v.id] || emptyRelated()).percent }));
+  const filtered = sortData(withCompl.filter((v) => {
+    if (onlyIncomplete && v._uplnost >= 100) return false;
     const searchStr = `${v.nazev_vozu || ""} ${v.znacka || ""} ${v.spravce || ""} ${v.rz || ""} ${v.vin || ""}`.toLowerCase();
     const matchSearch = searchStr.includes(search.toLowerCase());
     const matchStatus = statusFilter === "all" || v.status === statusFilter;
@@ -504,6 +511,7 @@ export default function Vehicles() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input className="pl-9" placeholder="Hledat (značka, správce, RZ, VIN)..." value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
+            <Button variant={onlyIncomplete ? "default" : "outline"} onClick={() => setOnlyIncomplete(o => !o)}>Jen neúplné</Button>
             <Select value={lokalitaFilter} onValueChange={v => { setLokalitaFilter(v); setActiveViewId(null); }}>
               <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -617,12 +625,13 @@ export default function Vehicles() {
                     {ALL_COLUMNS.filter(c => visibleColumns.includes(c.key)).map(col => (
                       <SortableTableHead key={col.key} sortKey={col.key} currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} className="whitespace-nowrap">{col.label}</SortableTableHead>
                     ))}
+                    <SortableTableHead sortKey="_uplnost" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} className="whitespace-nowrap">Úplnost</SortableTableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filtered.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={visibleColumns.length + 1} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={visibleColumns.length + 2} className="text-center py-8 text-muted-foreground">
                         Žádná vozidla nenalezena
                       </TableCell>
                     </TableRow>
@@ -641,6 +650,7 @@ export default function Vehicles() {
                              {renderCellValue(v, col.key)}
                            </TableCell>
                          ))}
+                         <TableCell><CompletenessBar percent={v._uplnost} /></TableCell>
                        </TableRow>
                      ))
                   )}

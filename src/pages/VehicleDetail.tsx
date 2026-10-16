@@ -1,5 +1,7 @@
 import VehicleFuelRecords from "@/components/fuel/VehicleFuelRecords";
 import { useState, useEffect } from "react";
+import { CompletenessBadge } from "@/components/CompletenessBadge";
+import { vehicleCompleteness, loadVehicleRelated, emptyRelated, type VehicleRelated } from "@/lib/completeness";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -508,6 +510,9 @@ export default function VehicleDetail() {
   const [editData, setEditData] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [cardPrinting, setCardPrinting] = useState(false);
+  const [tab, setTab] = useState("info");
+  const [related, setRelated] = useState<VehicleRelated | null>(null);
+  useEffect(() => { if (id) loadVehicleRelated([id]).then(r => setRelated(r[id] || emptyRelated())); }, [id, tab]);
   const [mileageRecords, setMileageRecords] = useState<{ vehicle_id: string; km: number; recorded_at: string; source: "vehicle_mileage" | "trip_log" }[]>([]);
   const [branchOptions, setBranchOptions] = useState<{ value: string; label: string }[]>([
     { value: "Praha", label: "Praha" },
@@ -681,6 +686,7 @@ export default function VehicleDetail() {
               <div className="flex items-center gap-3 flex-wrap">
                 <h1 className="break-words text-xl font-bold tracking-tight text-foreground sm:text-2xl">{vehicle.nazev_vozu || vehicle.znacka || "Vozidlo"}</h1>
                 {statusBadge(vehicle.status)}
+                {related && (() => { const c = vehicleCompleteness(vehicle, related); return <CompletenessBadge percent={c.percent} missing={c.missing} onGo={setTab} />; })()}
               </div>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-muted-foreground">
                 <PlateBadge rz={vehicle.rz} />
@@ -775,7 +781,7 @@ export default function VehicleDetail() {
         <LeasingMileagePanel vehicleId={vehicle.id} vehicle={vehicle} />
       )}
 
-      <Tabs defaultValue="info" className="w-full max-w-full">
+      <Tabs value={tab} onValueChange={setTab} className="w-full max-w-full">
         <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
         <TabsList className="w-max min-w-full justify-start">
           <TabsTrigger value="info">

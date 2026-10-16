@@ -514,6 +514,10 @@ export default function VehicleDetail() {
   const [saving, setSaving] = useState(false);
   const [cardPrinting, setCardPrinting] = useState(false);
   const [tab, setTab] = useState("info");
+  const isMobile = useIsMobile();
+  useEffect(() => {
+    if (isMobile && (tab === "service" || tab === "handover")) setTab("info");
+  }, [isMobile, tab]);
   const [related, setRelated] = useState<VehicleRelated | null>(null);
   useEffect(() => { if (id) loadVehicleRelated([id]).then(r => setRelated(r[id] || emptyRelated())); }, [id, tab]);
   const [mileageRecords, setMileageRecords] = useState<{ vehicle_id: string; km: number; recorded_at: string; source: "vehicle_mileage" | "trip_log" }[]>([]);
@@ -784,7 +788,6 @@ export default function VehicleDetail() {
         <LeasingMileagePanel vehicleId={vehicle.id} vehicle={vehicle} />
       )}
 
-      {isMobile && (tab === "service" || tab === "handover") && setTimeout(() => setTab("info"), 0) && null}
       <Tabs value={tab} onValueChange={setTab} className="w-full max-w-full">
         <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
         <TabsList className="w-max min-w-full justify-start">

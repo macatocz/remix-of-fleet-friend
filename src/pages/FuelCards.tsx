@@ -1,3 +1,4 @@
+import { fuelCardMissing } from "@/lib/completeness";
 import { useState } from "react";
 import { useSortableTable } from "@/hooks/useSortableTable";
 import { SortableTableHead } from "@/components/ui/sortable-table-head";
@@ -136,7 +137,7 @@ export default function FuelCards() {
                     <span className="text-muted-foreground text-xs">{vehicle?.znacka || ""}</span>
                   </TableCell>
                   <TableCell>{card.provider}</TableCell>
-                  <TableCell>{card.card_number || "—"}</TableCell>
+                  <TableCell>{card.card_number || "—"}{fuelCardMissing(card).length > 0 && <Badge variant="destructive" className="ml-2 text-[10px]">Chybí {fuelCardMissing(card).join(" / ")}</Badge>}</TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-1">
                       <span className="font-mono text-sm">

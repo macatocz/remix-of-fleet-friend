@@ -1,3 +1,4 @@
+import { fuelCardMissing } from "@/lib/completeness";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -181,7 +182,7 @@ export default function VehicleFuelCards({ vehicleId, defaultOwner }: Props) {
             {cards.map(card => (
               <TableRow key={card.id}>
                 <TableCell className="font-medium">{card.provider}</TableCell>
-                <TableCell>{card.card_number || "—"}</TableCell>
+                <TableCell>{card.card_number || "—"}{fuelCardMissing(card).length > 0 && <Badge variant="destructive" className="ml-2 text-[10px]">Chybí {fuelCardMissing(card).join(" / ")}</Badge>}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
                     <span className="font-mono text-sm">

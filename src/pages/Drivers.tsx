@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { driverMissing } from "@/lib/completeness";
 import { useSortableTable } from "@/hooks/useSortableTable";
 import { SortableTableHead } from "@/components/ui/sortable-table-head";
 import { useNavigate } from "react-router-dom";
@@ -55,6 +56,7 @@ export default function Drivers() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [onlyIncomplete, setOnlyIncomplete] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<DriverForm>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -261,6 +263,7 @@ export default function Drivers() {
 
   const filtered = sortData(drivers.filter(d => {
     if (filterStatus !== "all" && d.status !== filterStatus) return false;
+    if (onlyIncomplete && driverMissing(d).length === 0) return false;
     if (search) {
       const s = search.toLowerCase();
       const match = `${d.first_name} ${d.last_name}`.toLowerCase().includes(s)
@@ -484,6 +487,7 @@ export default function Drivers() {
                 </button>
               )}
             </div>
+            <Button variant={onlyIncomplete ? "default" : "outline"} onClick={() => setOnlyIncomplete(o => !o)}>Neúplní</Button>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -511,6 +515,7 @@ export default function Drivers() {
                   <SortableTableHead sortKey="department" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort}>Oddělení</SortableTableHead>
                   <SortableTableHead sortKey="vehicle" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort}>Vozidlo</SortableTableHead>
                   <SortableTableHead sortKey="status" currentSortKey={sortKey} sortDirection={sortDirection} onSort={handleSort}>Stav</SortableTableHead>
+                  <TableHead>Chybí</TableHead>
                   <TableHead>Akce</TableHead>
                 </TableRow>
               </TableHeader>
@@ -532,6 +537,9 @@ export default function Drivers() {
                       {vehicleLabel(d.vehicles)}
                     </TableCell>
                     <TableCell>{statusBadge(d.status)}</TableCell>
+                    <TableCell className="text-xs">
+                      {driverMissing(d).length ? <span className="text-destructive">{driverMissing(d).join(", ")}</span> : <span className="text-success">OK</span>}
+                    </TableCell>
                     <TableCell>
                       <div className="flex gap-1" onClick={e => e.stopPropagation()}>
                         <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(d)}>

@@ -42,24 +42,33 @@ export default function VehicleFuelRecords({ vehicleId }: { vehicleId: string })
   return (
     <div className="divide-y">
       {rows.map((r) => (
-        <div key={r.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2.5 text-sm">
-          <Fuel className="h-4 w-4 text-muted-foreground" />
-          <span className="font-medium tabular-nums">{new Date(r.fueled_at).toLocaleString("cs-CZ", { dateStyle: "short", timeStyle: "short" })}</span>
-          <span className="flex min-w-0 flex-1 items-center gap-1 truncate text-muted-foreground">
-            <MapPin className="h-3 w-3 shrink-0" />{r.location || "—"}
-          </span>
-          <span className="tabular-nums">{r.liters ? `${Number(r.liters).toLocaleString("cs-CZ")} l` : ""}</span>
-          <span className="tabular-nums">{r.total_price ? `${Number(r.total_price).toLocaleString("cs-CZ")} Kč` : ""}</span>
-          <span className="tabular-nums text-muted-foreground">{r.km ? `${r.km.toLocaleString("cs-CZ")} km` : ""}</span>
-          {r.document_id && docs[r.document_id] && (
-            <Button size="sm" variant="outline" className="h-8" onClick={() => openReceipt(docs[r.document_id])}>
-              <Receipt className="mr-1 h-3.5 w-3.5" />Účtenka
-            </Button>
-          )}
-          {canDeleteFuel(r, user?.id, isManager) && (
-            <DeleteFuelButton record={r} docPath={r.document_id ? docs[r.document_id] : undefined}
-              onDeleted={() => setRows((p) => p.filter((x) => x.id !== r.id))} />
-          )}
+        <div key={r.id} className="py-2.5 text-sm space-y-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <span className="flex items-center gap-2 font-medium tabular-nums">
+              <Fuel className="h-4 w-4 text-muted-foreground shrink-0" />
+              {new Date(r.fueled_at).toLocaleString("cs-CZ", { dateStyle: "short", timeStyle: "short" })}
+            </span>
+            <span className="font-semibold tabular-nums shrink-0">{r.total_price ? `${Number(r.total_price).toLocaleString("cs-CZ")} Kč` : ""}</span>
+          </div>
+          <div className="flex items-center gap-1 text-muted-foreground min-w-0">
+            <MapPin className="h-3 w-3 shrink-0" /><span className="truncate">{r.location || "—"}</span>
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {[r.liters ? `${Number(r.liters).toLocaleString("cs-CZ")} l` : "", r.km ? `${r.km.toLocaleString("cs-CZ")} km` : ""].filter(Boolean).join(" · ")}
+            </span>
+            <div className="flex items-center gap-1 shrink-0">
+              {r.document_id && docs[r.document_id] && (
+                <Button size="sm" variant="outline" className="h-8" onClick={() => openReceipt(docs[r.document_id])}>
+                  <Receipt className="mr-1 h-3.5 w-3.5" />Účtenka
+                </Button>
+              )}
+              {canDeleteFuel(r, user?.id, isManager) && (
+                <DeleteFuelButton record={r} docPath={r.document_id ? docs[r.document_id] : undefined}
+                  onDeleted={() => setRows((p) => p.filter((x) => x.id !== r.id))} />
+              )}
+            </div>
+          </div>
         </div>
       ))}
     </div>

@@ -511,6 +511,7 @@ export default function Vehicles() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input className="pl-9" placeholder="Hledat (značka, správce, RZ, VIN)..." value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
+            <Button variant={onlyIncomplete ? "default" : "outline"} onClick={() => setOnlyIncomplete(o => !o)}>Jen neúplné</Button>
             <Select value={lokalitaFilter} onValueChange={v => { setLokalitaFilter(v); setActiveViewId(null); }}>
               <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
               <SelectContent>

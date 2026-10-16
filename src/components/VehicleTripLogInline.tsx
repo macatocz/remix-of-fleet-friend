@@ -14,6 +14,7 @@ import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend
 } from "recharts";
 import TripLogExport from "@/components/TripLogExport";
+import { syncFuelIntoTrips } from "@/lib/tripLog/fuelSync";
 import TripTemplatesPopover, { TripTemplate } from "@/components/TripTemplatesPopover";
 import TripLogGeneratorDialog from "@/components/trip-log/TripLogGeneratorDialog";
 import { useRouteHistory } from "@/hooks/useRouteHistory";
@@ -103,6 +104,7 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
   const [calRows, setCalRows] = useState<TripRow[]>([]);
   const [multiMonthData, setMultiMonthData] = useState<any[]>([]);
   const [genOpen, setGenOpen] = useState(false);
+  const [fuelSyncing, setFuelSyncing] = useState(false);
   const [newRowMode, setNewRowMode] = useState<"single" | "roundtrip">("single");
   const { toast } = useToast();
   const tableRef = useRef<HTMLDivElement>(null);
@@ -809,6 +811,31 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
           />
           <Button size="sm" variant="outline" onClick={() => setGenOpen(true)}>
             <Sparkles className="mr-1 h-4 w-4" />Vygenerovat měsíc
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={fuelSyncing}
+            title="Doplní skutečná tankování z vyfocených účtenek do jízd tohoto měsíce"
+            onClick={async () => {
+              if (dirtyCount > 0 && !confirm("Máte neuložené změny, které se ztratí. Pokračovat?")) return;
+              setFuelSyncing(true);
+              try {
+                const r = await syncFuelIntoTrips(vehicleId, selectedMonth);
+                toast({
+                  title: r.total ? "Tankování načtena" : "Žádné účtenky v tomto měsíci",
+                  description: r.total ? `Doplněno k jízdám: ${r.attached}, nové jízdy: ${r.created}, již zapsáno: ${r.skipped}` : undefined,
+                });
+                fetchLogs();
+                fetchMultiMonth();
+              } catch (e: any) {
+                toast({ title: "Chyba", description: e.message, variant: "destructive" });
+              } finally {
+                setFuelSyncing(false);
+              }
+            }}
+          >
+            {fuelSyncing ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Fuel className="mr-1 h-4 w-4" />}Načíst tankování
           </Button>
           <TripLogExport vehicleId={vehicleId} selectedMonth={selectedMonth} vehicleLabel={vehicleLabel} />
           {dirtyCount > 0 && <span className="text-xs text-muted-foreground">{dirtyCount} neuložených</span>}

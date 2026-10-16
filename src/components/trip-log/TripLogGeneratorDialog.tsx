@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { generateMonth } from "@/lib/tripGen/generateMonth";
 import type { FuelStop, GeneratedTrip } from "@/lib/tripGen/types";
+import { loadFuelMilestones, milestonesToFuelStops } from "@/lib/tripLog/fuelSync";
 
 interface Props {
   open: boolean;
@@ -115,7 +116,15 @@ export default function TripLogGeneratorDialog({ open, onOpenChange, vehicleId, 
           liters: Number(r.fuel_quantity) || 0,
           price: Number(r.fuel_price) || 0,
         }));
-      setFuel(fromLogs);
+      // Real receipts are fixed milestones and take precedence
+      let fromReceipts: FuelStop[] = [];
+      try { fromReceipts = milestonesToFuelStops(await loadFuelMilestones(vehicleId, month)); } catch { /* ignore */ }
+      const merged = [...fromReceipts];
+      fromLogs.forEach((l) => {
+        if (!merged.some((r) => r.date === l.date && Math.abs(r.liters - l.liters) < 0.05)) merged.push(l);
+      });
+      merged.sort((a, b) => a.date.localeCompare(b.date));
+      setFuel(merged);
     })();
   }, [open, vehicleId, month]);
 

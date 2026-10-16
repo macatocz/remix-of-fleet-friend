@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, ChevronDown } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { officializeTrips } from "@/lib/tripLog/fuelSync";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
@@ -14,7 +16,7 @@ interface Props {
 export default function TripLogExport({ vehicleId, selectedMonth, vehicleLabel }: Props) {
   const { toast } = useToast();
 
-  const handleExport = async () => {
+  const handleExport = async (mode: "official" | "internal") => {
     const [year, month] = selectedMonth.split("-").map(Number);
     const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
     const endDate = new Date(year, month, 0).toISOString().split("T")[0];
@@ -32,12 +34,22 @@ export default function TripLogExport({ vehicleId, selectedMonth, vehicleLabel }
       return;
     }
 
-    const rows = data || [];
+    let rows: any[] = data || [];
+    if (mode === "official") {
+      let prefs: any = {};
+      try { prefs = JSON.parse(localStorage.getItem(`trip-gen:${vehicleId}`) || "{}"); } catch { /* ignore */ }
+      const split = (v?: string) => (v || "").split("\n").map((x) => x.trim()).filter(Boolean);
+      rows = officializeTrips(rows, {
+        base: (prefs.base || "Sídlo").trim(),
+        destinations: split(prefs.destinations),
+        purposes: split(prefs.purposes),
+      });
+    }
     const monthLabel = new Date(year, month - 1).toLocaleDateString("cs-CZ", { month: "long", year: "numeric" });
 
     // Build worksheet data
     const wsData: any[][] = [
-      [`Kniha jízd – ${vehicleLabel || "Vozidlo"}`],
+      [`${mode === "official" ? "Kniha jízd" : "Kniha jízd – interní přehled"} – ${vehicleLabel || "Vozidlo"}`],
       [`Období: ${monthLabel}`],
       [],
       ["Datum", "Den", "Čas", "Přest. (min)", "Řidič", "Odkud", "Kam", "Účel", "Typ jízdy", "Popis", "Poč. km", "Kon. km", "Km celkem", "PHM (l)", "PHM (Kč)", "Ost. (Kč)"],
@@ -102,13 +114,36 @@ export default function TripLogExport({ vehicleId, selectedMonth, vehicleLabel }
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Kniha jízd");
-    XLSX.writeFile(wb, `kniha-jizd_${selectedMonth}.xlsx`);
+    if (mode === "internal") {
+      const priv = rows.filter((r) => r.purpose_type !== "pracovne").reduce((a, r) => a + (r.km_total || 0), 0);
+      const biz = rows.filter((r) => r.purpose_type === "pracovne").reduce((a, r) => a + (r.km_total || 0), 0);
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Služební km", biz], ["Soukromé / jiné km", priv]]), "Souhrn");
+    }
+    XLSX.writeFile(wb, `kniha-jizd${mode === "internal" ? "-interni" : ""}_${selectedMonth}.xlsx`);
     toast({ title: "Export dokončen" });
   };
 
   return (
-    <Button size="sm" variant="outline" onClick={handleExport}>
-      <Download className="mr-1 h-4 w-4" />Excel
-    </Button>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button size="sm" variant="outline">
+          <Download className="mr-1 h-4 w-4" />Excel<ChevronDown className="ml-1 h-3 w-3" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => handleExport("official")}>
+          <div>
+            <div className="font-medium">Oficiální kniha jízd</div>
+            <div className="text-xs text-muted-foreground">Soukromé jízdy převedeny na služební, km navazují</div>
+          </div>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleExport("internal")}>
+          <div>
+            <div className="font-medium">Interní přehled</div>
+            <div className="text-xs text-muted-foreground">Skutečné jízdy včetně soukromých + souhrn km</div>
+          </div>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

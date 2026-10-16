@@ -9,11 +9,16 @@ import { Download, Receipt, Fuel, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { vehicleLabel } from "@/lib/vehicleName";
 import { exportTablePdf } from "@/lib/report/tablePdf";
+import { useAuth } from "@/contexts/AuthContext";
+import DeleteFuelButton from "@/components/fuel/DeleteFuelButton";
+import { canDeleteFuel } from "@/lib/fuel/deleteFuelRecord";
 
 const fmt = (n: number, d = 0) => n.toLocaleString("cs-CZ", { maximumFractionDigits: d });
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
 export default function FuelReport() {
+  const { user, hasRole } = useAuth();
+  const isManager = hasRole("admin") || hasRole("dispatcer");
   const now = new Date();
   const [from, setFrom] = useState(iso(new Date(now.getFullYear(), now.getMonth(), 1)));
   const [to, setTo] = useState(iso(now));
@@ -166,11 +171,17 @@ export default function FuelReport() {
                   <TableCell className="text-right tabular-nums">{r.total_price ? `${fmt(Number(r.total_price), 2)} Kč` : "—"}</TableCell>
                   <TableCell className="text-right tabular-nums">{r.km ? `${fmt(r.km)} km` : "—"}</TableCell>
                   <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-1">
                     {r.document_id && docs[r.document_id] ? (
                       <Button size="sm" variant="outline" className="h-8" onClick={() => openReceipt(docs[r.document_id])}>
                         <Receipt className="mr-1 h-3.5 w-3.5" />Účtenka
                       </Button>
                     ) : <span className="text-xs text-destructive">chybí</span>}
+                    {canDeleteFuel(r, user?.id, isManager) && (
+                      <DeleteFuelButton record={r} docPath={r.document_id ? docs[r.document_id] : undefined}
+                        onDeleted={() => setRows((p) => p.filter((x) => x.id !== r.id))} />
+                    )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

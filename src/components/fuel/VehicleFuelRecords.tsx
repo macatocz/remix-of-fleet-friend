@@ -3,8 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Fuel, Receipt, MapPin } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import DeleteFuelButton from "@/components/fuel/DeleteFuelButton";
+import { canDeleteFuel } from "@/lib/fuel/deleteFuelRecord";
 
 export default function VehicleFuelRecords({ vehicleId }: { vehicleId: string }) {
+  const { user, hasRole } = useAuth();
+  const isManager = hasRole("admin") || hasRole("dispatcer");
   const [rows, setRows] = useState<any[]>([]);
   const [docs, setDocs] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -50,6 +55,10 @@ export default function VehicleFuelRecords({ vehicleId }: { vehicleId: string })
             <Button size="sm" variant="outline" className="h-8" onClick={() => openReceipt(docs[r.document_id])}>
               <Receipt className="mr-1 h-3.5 w-3.5" />Účtenka
             </Button>
+          )}
+          {canDeleteFuel(r, user?.id, isManager) && (
+            <DeleteFuelButton record={r} docPath={r.document_id ? docs[r.document_id] : undefined}
+              onDeleted={() => setRows((p) => p.filter((x) => x.id !== r.id))} />
           )}
         </div>
       ))}

@@ -40,6 +40,9 @@ import VehicleVignettes from "@/components/VehicleVignettes";
 import VehicleServicePlan from "@/components/VehicleServicePlan";
 import VehicleHandover from "@/components/VehicleHandover";
 import VehicleIncidents from "@/components/VehicleIncidents";
+import MobileTripList from "@/components/mobile/MobileTripList";
+import SpravceCalendarStrip from "@/components/mobile/SpravceCalendarStrip";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 
 interface FieldDef {
@@ -511,6 +514,10 @@ export default function VehicleDetail() {
   const [saving, setSaving] = useState(false);
   const [cardPrinting, setCardPrinting] = useState(false);
   const [tab, setTab] = useState("info");
+  const isMobile = useIsMobile();
+  useEffect(() => {
+    if (isMobile && (tab === "service" || tab === "handover")) setTab("info");
+  }, [isMobile, tab]);
   const [related, setRelated] = useState<VehicleRelated | null>(null);
   useEffect(() => { if (id) loadVehicleRelated([id]).then(r => setRelated(r[id] || emptyRelated())); }, [id, tab]);
   const [mileageRecords, setMileageRecords] = useState<{ vehicle_id: string; km: number; recorded_at: string; source: "vehicle_mileage" | "trip_log" }[]>([]);
@@ -793,18 +800,18 @@ export default function VehicleDetail() {
           <TabsTrigger value="documents">
             <FileText className="mr-2 h-4 w-4" />Dokumenty
           </TabsTrigger>
-          <TabsTrigger value="service">
+          {!isMobile && <TabsTrigger value="service">
             <Wrench className="mr-2 h-4 w-4" />Servis
-          </TabsTrigger>
+          </TabsTrigger>}
           <TabsTrigger value="triplog">
             <BookOpen className="mr-2 h-4 w-4" />Kniha jízd
           </TabsTrigger>
           <TabsTrigger value="fuelcards">
-            <CreditCard className="mr-2 h-4 w-4" />Tankovací karty
+            <CreditCard className="mr-2 h-4 w-4" />{isMobile ? "Karty" : "Tankovací karty"}
           </TabsTrigger>
-          <TabsTrigger value="handover">
+          {!isMobile && <TabsTrigger value="handover">
             <ClipboardCheck className="mr-2 h-4 w-4" />Předání
-          </TabsTrigger>
+          </TabsTrigger>}
           <TabsTrigger value="incidents">
             <AlertTriangle className="mr-2 h-4 w-4" />Škody
           </TabsTrigger>
@@ -867,24 +874,24 @@ export default function VehicleDetail() {
           </div>
         </TabsContent>
 
-        <TabsContent value="calendar" className="mt-6 max-w-full overflow-x-auto">
+        <TabsContent value="calendar" className="mt-4 md:mt-6 max-w-full overflow-x-auto">
           <Card>
-            <CardContent className="pt-6">
-              <VehicleCalendar vehicleId={vehicle.id} />
+            <CardContent className="p-3 md:p-6 md:pt-6">
+              {isMobile ? <SpravceCalendarStrip vehicleId={vehicle.id} days={30} /> : <VehicleCalendar vehicleId={vehicle.id} />}
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="documents" className="mt-6 max-w-full overflow-x-auto">
+        <TabsContent value="documents" className="mt-4 md:mt-6 max-w-full overflow-x-auto">
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="p-3 md:p-6 md:pt-6">
               <VehicleDocuments vehicleId={vehicle.id} />
             </CardContent>
           </Card>
         </TabsContent>
 
 
-        <TabsContent value="service" className="mt-6 max-w-full overflow-x-auto">
+        <TabsContent value="service" className="mt-4 md:mt-6 max-w-full overflow-x-auto">
           <Tabs defaultValue="history">
             <TabsList>
               <TabsTrigger value="history">Historie servisu</TabsTrigger>
@@ -892,14 +899,14 @@ export default function VehicleDetail() {
             </TabsList>
             <TabsContent value="history" className="mt-4">
               <Card>
-                <CardContent className="pt-6">
+                <CardContent className="p-3 md:p-6 md:pt-6">
                   <VehicleService vehicleId={vehicle.id} />
                 </CardContent>
               </Card>
             </TabsContent>
             <TabsContent value="plan" className="mt-4">
               <Card>
-                <CardContent className="pt-6">
+                <CardContent className="p-3 md:p-6 md:pt-6">
                   <VehicleServicePlan vehicleId={vehicle.id} />
                 </CardContent>
               </Card>
@@ -907,39 +914,39 @@ export default function VehicleDetail() {
           </Tabs>
         </TabsContent>
 
-        <TabsContent value="triplog" className="mt-6 max-w-full overflow-x-auto">
+        <TabsContent value="triplog" className="mt-4 md:mt-6 max-w-full overflow-x-auto">
           <Card>
-            <CardContent className="pt-6">
-              <VehicleTripLogInline vehicleId={vehicle.id} />
+            <CardContent className="p-3 md:p-6 md:pt-6">
+              {isMobile ? <MobileTripList vehicleId={vehicle.id} /> : <VehicleTripLogInline vehicleId={vehicle.id} />}
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="fuelcards" className="mt-6 max-w-full space-y-6 overflow-x-auto">
+        <TabsContent value="fuelcards" className="mt-4 md:mt-6 max-w-full space-y-6 overflow-x-auto">
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="p-3 md:p-6 md:pt-6">
               <VehicleFuelCards vehicleId={vehicle.id} defaultOwner={vehicle.spravce} />
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6 space-y-3">
+            <CardContent className="p-3 md:p-6 space-y-3">
               <h3 className="text-sm font-semibold">Tankování a účtenky</h3>
               <VehicleFuelRecords vehicleId={vehicle.id} />
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="handover" className="mt-6 max-w-full overflow-x-auto">
+        <TabsContent value="handover" className="mt-4 md:mt-6 max-w-full overflow-x-auto">
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="p-3 md:p-6 md:pt-6">
               <VehicleHandover vehicleId={vehicle.id} />
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="incidents" className="mt-6 max-w-full overflow-x-auto">
+        <TabsContent value="incidents" className="mt-4 md:mt-6 max-w-full overflow-x-auto">
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="p-3 md:p-6 md:pt-6">
               <VehicleIncidents vehicleId={vehicle.id} />
             </CardContent>
           </Card>

@@ -159,14 +159,71 @@ export default function VehicleFuelCards({ vehicleId, defaultOwner }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Tankovací karty</h3>
+        <h3 className="text-base md:text-lg font-semibold">Tankovací karty</h3>
         <Button size="sm" onClick={openNew}><Plus className="mr-2 h-4 w-4" />Přidat kartu</Button>
       </div>
 
       {cards.length === 0 ? (
         <p className="text-muted-foreground text-sm py-4">Žádné tankovací karty.</p>
       ) : (
-        <Table>
+        <>
+        <div className="space-y-2 md:hidden">
+          {cards.map(card => {
+            const missing = fuelCardMissing(card);
+            return (
+              <div key={card.id} className="rounded-lg border bg-card p-3 space-y-2 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-semibold">{card.provider}</span>
+                    {statusBadge(card.status)}
+                  </div>
+                  <div className="flex shrink-0">
+                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => openEdit(card)} aria-label="Upravit">
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive" aria-label="Smazat">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Smazat kartu?</AlertDialogTitle>
+                          <AlertDialogDescription>Opravdu chcete smazat tuto tankovací kartu?</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Zrušit</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(card.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Smazat</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+                <p className="font-mono text-base tracking-wider break-all">{card.card_number || "—"}</p>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="min-w-0">
+                    <p className="text-[11px] uppercase text-muted-foreground">PIN</p>
+                    <button type="button" className="flex items-center gap-1.5 font-mono" onClick={() => card.pin && togglePin(card.id)}>
+                      {visiblePins.has(card.id) ? (card.pin || "—") : (card.pin ? "••••" : "—")}
+                      {card.pin && (visiblePins.has(card.id) ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />)}
+                    </button>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] uppercase text-muted-foreground">Platnost do</p>
+                    <p>{card.valid_until ? new Date(card.valid_until).toLocaleDateString("cs-CZ") : "—"}</p>
+                  </div>
+                  <div className="col-span-2 min-w-0">
+                    <p className="text-[11px] uppercase text-muted-foreground">Vlastník</p>
+                    <p className="truncate">{card.owner_name || "—"}</p>
+                  </div>
+                </div>
+                {missing.length > 0 && <Badge variant="destructive" className="text-[10px]">Chybí {missing.join(" / ")}</Badge>}
+              </div>
+            );
+          })}
+        </div>
+        <Table className="hidden md:table">
           <TableHeader>
             <TableRow>
               <TableHead>Poskytovatel</TableHead>
@@ -226,10 +283,11 @@ export default function VehicleFuelCards({ vehicleId, defaultOwner }: Props) {
             ))}
           </TableBody>
         </Table>
+        </>
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingId ? "Upravit kartu" : "Nová tankovací karta"}</DialogTitle>
           </DialogHeader>

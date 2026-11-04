@@ -16,18 +16,19 @@ interface Props {
 export default function TripLogExport({ vehicleId, selectedMonth, vehicleLabel }: Props) {
   const { toast } = useToast();
 
-  const handleExport = async (mode: "official" | "internal") => {
+  const handleExport = async (mode: "official" | "internal", fullPeriod = false) => {
     const [year, month] = selectedMonth.split("-").map(Number);
     const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
     const endDate = new Date(year, month, 0).toISOString().split("T")[0];
 
-    const { data, error } = await supabase
+    let query = supabase
       .from("trip_logs")
       .select("*, drivers(first_name, last_name)")
-      .eq("vehicle_id", vehicleId)
-      .gte("date", startDate)
-      .lte("date", endDate)
-      .order("date", { ascending: true });
+      .eq("vehicle_id", vehicleId);
+    if (!fullPeriod) {
+      query = query.gte("date", startDate).lte("date", endDate);
+    }
+    const { data, error } = await query.order("date", { ascending: true });
 
     if (error) {
       toast({ title: "Chyba exportu", description: error.message, variant: "destructive" });
@@ -45,7 +46,11 @@ export default function TripLogExport({ vehicleId, selectedMonth, vehicleLabel }
         purposes: split(prefs.purposes),
       });
     }
-    const monthLabel = new Date(year, month - 1).toLocaleDateString("cs-CZ", { month: "long", year: "numeric" });
+    const monthLabel = fullPeriod
+      ? (rows.length > 0
+          ? `${new Date(rows[0].date + "T00:00:00").toLocaleDateString("cs-CZ")} – ${new Date(rows[rows.length - 1].date + "T00:00:00").toLocaleDateString("cs-CZ")}`
+          : "celé období")
+      : new Date(year, month - 1).toLocaleDateString("cs-CZ", { month: "long", year: "numeric" });
 
     // Build worksheet data
     const wsData: any[][] = [
@@ -119,7 +124,7 @@ export default function TripLogExport({ vehicleId, selectedMonth, vehicleLabel }
       const biz = rows.filter((r) => r.purpose_type === "pracovne").reduce((a, r) => a + (r.km_total || 0), 0);
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Služební km", biz], ["Soukromé / jiné km", priv]]), "Souhrn");
     }
-    XLSX.writeFile(wb, `kniha-jizd${mode === "internal" ? "-interni" : ""}_${selectedMonth}.xlsx`);
+    XLSX.writeFile(wb, `kniha-jizd${mode === "internal" ? "-interni" : ""}_${fullPeriod ? "cele-obdobi" : selectedMonth}.xlsx`);
     toast({ title: "Export dokončen" });
   };
 
@@ -141,6 +146,18 @@ export default function TripLogExport({ vehicleId, selectedMonth, vehicleLabel }
           <div>
             <div className="font-medium">Interní přehled</div>
             <div className="text-xs text-muted-foreground">Skutečné jízdy včetně soukromých + souhrn km</div>
+          </div>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleExport("official", true)}>
+          <div>
+            <div className="font-medium">Oficiální – celé období</div>
+            <div className="text-xs text-muted-foreground">Všechny jízdy od první do poslední, soukromé převedeny</div>
+          </div>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleExport("internal", true)}>
+          <div>
+            <div className="font-medium">Interní – celé období</div>
+            <div className="text-xs text-muted-foreground">Kompletní historie včetně soukromých jízd</div>
           </div>
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -124,7 +124,7 @@ export default function TripLogExport({ vehicleId, selectedMonth, vehicleLabel }
       const biz = rows.filter((r) => r.purpose_type === "pracovne").reduce((a, r) => a + (r.km_total || 0), 0);
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Služební km", biz], ["Soukromé / jiné km", priv]]), "Souhrn");
     }
-    XLSX.writeFile(wb, `kniha-jizd${mode === "internal" ? "-interni" : ""}_${selectedMonth}.xlsx`);
+    XLSX.writeFile(wb, `kniha-jizd${mode === "internal" ? "-interni" : ""}_${fullPeriod ? "cele-obdobi" : selectedMonth}.xlsx`);
     toast({ title: "Export dokončen" });
   };
 
@@ -146,6 +146,18 @@ export default function TripLogExport({ vehicleId, selectedMonth, vehicleLabel }
           <div>
             <div className="font-medium">Interní přehled</div>
             <div className="text-xs text-muted-foreground">Skutečné jízdy včetně soukromých + souhrn km</div>
+          </div>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleExport("official", true)}>
+          <div>
+            <div className="font-medium">Oficiální – celé období</div>
+            <div className="text-xs text-muted-foreground">Všechny jízdy od první do poslední, soukromé převedeny</div>
+          </div>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleExport("internal", true)}>
+          <div>
+            <div className="font-medium">Interní – celé období</div>
+            <div className="text-xs text-muted-foreground">Kompletní historie včetně soukromých jízd</div>
           </div>
         </DropdownMenuItem>
       </DropdownMenuContent>

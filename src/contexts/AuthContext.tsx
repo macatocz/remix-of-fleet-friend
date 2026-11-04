@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, type Context } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -22,7 +22,7 @@ interface AuthContextType {
 
 // Keep one context instance across hot reloads, otherwise providers and consumers
 // can end up holding different instances ("useAuth must be used within AuthProvider").
-const g = globalThis as unknown as { __cmAuthContext?: React.Context<AuthContextType | undefined> };
+const g = globalThis as unknown as { __cmAuthContext?: Context<AuthContextType | undefined> };
 const AuthContext = g.__cmAuthContext ?? (g.__cmAuthContext = createContext<AuthContextType | undefined>(undefined));
 const storageKey = (uid: string) => `activeRole:${uid}`;
 

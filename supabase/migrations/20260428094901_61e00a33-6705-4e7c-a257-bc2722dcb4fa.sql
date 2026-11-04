@@ -1,1 +1,0 @@
-ALTER TABLE public.vehicles ADD COLUMN IF NOT EXISTS vychozi_stav_tachometru text;

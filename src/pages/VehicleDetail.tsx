@@ -788,7 +788,17 @@ export default function VehicleDetail() {
         <LeasingMileagePanel vehicleId={vehicle.id} vehicle={vehicle} />
       )}
 
-      <Tabs value={tab} onValueChange={setTab} className="w-full max-w-full">
+      <Tabs
+        id="vehicle-tabs"
+        value={tab}
+        onValueChange={(v) => {
+          setTab(v);
+          requestAnimationFrame(() => {
+            document.getElementById("vehicle-tabs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+        }}
+        className="w-full max-w-full scroll-mt-20"
+      >
         <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
         <TabsList className="w-max min-w-full justify-start">
           <TabsTrigger value="info">

@@ -20,7 +20,10 @@ interface AuthContextType {
   signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// Keep one context instance across hot reloads, otherwise providers and consumers
+// can end up holding different instances ("useAuth must be used within AuthProvider").
+const g = globalThis as unknown as { __cmAuthContext?: React.Context<AuthContextType | undefined> };
+const AuthContext = g.__cmAuthContext ?? (g.__cmAuthContext = createContext<AuthContextType | undefined>(undefined));
 const storageKey = (uid: string) => `activeRole:${uid}`;
 
 export function AuthProvider({ children }: { children: ReactNode }) {

@@ -16,18 +16,19 @@ interface Props {
 export default function TripLogExport({ vehicleId, selectedMonth, vehicleLabel }: Props) {
   const { toast } = useToast();
 
-  const handleExport = async (mode: "official" | "internal") => {
+  const handleExport = async (mode: "official" | "internal", fullPeriod = false) => {
     const [year, month] = selectedMonth.split("-").map(Number);
     const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
     const endDate = new Date(year, month, 0).toISOString().split("T")[0];
 
-    const { data, error } = await supabase
+    let query = supabase
       .from("trip_logs")
       .select("*, drivers(first_name, last_name)")
-      .eq("vehicle_id", vehicleId)
-      .gte("date", startDate)
-      .lte("date", endDate)
-      .order("date", { ascending: true });
+      .eq("vehicle_id", vehicleId);
+    if (!fullPeriod) {
+      query = query.gte("date", startDate).lte("date", endDate);
+    }
+    const { data, error } = await query.order("date", { ascending: true });
 
     if (error) {
       toast({ title: "Chyba exportu", description: error.message, variant: "destructive" });
@@ -45,7 +46,11 @@ export default function TripLogExport({ vehicleId, selectedMonth, vehicleLabel }
         purposes: split(prefs.purposes),
       });
     }
-    const monthLabel = new Date(year, month - 1).toLocaleDateString("cs-CZ", { month: "long", year: "numeric" });
+    const monthLabel = fullPeriod
+      ? (rows.length > 0
+          ? `${new Date(rows[0].date + "T00:00:00").toLocaleDateString("cs-CZ")} – ${new Date(rows[rows.length - 1].date + "T00:00:00").toLocaleDateString("cs-CZ")}`
+          : "celé období")
+      : new Date(year, month - 1).toLocaleDateString("cs-CZ", { month: "long", year: "numeric" });
 
     // Build worksheet data
     const wsData: any[][] = [

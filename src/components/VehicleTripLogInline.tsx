@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
-import { Plus, Loader2, Trash2, Save, TrendingUp, Fuel, Route, DollarSign, Filter, CalendarDays, List, Download, Copy, ArrowDownToLine, MoreVertical, Bookmark, Sparkles } from "lucide-react";
+import { Plus, Loader2, Trash2, Save, TrendingUp, Fuel, Route, DollarSign, Filter, CalendarDays, List, Download, Copy, ArrowDownToLine, MoreVertical, Bookmark, Sparkles, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -17,6 +17,7 @@ import TripLogExport from "@/components/TripLogExport";
 import { syncFuelIntoTrips } from "@/lib/tripLog/fuelSync";
 import TripTemplatesPopover, { TripTemplate } from "@/components/TripTemplatesPopover";
 import TripLogGeneratorDialog from "@/components/trip-log/TripLogGeneratorDialog";
+import TripLogImportDialog from "@/components/trip-log/TripLogImportDialog";
 import { useRouteHistory } from "@/hooks/useRouteHistory";
 import { parseTSV, coerceForColumn } from "@/lib/tripParse";
 import { PURPOSE_TYPES, purposeTypeLabel } from "@/lib/reservationRules";
@@ -91,6 +92,7 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
   const [rows, setRows] = useState<TripRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [drivers, setDrivers] = useState<{ id: string; first_name: string; last_name: string }[]>([]);
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
@@ -837,6 +839,10 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
           >
             {fuelSyncing ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Fuel className="mr-1 h-4 w-4" />}Načíst tankování
           </Button>
+          <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+            <Upload className="mr-1 h-4 w-4" />Importovat Excel
+          </Button>
+          <TripLogImportDialog open={importOpen} onOpenChange={setImportOpen} vehicleId={vehicleId} drivers={drivers} onDone={() => { fetchLogs(); fetchMultiMonth(); }} />
           <TripLogExport vehicleId={vehicleId} selectedMonth={selectedMonth} vehicleLabel={vehicleLabel} />
           {dirtyCount > 0 && <span className="text-xs text-muted-foreground">{dirtyCount} neuložených</span>}
           {viewMode === "free" && (

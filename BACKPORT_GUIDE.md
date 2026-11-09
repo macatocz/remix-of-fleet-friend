@@ -34,3 +34,6 @@ Soupis změn pro případný přenos do původní aplikace.
 ## Editace záznamů tankování
 - Nový `src/components/fuel/EditFuelButton.tsx` (ikona tužky + dialog: datum/čas, litry, cena, tachometr, místo, poznámka).
 - Vloženo vedle koše v `src/components/fuel/FuelReport.tsx` a `src/components/fuel/VehicleFuelRecords.tsx`; jen admin/dispečer (odpovídá DB pravidlu úprav).
+
+## Tankování na kartě vozidla – tabulka na desktopu
+- `src/components/fuel/VehicleFuelRecords.tsx`: na desktopu (md+) jednořádková tabulka (Datum, Místo, Litry, Cena, Kč/l, Tachometr, Akce), nad ní souhrn (počet, litry, cena, průměr Kč/l); mobil ponechává kartičky.

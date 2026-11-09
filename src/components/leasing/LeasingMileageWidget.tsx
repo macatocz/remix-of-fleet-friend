@@ -92,7 +92,7 @@ export default function LeasingMileageWidget({ focus }: { focus?: MonitoringFocu
   }, [vehicles, records, tripLogs]);
 
   const filteredRows = rows.filter((row) => {
-    if (focus === "risk") return row.result.status === "warning" || row.result.status === "critical";
+    if (focus === "risk") return row.result.status === "watch" || row.result.status === "warning" || row.result.status === "critical";
     if (focus === "missing") return row.result.status === "no-data";
     return true;
   });

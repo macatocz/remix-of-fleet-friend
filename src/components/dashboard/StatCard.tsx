@@ -35,8 +35,7 @@ export default function StatCard({ label, value, hint, icon: Icon, tone = "prima
       style={{ animationDelay: `${delay}ms` }}
       className={cn(
         "relative overflow-hidden animate-fade-in-up shadow-card transition-all",
-        "bg-gradient-to-br to-card",
-        t.grad,
+        "border-border/70 bg-card",
         onClick && "cursor-pointer hover:-translate-y-0.5 hover:shadow-card-hover"
       )}
     >

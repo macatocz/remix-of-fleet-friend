@@ -352,7 +352,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             <DeadlinesCard groups={deadlineGroups} focus={monitoringFocus} />
             <LeasingMileageWidget focus={monitoringFocus} />
-            <div className="flex flex-col gap-3 md:col-span-2 xl:col-span-1 [&>*]:flex-1">
+            <div className="flex flex-col gap-3 md:col-span-2 xl:col-span-1">
               <PendingReservationsWidget />
               <ChartCard title="Dnešní výpůjčky" icon={CalendarDays} count={todayReservations.length}>
                 {todayReservations.length === 0 ? <p className="py-4 text-center text-xs text-muted-foreground">Dnes nejsou žádné schválené rezervace.</p> :

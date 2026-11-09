@@ -65,7 +65,7 @@ export default function FleetHealthSummary({ deadlineGroups, focus, onFocusChang
   const deadlineItems = deadlineGroups.flatMap((group) => group.items);
   const overdue = deadlineItems.filter((item) => item.overdue || (item.days !== null && item.days < 0)).length;
   const soon = deadlineItems.filter((item) => !item.overdue && item.days !== null && item.days >= 0 && item.days <= (item.criticalDays ?? 30)).length;
-  const risk = leaseStatuses.filter((status) => status === "warning" || status === "critical").length;
+  const risk = leaseStatuses.filter((status) => status === "watch" || status === "warning" || status === "critical").length;
   const missing = leaseStatuses.filter((status) => status === "no-data").length;
 
   const termChart = useMemo(() => {
@@ -106,7 +106,7 @@ export default function FleetHealthSummary({ deadlineGroups, focus, onFocusChang
               aria-pressed={active}
               onClick={() => onFocusChange(active ? null : metric.key)}
               className={cn(
-                "h-auto min-h-16 justify-start gap-3 bg-card px-3 py-2 text-left font-normal shadow-card hover:bg-muted/40",
+                "h-auto min-h-16 justify-start gap-3 border-border/70 bg-card px-3 py-2 text-left font-normal shadow-card hover:bg-muted/40",
                 active && "border-primary ring-1 ring-primary/20",
               )}
             >

@@ -71,7 +71,7 @@ export default function DeadlinesCard({ groups, focus }: { groups: DeadlineGroup
   const critical = groups.flatMap((group) => group.items).filter((item) => item.overdue || (item.days !== null && item.days <= (item.criticalDays ?? 30))).length;
 
   return (
-    <Card className="h-full overflow-hidden shadow-card">
+    <Card className="flex h-full flex-col overflow-hidden shadow-card">
       <CardHeader className="border-b border-border/60 px-4 py-3">
         <CardTitle className="flex items-center justify-between gap-2 text-sm">
           <span className="flex min-w-0 items-center gap-2">
@@ -83,7 +83,7 @@ export default function DeadlinesCard({ groups, focus }: { groups: DeadlineGroup
           {critical > 0 && <Badge variant="destructive" className="shrink-0 text-[10px]">{critical} kritické</Badge>}
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-3">
+      <CardContent className="flex min-h-0 flex-1 flex-col p-3">
         <div className="mb-3 flex flex-wrap gap-1">
           <Button variant={groupKey === "all" ? "secondary" : "ghost"} size="sm" className="h-7 shrink-0 px-2 text-[11px]" onClick={() => setGroupKey("all")}>
             <SlidersHorizontal className="mr-1 h-3 w-3" /> Vše {total}
@@ -97,7 +97,7 @@ export default function DeadlinesCard({ groups, focus }: { groups: DeadlineGroup
         {items.length === 0 ? (
           <p className="py-8 text-center text-xs text-muted-foreground">Žádné termíny v tomto výběru</p>
         ) : (
-          <div className="max-h-[248px] space-y-1 overflow-y-auto pr-1">
+          <div className="max-h-[360px] min-h-0 space-y-1 overflow-y-auto pr-1 md:max-h-none md:h-0 md:min-h-[248px] md:flex-1">
             {items.map((item) => {
               const u = urgency(item);
               return (

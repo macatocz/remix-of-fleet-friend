@@ -39,6 +39,7 @@ import { VehicleQRCode } from "@/components/VehicleQRCode";
 import VehicleVignettes from "@/components/VehicleVignettes";
 import VehicleServicePlan from "@/components/VehicleServicePlan";
 import VehicleHandover from "@/components/VehicleHandover";
+import MobileHandoverDrawer from "@/components/mobile/MobileHandoverDrawer";
 import VehicleIncidents from "@/components/VehicleIncidents";
 import MobileTripList from "@/components/mobile/MobileTripList";
 import SpravceCalendarStrip from "@/components/mobile/SpravceCalendarStrip";
@@ -787,6 +788,8 @@ export default function VehicleDetail() {
       {showLeasing && (
         <LeasingMileagePanel vehicleId={vehicle.id} vehicle={vehicle} />
       )}
+
+      {isMobile && <MobileHandoverDrawer vehicleId={vehicle.id} />}
 
       <Tabs
         id="vehicle-tabs"

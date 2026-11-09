@@ -39,6 +39,9 @@ import InstallGuide from "@/pages/InstallGuide";
 import MyTrips from "@/pages/mobile/MyTrips";
 import DriverDesktopHome from "@/pages/DriverDesktopHome";
 import { DriverLayout } from "@/components/DriverLayout";
+import FinanceHub from "@/pages/hubs/FinanceHub";
+import PeopleHub from "@/pages/hubs/PeopleHub";
+import ServiceHub from "@/pages/hubs/ServiceHub";
 import NotFound from "@/pages/NotFound";
 import RoleSelect from "@/pages/RoleSelect";
 
@@ -67,6 +70,9 @@ const App = () => (
               <Route path="/" element={<Dashboard />} />
               <Route path="/vozidla" element={<Vehicles />} />
               <Route path="/vozidla/:id" element={<VehicleDetail />} />
+              <Route path="/finance" element={<FinanceHub />} />
+              <Route path="/ridici-rezervace" element={<PeopleHub />} />
+              <Route path="/servis-skody" element={<ServiceHub />} />
               <Route path="/ridici" element={<Drivers />} />
               <Route path="/rezervace" element={<Reservations />} />
               <Route path="/servis" element={<Service />} />

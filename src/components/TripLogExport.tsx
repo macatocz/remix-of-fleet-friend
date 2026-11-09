@@ -13,6 +13,84 @@ interface Props {
   vehicleLabel?: string;
 }
 
+
+/** Sestaví sešit knihy jízd (sdíleno s měsíční uzávěrkou). */
+export function buildTripLogWorkbook(rows: any[], mode: "official" | "internal", vehicleLabel: string | undefined, monthLabel: string) {
+  // Build worksheet data
+  const wsData: any[][] = [
+    [`${mode === "official" ? "Kniha jízd" : "Kniha jízd – interní přehled"} – ${vehicleLabel || "Vozidlo"}`],
+    [`Období: ${monthLabel}`],
+    [],
+    ["Datum", "Den", "Čas", "Přest. (min)", "Řidič", "Odkud", "Kam", "Účel", "Typ jízdy", "Popis", "Poč. km", "Kon. km", "Km celkem", "PHM (l)", "PHM (Kč)", "Ost. (Kč)"],
+  ];
+
+  let totalKm = 0;
+  let totalFuel = 0;
+  let totalFuelPrice = 0;
+  let totalOther = 0;
+
+  const dayNames = ["Ne", "Po", "Út", "St", "Čt", "Pá", "So"];
+
+  rows.forEach(r => {
+    const d = new Date(r.date + "T00:00:00");
+    const dayName = dayNames[d.getDay()];
+    const driverName = (r as any).drivers ? `${(r as any).drivers.first_name} ${(r as any).drivers.last_name}` : "";
+    const km = r.km_total || 0;
+    const fq = Number(r.fuel_quantity) || 0;
+    const fp = Number(r.fuel_price) || 0;
+    const op = Number(r.other_price) || 0;
+
+    totalKm += km;
+    totalFuel += fq;
+    totalFuelPrice += fp;
+    totalOther += op;
+
+    wsData.push([
+      d.toLocaleDateString("cs-CZ"),
+      dayName,
+      r.time ? r.time.slice(0, 5) : "",
+      (r as any).break_minutes ?? "",
+      driverName,
+      r.route_from || "",
+      r.route_to || "",
+      r.purpose || "",
+      purposeTypeLabel((r as any).purpose_type),
+      r.description || "",
+      r.km_start ?? "",
+      r.km_end ?? "",
+      km || "",
+      fq || "",
+      fp || "",
+      op || "",
+    ]);
+  });
+
+  // Summary row
+  wsData.push([]);
+  wsData.push(["", "", "", "", "", "", "", "", "", "CELKEM:", "", "", totalKm, Math.round(totalFuel * 10) / 10, Math.round(totalFuelPrice), Math.round(totalOther)]);
+
+  if (totalKm > 0 && totalFuel > 0) {
+    wsData.push(["", "", "", "", "", "", "", "", "", "Spotřeba l/100km:", "", "", "", Math.round(totalFuel / totalKm * 1000) / 10]);
+  }
+
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Set column widths
+  ws["!cols"] = [
+    { wch: 12 }, { wch: 4 }, { wch: 6 }, { wch: 10 }, { wch: 18 }, { wch: 15 }, { wch: 15 },
+    { wch: 15 }, { wch: 12 }, { wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Kniha jízd");
+  if (mode === "internal") {
+    const priv = rows.filter((r) => r.purpose_type !== "pracovne").reduce((a, r) => a + (r.km_total || 0), 0);
+    const biz = rows.filter((r) => r.purpose_type === "pracovne").reduce((a, r) => a + (r.km_total || 0), 0);
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Služební km", biz], ["Soukromé / jiné km", priv]]), "Souhrn");
+  }
+  return wb;
+}
+
 export default function TripLogExport({ vehicleId, selectedMonth, vehicleLabel }: Props) {
   const { toast } = useToast();
 
@@ -52,78 +130,7 @@ export default function TripLogExport({ vehicleId, selectedMonth, vehicleLabel }
           : "celé období")
       : new Date(year, month - 1).toLocaleDateString("cs-CZ", { month: "long", year: "numeric" });
 
-    // Build worksheet data
-    const wsData: any[][] = [
-      [`${mode === "official" ? "Kniha jízd" : "Kniha jízd – interní přehled"} – ${vehicleLabel || "Vozidlo"}`],
-      [`Období: ${monthLabel}`],
-      [],
-      ["Datum", "Den", "Čas", "Přest. (min)", "Řidič", "Odkud", "Kam", "Účel", "Typ jízdy", "Popis", "Poč. km", "Kon. km", "Km celkem", "PHM (l)", "PHM (Kč)", "Ost. (Kč)"],
-    ];
-
-    let totalKm = 0;
-    let totalFuel = 0;
-    let totalFuelPrice = 0;
-    let totalOther = 0;
-
-    const dayNames = ["Ne", "Po", "Út", "St", "Čt", "Pá", "So"];
-
-    rows.forEach(r => {
-      const d = new Date(r.date + "T00:00:00");
-      const dayName = dayNames[d.getDay()];
-      const driverName = (r as any).drivers ? `${(r as any).drivers.first_name} ${(r as any).drivers.last_name}` : "";
-      const km = r.km_total || 0;
-      const fq = Number(r.fuel_quantity) || 0;
-      const fp = Number(r.fuel_price) || 0;
-      const op = Number(r.other_price) || 0;
-
-      totalKm += km;
-      totalFuel += fq;
-      totalFuelPrice += fp;
-      totalOther += op;
-
-      wsData.push([
-        d.toLocaleDateString("cs-CZ"),
-        dayName,
-        r.time ? r.time.slice(0, 5) : "",
-        (r as any).break_minutes ?? "",
-        driverName,
-        r.route_from || "",
-        r.route_to || "",
-        r.purpose || "",
-        purposeTypeLabel((r as any).purpose_type),
-        r.description || "",
-        r.km_start ?? "",
-        r.km_end ?? "",
-        km || "",
-        fq || "",
-        fp || "",
-        op || "",
-      ]);
-    });
-
-    // Summary row
-    wsData.push([]);
-    wsData.push(["", "", "", "", "", "", "", "", "", "CELKEM:", "", "", totalKm, Math.round(totalFuel * 10) / 10, Math.round(totalFuelPrice), Math.round(totalOther)]);
-
-    if (totalKm > 0 && totalFuel > 0) {
-      wsData.push(["", "", "", "", "", "", "", "", "", "Spotřeba l/100km:", "", "", "", Math.round(totalFuel / totalKm * 1000) / 10]);
-    }
-
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-    // Set column widths
-    ws["!cols"] = [
-      { wch: 12 }, { wch: 4 }, { wch: 6 }, { wch: 10 }, { wch: 18 }, { wch: 15 }, { wch: 15 },
-      { wch: 15 }, { wch: 12 }, { wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
-    ];
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Kniha jízd");
-    if (mode === "internal") {
-      const priv = rows.filter((r) => r.purpose_type !== "pracovne").reduce((a, r) => a + (r.km_total || 0), 0);
-      const biz = rows.filter((r) => r.purpose_type === "pracovne").reduce((a, r) => a + (r.km_total || 0), 0);
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Služební km", biz], ["Soukromé / jiné km", priv]]), "Souhrn");
-    }
+    const wb = buildTripLogWorkbook(rows, mode, vehicleLabel, monthLabel);
     XLSX.writeFile(wb, `kniha-jizd${mode === "internal" ? "-interni" : ""}_${fullPeriod ? "cele-obdobi" : selectedMonth}.xlsx`);
     toast({ title: "Export dokončen" });
   };

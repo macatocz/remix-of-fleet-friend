@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Car, Users, CalendarDays, Wrench, DollarSign, Settings, BookOpen, CreditCard, AlertTriangle, FileText, BarChart3
+  LayoutDashboard, Car, Users, Wrench, Settings, BookOpen, BarChart3
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -10,16 +10,12 @@ import {
 } from "@/components/ui/sidebar";
 
 const mainItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard, description: "Přehled a upozornění" },
-  { title: "Vozidla", url: "/vozidla", icon: Car, description: "Evidence vozového parku" },
-  { title: "Řidiči", url: "/ridici", icon: Users, description: "Zaměstnanci a oprávnění" },
-  { title: "Rezervace", url: "/rezervace", icon: CalendarDays, description: "Plánování jízd a schvalování" },
-  { title: "Servis", url: "/servis", icon: Wrench, description: "Servisní plány a záznamy" },
-  { title: "Škody", url: "/skody", icon: AlertTriangle, description: "Nehody a pojistné události" },
-  { title: "Náklady", url: "/naklady", icon: DollarSign, description: "Provozní a leasingové výdaje" },
-  { title: "Tankovací karty", url: "/tankovaci-karty", icon: CreditCard, description: "Palivové karty a PINy" },
-  { title: "Cestovní příkazy", url: "/cestovni-prikazy", icon: FileText, description: "Tuzemské i zahraniční CP" },
-  { title: "Report", url: "/report", icon: BarChart3, description: "Kvartální souhrn nákladů a vytížení" },
+  { title: "Přehled", url: "/", icon: LayoutDashboard, description: "Upozornění a termíny", also: [] as string[] },
+  { title: "Vozidla", url: "/vozidla", icon: Car, description: "Evidence vozového parku", also: [] },
+  { title: "Kniha jízd", url: "/kniha-jizd", icon: BookOpen, description: "Zápis, import, kontrola, export", also: [] },
+  { title: "Řidiči a rezervace", url: "/ridici-rezervace", icon: Users, description: "Zaměstnanci a plánování jízd", also: ["/ridici", "/rezervace"] },
+  { title: "Servis a škody", url: "/servis-skody", icon: Wrench, description: "Servis, nehody a pojistky", also: ["/servis", "/skody"] },
+  { title: "Finance a reporty", url: "/finance", icon: BarChart3, description: "Náklady, PHM, karty, cesťáky", also: ["/naklady", "/report", "/tankovaci-karty", "/cestovni-prikazy"] },
 ];
 
 const settingsItems = [
@@ -58,7 +54,7 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
-                      className={collapsed ? "justify-center" : "hover:bg-sidebar-accent/50 items-start"}
+                      className={`${collapsed ? "justify-center" : "hover:bg-sidebar-accent/50 items-start"} ${item.also.some((p) => location.pathname.startsWith(p)) ? "bg-sidebar-accent text-sidebar-primary font-medium" : ""}`}
                       activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
                     >
                       <item.icon className={collapsed ? "h-4 w-4 shrink-0" : "mr-2 h-4 w-4 mt-0.5 shrink-0"} />

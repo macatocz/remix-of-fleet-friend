@@ -33,13 +33,13 @@ export function AppSidebar() {
         <div className={collapsed ? "py-4 px-2" : "p-4"}>
           {!collapsed && (
             <h1 className="text-lg font-bold text-sidebar-foreground flex items-center gap-2">
-              <img src="/icon-192.png" alt="" className="h-7 w-7 shrink-0 rounded-md object-cover" />
+              <img src="/logo-smart-car.png" alt="" className="h-7 w-7 shrink-0 rounded-md object-cover" />
               Vozový park
             </h1>
           )}
           {collapsed && (
             <div className="flex justify-center">
-              <img src="/icon-192.png" alt="Vozový park" className="h-7 w-7 shrink-0 rounded-md object-cover" />
+              <img src="/logo-smart-car.png" alt="Vozový park" className="h-7 w-7 shrink-0 rounded-md object-cover" />
             </div>
           )}
         </div>

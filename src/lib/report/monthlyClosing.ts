@@ -41,7 +41,7 @@ export async function buildMonthlyClosing(month: string, onProgress?: (msg: stri
   (fuel || []).forEach((f: any) => { const p = add(f.vehicle_id); p.fuel += Number(f.total_price) || 0; p.liters += Number(f.liters) || 0; });
   (service || []).forEach((s: any) => { add(s.vehicle_id).service += Number(s.cost) || 0; });
   const summaryRows = [...perVehicle.entries()].map(([id, p]) => [vName(id), Math.round(p.liters * 10) / 10, Math.round(p.fuel), Math.round(p.service), Math.round(p.fuel + p.service)]);
-  const tot = summaryRows.reduce((a, r) => [a[0] + (r[1] as number), a[1] + (r[2] as number), a[2] + (r[3] as number), a[3] + (r[4] as number)], [0, 0, 0, 0]);
+  const tot = summaryRows.reduce<number[]>((a, r) => [a[0] + Number(r[1]), a[1] + Number(r[2]), a[2] + Number(r[3]), a[3] + Number(r[4])], [0, 0, 0, 0]);
   const head = ["Vozidlo", "PHM (l)", "PHM (Kč)", "Servis (Kč)", "Celkem (Kč)"];
 
   const wb = XLSX.utils.book_new();

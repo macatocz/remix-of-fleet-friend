@@ -44,6 +44,7 @@ const adminNav: NavItem[] = [
 ];
 
 const moreItems = [
+  { url: "/m/kniha-jizd", label: "Kniha jízd", icon: Route },
   { url: "/m/servis", label: "Servis", icon: Wrench },
   { url: "/m/skody", label: "Škody", icon: AlertTriangle },
   { url: "/m/naklady", label: "Náklady", icon: Coins },

@@ -50,7 +50,6 @@ export async function buildMonthlyClosing(month: string, onProgress?: (msg: stri
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Datum", "Vozidlo", "Typ", "Popis", "Kč"], ...(service || []).map((s: any) => [new Date(s.date).toLocaleDateString("cs-CZ"), vName(s.vehicle_id), s.type, s.description || "", s.cost ?? ""])]), "Servis");
   root.file("01_souhrn-nakladu.xlsx", wbBytes(wb));
 
-  await ensurePdfFont(new jsPDF());
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   await ensurePdfFont(doc);
   const theme = getPdfTheme();
@@ -58,7 +57,7 @@ export async function buildMonthlyClosing(month: string, onProgress?: (msg: stri
   doc.setFont(PDF_FONT, "normal");
   doc.setFontSize(16);
   doc.text(`Souhrn nákladů – ${monthLabel}`, 14, 18);
-  autoTable(doc, { startY: 26, head: [head], body: [...summaryRows, ["CELKEM", ...tot]], styles: { font: PDF_FONT, fontSize: 9 }, headStyles: { fillColor: theme.colors.primary as any } });
+  autoTable(doc, { startY: 26, head: [head], body: [...summaryRows, ["CELKEM", ...tot]], ...(theme.table as any), styles: { ...(theme.table.styles as any), font: PDF_FONT, fontSize: 9 } });
   root.file("01_souhrn-nakladu.pdf", doc.output("arraybuffer"));
 
   // 2) Oficiální kniha jízd per vozidlo

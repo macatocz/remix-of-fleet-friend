@@ -17,6 +17,7 @@ import TripLogExport from "@/components/TripLogExport";
 import { syncFuelIntoTrips } from "@/lib/tripLog/fuelSync";
 import TripTemplatesPopover, { TripTemplate } from "@/components/TripTemplatesPopover";
 import TripLogGeneratorDialog from "@/components/trip-log/TripLogGeneratorDialog";
+import TripLogAuditDialog from "@/components/trip-log/TripLogAuditDialog";
 import TripLogImportDialog from "@/components/trip-log/TripLogImportDialog";
 import { useRouteHistory } from "@/hooks/useRouteHistory";
 import { parseTSV, coerceForColumn } from "@/lib/tripParse";
@@ -843,6 +844,7 @@ export default function VehicleTripLogInline({ vehicleId }: Props) {
             <Upload className="mr-1 h-4 w-4" />Importovat Excel
           </Button>
           <TripLogImportDialog open={importOpen} onOpenChange={setImportOpen} vehicleId={vehicleId} drivers={drivers} onDone={() => { fetchLogs(); fetchMultiMonth(); }} />
+          <TripLogAuditDialog vehicleId={vehicleId} selectedMonth={selectedMonth} />
           <TripLogExport vehicleId={vehicleId} selectedMonth={selectedMonth} vehicleLabel={vehicleLabel} />
           {dirtyCount > 0 && <span className="text-xs text-muted-foreground">{dirtyCount} neuložených</span>}
           {viewMode === "free" && (

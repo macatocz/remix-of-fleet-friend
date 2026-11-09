@@ -97,7 +97,7 @@ export default function DeadlinesCard({ groups, focus }: { groups: DeadlineGroup
         {items.length === 0 ? (
           <p className="py-8 text-center text-xs text-muted-foreground">Žádné termíny v tomto výběru</p>
         ) : (
-          <div className="max-h-[360px] min-h-0 space-y-1 overflow-y-auto pr-1 md:max-h-none md:h-0 md:min-h-[248px] md:flex-1">
+          <div className="max-h-[360px] min-h-0 space-y-1 overflow-y-auto pr-1 md:max-h-[340px]">
             {items.map((item) => {
               const u = urgency(item);
               return (

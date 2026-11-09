@@ -5,6 +5,7 @@ import { Fuel, Receipt, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import DeleteFuelButton from "@/components/fuel/DeleteFuelButton";
+import EditFuelButton from "@/components/fuel/EditFuelButton";
 import { canDeleteFuel } from "@/lib/fuel/deleteFuelRecord";
 
 export default function VehicleFuelRecords({ vehicleId }: { vehicleId: string }) {
@@ -63,6 +64,7 @@ export default function VehicleFuelRecords({ vehicleId }: { vehicleId: string })
                   <Receipt className="mr-1 h-3.5 w-3.5" />Účtenka
                 </Button>
               )}
+              {isManager && <EditFuelButton record={r} onSaved={(n) => setRows((p) => p.map((x) => x.id === n.id ? n : x))} />}
               {canDeleteFuel(r, user?.id, isManager) && (
                 <DeleteFuelButton record={r} docPath={r.document_id ? docs[r.document_id] : undefined}
                   onDeleted={() => setRows((p) => p.filter((x) => x.id !== r.id))} />

@@ -59,7 +59,7 @@ export function DriverLayout() {
             <div className="h-16 flex items-center justify-between px-6">
               <div className="flex items-center gap-2">
                 <SidebarTrigger />
-                <h1 className="font-semibold text-base flex items-center gap-2"><img src="/icon-192.png" alt="" className="h-7 w-7 rounded-md object-cover" />Vozový park</h1>
+                <h1 className="font-semibold text-base flex items-center gap-2"><img src="/logo-smart-car.png" alt="" className="h-7 w-7 rounded-md object-cover" />Vozový park</h1>
               </div>
               <div className="flex items-center gap-1">
                 <NotificationBell />

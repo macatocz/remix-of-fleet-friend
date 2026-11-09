@@ -90,7 +90,7 @@ export function MobileLayout() {
       <header className="flex flex-col border-b bg-card sticky top-0 z-30">
         <div className="h-safe-top" />
         <div className="h-16 flex items-center justify-between px-4">
-          <h1 className="font-semibold text-base flex items-center gap-2"><img src="/icon-192.png" alt="" className="h-7 w-7 rounded-md object-cover" />Vozový park</h1>
+          <h1 className="font-semibold text-base flex items-center gap-2"><img src="/logo-smart-car.png" alt="" className="h-7 w-7 rounded-md object-cover" />Vozový park</h1>
           <div className="flex items-center gap-1">
             <OfflineIndicator />
             <NotificationBell />

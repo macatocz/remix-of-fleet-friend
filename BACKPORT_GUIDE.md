@@ -26,3 +26,7 @@ Soupis změn pro případný přenos do původní aplikace.
 
 ## Redesign: grafit + tyrkys
 - `src/index.css`: primární barva změněna z červené (357 72% 46%) na tyrkysovou (174 84% 32%), postranní panel a text na grafit (220 9% 15–16%), grafy sladěny. PDF tisková paleta beze změny.
+
+## Nové logo (Smart Car v tyrkysu)
+- Přidáno `public/logo-smart-car.png` a `public/favicon.png`.
+- `AppSidebar.tsx`, `DriverSidebar.tsx`, `DriverLayout.tsx`, `MobileLayout.tsx`: `/icon-192.png` → `/logo-smart-car.png`.

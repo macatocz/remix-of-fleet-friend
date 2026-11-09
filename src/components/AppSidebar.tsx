@@ -54,10 +54,8 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
-                      className={collapsed ? "justify-center" : "hover:bg-sidebar-accent/50 items-start"}
+                      className={`${collapsed ? "justify-center" : "hover:bg-sidebar-accent/50 items-start"} ${item.also.some((p) => location.pathname.startsWith(p)) ? "bg-sidebar-accent text-sidebar-primary font-medium" : ""}`}
                       activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
-                      style={item.also.some((p) => location.pathname.startsWith(p)) ? { fontWeight: 500 } : undefined}
-                      data-active-alias={item.also.some((p) => location.pathname.startsWith(p)) || undefined}
                     >
                       <item.icon className={collapsed ? "h-4 w-4 shrink-0" : "mr-2 h-4 w-4 mt-0.5 shrink-0"} />
                       {!collapsed && (

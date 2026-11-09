@@ -1,0 +1,25 @@
+# Backport guide (changes since remix)
+
+Soupis změn pro případný přenos do původní aplikace.
+
+## Závislosti
+- `jszip` (měsíční uzávěrka)
+
+## Nové soubory (kopírovat 1:1)
+- Import knihy jízd: `src/lib/tripLog/importParser.ts`, `src/components/trip-log/TripLogImportDialog.tsx`, `src/test/tripImport.test.ts`
+- Měsíční uzávěrka: `src/lib/report/monthlyClosing.ts`, `src/components/finance/MonthlyClosingButton.tsx`
+- Kontrola knihy jízd: `src/lib/tripLog/audit.ts`, `src/components/trip-log/TripLogAuditDialog.tsx`, `src/test/tripAudit.test.ts`
+- Předání vozu na mobilu: `src/components/mobile/MobileHandoverDrawer.tsx`
+- Huby menu: `src/components/HubTabs.tsx`, `src/pages/hubs/FinanceHub.tsx`, `PeopleHub.tsx`, `ServiceHub.tsx`
+
+## Upravené soubory
+- `src/App.tsx` (routy hubů), `src/components/AppSidebar.tsx` (7 položek), `src/components/MobileLayout.tsx`
+- `src/components/VehicleTripLogInline.tsx` (Importovat Excel, Zkontrolovat)
+- `src/components/TripLogExport.tsx` (sdílený `buildTripLogWorkbook`, export za celé období)
+- `src/pages/VehicleDetail.tsx` (předání vozu na mobilu)
+
+## 2026-11-09 – Úprava Přehledu
+- `src/components/dashboard/StatCard.tsx`: KPI karty bez pastelového podbarvení, neutrální podklad.
+- `src/components/dashboard/FleetHealthSummary.tsx` + `src/components/leasing/LeasingMileageWidget.tsx`: „Rizikový nájezd" zahrnuje i stav Sledovat (>100 % plánu).
+- `src/components/dashboard/DeadlinesCard.tsx`: seznam termínů vyplní celou výšku dlaždice.
+- `src/pages/Dashboard.tsx`: karty rezervací v pravém sloupci bez umělého roztahování.

@@ -11,6 +11,7 @@ import { vehicleLabel } from "@/lib/vehicleName";
 import { exportTablePdf } from "@/lib/report/tablePdf";
 import { useAuth } from "@/contexts/AuthContext";
 import DeleteFuelButton from "@/components/fuel/DeleteFuelButton";
+import EditFuelButton from "@/components/fuel/EditFuelButton";
 import { canDeleteFuel } from "@/lib/fuel/deleteFuelRecord";
 
 const fmt = (n: number, d = 0) => n.toLocaleString("cs-CZ", { maximumFractionDigits: d });
@@ -177,6 +178,7 @@ export default function FuelReport() {
                         <Receipt className="mr-1 h-3.5 w-3.5" />Účtenka
                       </Button>
                     ) : <span className="text-xs text-destructive">chybí</span>}
+                    {isManager && <EditFuelButton record={r} onSaved={(n) => setRows((p) => p.map((x) => x.id === n.id ? n : x))} />}
                     {canDeleteFuel(r, user?.id, isManager) && (
                       <DeleteFuelButton record={r} docPath={r.document_id ? docs[r.document_id] : undefined}
                         onDeleted={() => setRows((p) => p.filter((x) => x.id !== r.id))} />

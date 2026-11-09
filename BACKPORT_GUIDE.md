@@ -30,3 +30,7 @@ Soupis změn pro případný přenos do původní aplikace.
 ## Nové logo (Smart Car v tyrkysu)
 - Přidáno `public/logo-smart-car.png` a `public/favicon.png`.
 - `AppSidebar.tsx`, `DriverSidebar.tsx`, `DriverLayout.tsx`, `MobileLayout.tsx`: `/icon-192.png` → `/logo-smart-car.png`.
+
+## Editace záznamů tankování
+- Nový `src/components/fuel/EditFuelButton.tsx` (ikona tužky + dialog: datum/čas, litry, cena, tachometr, místo, poznámka).
+- Vloženo vedle koše v `src/components/fuel/FuelReport.tsx` a `src/components/fuel/VehicleFuelRecords.tsx`; jen admin/dispečer (odpovídá DB pravidlu úprav).

@@ -23,3 +23,6 @@ Soupis změn pro případný přenos do původní aplikace.
 - `src/components/dashboard/FleetHealthSummary.tsx` + `src/components/leasing/LeasingMileageWidget.tsx`: „Rizikový nájezd" zahrnuje i stav Sledovat (>100 % plánu).
 - `src/components/dashboard/DeadlinesCard.tsx`: seznam termínů vyplní celou výšku dlaždice.
 - `src/pages/Dashboard.tsx`: karty rezervací v pravém sloupci bez umělého roztahování.
+
+## Redesign: grafit + tyrkys
+- `src/index.css`: primární barva změněna z červené (357 72% 46%) na tyrkysovou (174 84% 32%), postranní panel a text na grafit (220 9% 15–16%), grafy sladěny. PDF tisková paleta beze změny.
